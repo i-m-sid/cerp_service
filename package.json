@@ -1,0 +1,39 @@
+{
+  "name": "cerp-service",
+  "version": "1.0.0",
+  "description": "CERP Service",
+  "main": "dist/lambda.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "lint": "eslint 'src/**/*.ts'",
+    "lint:fix": "eslint 'src/**/*.ts' --fix",
+    "format": "prettier --write 'src/**/*.ts'",
+    "test": "jest --coverage"
+  },
+  "dependencies": {
+    "@fastify/aws-lambda": "^5.1.4",
+    "@fastify/sensible": "^6.0.3",
+    "dotenv": "^16.0.0",
+    "fastify": "^5.2.1",
+    "@fastify/formbody": "^8.0.2",
+    "@fastify/redis": "^7.0.2",
+    "ioredis": "^5.5.0",
+    "libsodium-wrappers": "^0.7.15"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
+    "@types/libsodium-wrappers": "^0.7.14",
+    "@types/node": "^22.13.1",
+    "@typescript-eslint/eslint-plugin": "^8.23.0",
+    "@typescript-eslint/parser": "^8.23.0",
+    "eslint": "^9.19.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.3",
+    "prettier": "^3.4.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.7.3"
+  }
+}
