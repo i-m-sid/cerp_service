@@ -1,9 +1,9 @@
 import Fastify from 'fastify';
 import dotenv from 'dotenv';
-import { ondcRoutes } from './modules/ondc/ondc.routes';
 import { setupErrorHandler } from './utils/error-handler';
 import fastifyFormbody from '@fastify/formbody';
 import fastifyRedis from '@fastify/redis';
+import { authRoutes } from './modules/auth/auth.routes';
 
 dotenv.config();
 
@@ -19,7 +19,7 @@ app.register(fastifyRedis, {
   password: process.env.REDIS_TOKEN as string,
 });
 // Register Routes
-app.register(ondcRoutes);
+app.register(authRoutes);
 
 // Setup global error handler
 setupErrorHandler(app);

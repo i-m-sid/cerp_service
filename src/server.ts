@@ -1,20 +1,29 @@
-import app from './app';
+import fastify from 'fastify';
+import { authRoutes } from './modules/auth/auth.routes';
+import { authMiddleware } from './middleware/auth.middleware';
+import dotenv from 'dotenv';
 
-// Start the server (for local development)
-const startServer = async () => {
+dotenv.config();
+
+const server = fastify({
+  logger: true,
+});
+
+// Register auth middleware as a decorator
+server.decorate('auth', authMiddleware);
+
+// Register routes
+server.register(authRoutes);
+
+// Start server
+const start = async () => {
   try {
-    await app.listen({
-      port: Number(process.env.PORT) || 3000,
-      host: '0.0.0.0',
-    });
-    app.log.info(
-      `🚀 Server running on http://localhost:${process.env.PORT || 3000}`,
-    );
+    await server.listen({ port: 3000, host: '0.0.0.0' });
+    console.log('Server is running on port 3000');
   } catch (err) {
-    app.log.error(err);
+    server.log.error(err);
     process.exit(1);
   }
 };
 
-// Run the server locally
-startServer();
+start();
