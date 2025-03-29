@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { AuthService } from '../modules/auth/auth.service';
+import { sendErrorResponse } from '../utils/response-handler';
 
 const authService = new AuthService();
 
@@ -14,12 +15,17 @@ declare module 'fastify' {
 
 export async function authMiddleware(
   request: FastifyRequest,
-  reply: FastifyReply
+  reply: FastifyReply,
 ) {
   try {
     const authHeader = request.headers.authorization;
     if (!authHeader) {
-      throw new Error('No authorization header');
+      return sendErrorResponse(
+        reply,
+        401,
+        'No authorization header',
+        'Authentication required',
+      );
     }
 
     const token = authHeader.replace('Bearer ', '');
@@ -31,9 +37,11 @@ export async function authMiddleware(
       email: decoded.email,
     };
   } catch (error) {
-    reply.status(401).send({
-      error: 'Unauthorized',
-      message: error instanceof Error ? error.message : 'Authentication failed',
-    });
+    return sendErrorResponse(
+      reply,
+      401,
+      error,
+      error instanceof Error ? error.message : 'Authentication failed',
+    );
   }
-} 
+}

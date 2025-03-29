@@ -1,24 +1,23 @@
-import { OAuth2Client } from 'google-auth-library';
-import jwt, { SignOptions } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+import { compare, hash } from 'bcrypt';
 import {
-  GoogleUser,
-  GoogleUserSchema,
-  JWTPayload,
+  RegisterInput,
+  LoginInput,
   AuthResponse,
+  JWTPayload,
+  UserResponse,
 } from './auth.types';
 import { UserRepository } from '../user/user.repository';
 import { prisma } from '../../lib/prisma.service';
-import { UserSchema } from '../user/user.types';
 
 export class AuthService {
   private userRepository: UserRepository;
-  private googleClient: OAuth2Client;
   private readonly JWT_SECRET: string;
   private readonly JWT_EXPIRES_IN: number;
+  private readonly SALT_ROUNDS = 10;
 
   constructor() {
     this.userRepository = new UserRepository(prisma);
-    this.googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
     this.JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
     // Convert expiration time to seconds
@@ -29,72 +28,60 @@ export class AuthService {
   }
 
   /**
-   * Verify Google ID token and return user information
-   * @param idToken - Google ID token from client
+   * Register a new user
+   * @param registerData - Registration data including email, password, and name fields
    */
-  async verifyGoogleToken(idToken: string): Promise<GoogleUser> {
-    try {
-      const ticket = await this.googleClient.verifyIdToken({
-        idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      });
-
-      const payload = ticket.getPayload();
-      if (!payload) {
-        throw new Error('Invalid token payload');
-      }
-
-      const googleUser = {
-        email: payload.email!,
-        name: payload.name,
-        picture: payload.picture,
-        sub: payload.sub,
-      };
-
-      const validatedUser = GoogleUserSchema.parse(googleUser);
-      return validatedUser;
-    } catch (error) {
-      throw new Error('Invalid Google token');
+  async register(registerData: RegisterInput): Promise<AuthResponse> {
+    // Check if user exists
+    const existingUser = await this.userRepository.findByEmail(
+      registerData.email,
+    );
+    if (existingUser) {
+      throw new Error('User with this email already exists');
     }
+
+    // Hash password
+    const hashedPassword = await hash(registerData.password, this.SALT_ROUNDS);
+
+    // Create user
+    const newUser = await this.userRepository.create({
+      email: registerData.email,
+      password: hashedPassword,
+      firstName: registerData.firstName,
+      lastName: registerData.lastName,
+    });
+
+    // Generate JWT
+    const accessToken = this.generateToken(newUser.id, newUser.email);
+
+    return {
+      user: this.mapUserToResponse(newUser),
+      accessToken,
+    };
   }
 
   /**
-   * Create or update user in database and return auth response
-   * @param googleUser - Validated Google user information
+   * Login user with email and password
+   * @param loginData - Login credentials
    */
-  async authenticateUser(googleUser: GoogleUser): Promise<AuthResponse> {
-    const user = await this.userRepository.upsertByEmail(
-      googleUser.email,
-      {
-        email: googleUser.email,
-        name: googleUser.name || undefined,
-        picture: googleUser.picture || undefined,
-      },
-      {
-        name: googleUser.name || undefined,
-        picture: googleUser.picture || undefined,
-        updatedAt: new Date(),
-      },
-    );
+  async login(loginData: LoginInput): Promise<AuthResponse> {
+    // Find user by email
+    const user = await this.userRepository.findByEmail(loginData.email);
+    if (!user) {
+      throw new Error('Invalid email or password');
+    }
 
-    const accessToken = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-      },
-      this.JWT_SECRET,
-      { expiresIn: this.JWT_EXPIRES_IN },
-    );
+    // Verify password
+    const isPasswordValid = await compare(loginData.password, user.password);
+    if (!isPasswordValid) {
+      throw new Error('Invalid email or password');
+    }
 
-    console.log('accessToken', accessToken);
+    // Generate JWT
+    const accessToken = this.generateToken(user.id, user.email);
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        picture: user.picture,
-      },
+      user: this.mapUserToResponse(user),
       accessToken,
     };
   }
@@ -112,14 +99,38 @@ export class AuthService {
         throw new Error('User not found');
       }
 
-      const validatedUser = UserSchema.parse(user);
-      if (!validatedUser.isActive) {
-        throw new Error('User is inactive');
-      }
-
       return decoded;
     } catch (error) {
       throw new Error('Invalid token');
     }
+  }
+
+  /**
+   * Generate JWT token
+   * @private
+   */
+  private generateToken(userId: string, email: string): string {
+    return jwt.sign(
+      {
+        userId,
+        email,
+      },
+      this.JWT_SECRET,
+      { expiresIn: this.JWT_EXPIRES_IN },
+    );
+  }
+
+  /**
+   * Map user entity to response type
+   * @private
+   */
+  private mapUserToResponse(user: any): UserResponse {
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      picture: user.picture,
+    };
   }
 }

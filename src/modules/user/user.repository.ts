@@ -2,13 +2,17 @@ import { PrismaClient, User } from '@prisma/client';
 
 export interface CreateUserData {
   email: string;
-  name?: string;
+  firstName: string;
+  lastName: string;
+  password: string;
   picture?: string;
 }
 
 export interface UpdateUserData {
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   picture?: string;
+  password?: string;
   updatedAt?: Date;
 }
 
@@ -31,10 +35,16 @@ export class UserRepository {
     });
   }
 
+  async create(data: CreateUserData): Promise<User> {
+    return this.prisma.user.create({
+      data: data,
+    });
+  }
+
   async update(id: string, data: UpdateUserData): Promise<User> {
     return this.prisma.user.update({
       where: { id },
-      data,
+      data: data,
     });
   }
 
@@ -43,10 +53,16 @@ export class UserRepository {
     createData: CreateUserData,
     updateData: UpdateUserData,
   ): Promise<User> {
-    return this.prisma.user.upsert({
-      where: { email },
-      create: createData,
-      update: updateData,
-    });
+    try {
+      const user = await this.prisma.user.upsert({
+        where: { email },
+        create: createData,
+        update: updateData,
+      });
+      return user;
+    } catch (error) {
+      console.error('Error upserting user', error);
+      throw error;
+    }
   }
 }
