@@ -19,10 +19,8 @@ enum FieldType {
   DECIMAL
   BOOLEAN
   DATE
-  VEHICLE       // Relational
-  CUSTOMER      // Relational
-  DROPDOWN
-  REFERENCE     // fallback generic type
+  SINGLE_SELECT
+  MULTI_SELECT
 }
 
 
@@ -75,7 +73,6 @@ model ChallanTemplate {
 
   challans        Challan[]                   // all challans of this type
   statuses        ChallanStatus[]             // all status options for this template
-  itemFields      ChallanTemplateItemField[]  // fields that define the structure of each item
   allowedCustomerTypes  CustomerType[]  @relation("AllowedCustomerTypes")
   allowedItemCategories ItemCategory[]      @relation("SupportedItemCategories")
 }
@@ -86,22 +83,16 @@ model ChallanTemplateField {
   label       String        // "Vehicle", "Driver", etc.
   key         String        // JSON key in customFields
   type        FieldType
+  flex        Int
+  row         Int
+  column      Int
   isRequired  Boolean       @default(false)
+  data        String[]
   refModel    String?       // e.g., "Vehicle", "Customer"
   refKey      String?       // e.g., "id", "vehicleNumber"
   refDisplay  String?       // e.g., "vehicleNumber (type)"
 
   template    ChallanTemplate @relation(fields: [templateId], references: [id])
-}
-
-model ChallanTemplateItemField {
-  id           String           @id @default(cuid())
-  templateId   String
-  label        String
-  key          String
-  isRequired   Boolean          @default(false)
-
-  template     ChallanTemplate  @relation(fields: [templateId], references: [id])
 }
 
 model ItemCategory {
@@ -111,12 +102,12 @@ model ItemCategory {
   hsnCode     String?
   createdBy   String        // user/org
 
-  items       CustomItem[]
+  items       Item[]
   templates   ChallanTemplate[] @relation("SupportedItemCategories")
   allowedUnits UnitOfMeasurement[] @relation("CategoryUOMs")
 }
 
-model CustomItem {
+model Item {
   id            String        @id @default(cuid())
   name          String
   description   String?
@@ -125,17 +116,6 @@ model CustomItem {
 
   category      ItemCategory  @relation(fields: [categoryId], references: [id])
   allowedUnits  UnitOfMeasurement[] @relation("ItemUOMs")
-  challanItems      ChallanItem[]
-}
-
-model ChallanItem {
-  id            String     @id @default(cuid())
-  challanId     String
-  customItemId  String?    // optional reference to reusable item
-  itemData      Json       // quantity, rate, taxes, etc.
-
-  challan       Challan    @relation(fields: [challanId], references: [id])
-  customItem    CustomItem? @relation(fields: [customItemId], references: [id])
 }
 
 model Challan {
@@ -151,7 +131,6 @@ model Challan {
 
   template       ChallanTemplate  @relation(fields: [templateId], references: [id])
   status         ChallanStatus    @relation(fields: [statusId], references: [id])
-  items          ChallanItem[]           // actual item data
 }
 
 model ChallanStatus {
@@ -171,7 +150,7 @@ model UnitOfMeasurement {
   shortCode  String          // e.g., "kg"
 
   categories ItemCategory[]  @relation("CategoryUOMs")
-  items      CustomItem[]    @relation("ItemUOMs")
+  items      Item[]    @relation("ItemUOMs")
 }
 
 model Vehicle {
