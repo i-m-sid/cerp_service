@@ -7,6 +7,7 @@ export interface ICreateVehicle {
   lastFuelOdometerReading?: number;
   lastServiceOdometerReading?: number;
   lastServiceDate?: Date;
+  createdBy: string;
 }
 
 export interface IUpdateVehicle extends Partial<ICreateVehicle> {

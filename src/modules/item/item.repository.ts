@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import { ICreateVehicle, IUpdateVehicle } from './vehicle.interface';
+import { ICreateItem, IUpdateItem } from './item.interface';
 
-export class VehicleRepository {
+export class ItemRepository {
   private prisma: PrismaClient;
 
   constructor() {
@@ -9,46 +9,46 @@ export class VehicleRepository {
   }
 
   private readonly include = {
-    owner: true,
+    category: true,
   };
 
-  async create(data: ICreateVehicle) {
-    return this.prisma.vehicle.create({
+  async create(data: ICreateItem) {
+    return this.prisma.item.create({
       data,
       include: this.include,
     });
   }
 
   async findAll() {
-    return this.prisma.vehicle.findMany({
+    return this.prisma.item.findMany({
       include: this.include,
     });
   }
 
   async findById(id: string) {
-    return this.prisma.vehicle.findUnique({
+    return this.prisma.item.findUnique({
       where: { id },
       include: this.include,
     });
   }
 
-  async findByVehicleNumber(vehicleNumber: string) {
-    return this.prisma.vehicle.findUnique({
-      where: { vehicleNumber },
+  async findByName(name: string) {
+    return this.prisma.item.findFirst({
+      where: { name },
       include: this.include,
     });
   }
 
-  async findByOwner(ownerId: string) {
-    return this.prisma.vehicle.findMany({
-      where: { ownerId },
+  async findByCategoryId(categoryId: string) {
+    return this.prisma.item.findMany({
+      where: { categoryId },
       include: this.include,
     });
   }
 
-  async update(data: IUpdateVehicle) {
+  async update(data: IUpdateItem) {
     const { id, ...updateData } = data;
-    return this.prisma.vehicle.update({
+    return this.prisma.item.update({
       where: { id },
       data: updateData,
       include: this.include,
@@ -56,7 +56,7 @@ export class VehicleRepository {
   }
 
   async delete(id: string) {
-    return this.prisma.vehicle.delete({
+    return this.prisma.item.delete({
       where: { id },
     });
   }

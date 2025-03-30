@@ -18,7 +18,10 @@ export class VehicleController {
     reply: FastifyReply,
   ) {
     try {
-      const vehicle = await this.service.create(request.body);
+      const vehicle = await this.service.create({
+        ...request.body,
+        createdBy: request.user!.userId,
+      });
       return sendSuccessResponse(reply, 201, vehicle);
     } catch (error) {
       request.log.error(error);
@@ -49,6 +52,24 @@ export class VehicleController {
     } catch (error) {
       request.log.error(error);
       return sendErrorResponse(reply, 500, error, 'Failed to fetch vehicle');
+    }
+  }
+
+  async findByOwner(
+    request: FastifyRequest<{ Params: { ownerId: string } }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const vehicles = await this.service.findByOwner(request.params.ownerId);
+      return sendSuccessResponse(reply, 200, vehicles);
+    } catch (error) {
+      request.log.error(error);
+      return sendErrorResponse(
+        reply,
+        500,
+        error,
+        'Failed to fetch vehicles by owner',
+      );
     }
   }
 

@@ -115,7 +115,6 @@ model Item {
   createdBy     String         // user/org ID
 
   category      ItemCategory  @relation(fields: [categoryId], references: [id])
-  allowedUnits  UnitOfMeasurement[] @relation("ItemUOMs")
 }
 
 model Challan {
@@ -148,9 +147,9 @@ model UnitOfMeasurement {
   id         String          @id @default(cuid())
   label      String          // e.g., "Kilogram"
   shortCode  String          // e.g., "kg"
+  createdBy  String         // user/org ID
 
   categories ItemCategory[]  @relation("CategoryUOMs")
-  items      Item[]    @relation("ItemUOMs")
 }
 
 model Vehicle {
@@ -163,19 +162,11 @@ model Vehicle {
   lastFuelOdometerReading Decimal?
   lastServiceOdometerReading Decimal?
   lastServiceDate DateTime?
+  createdBy      String                         // user/org ID
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
   owner          Customer  @relation(fields: [ownerId], references: [id])
-}
-
-model Royalty {
-  id         String              @id @default(cuid())
-  royaltyNo  String              @unique                 // e.g., RLT-2025-0001
-  quantity   Decimal
-
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
 }
 
 

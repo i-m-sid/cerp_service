@@ -14,7 +14,7 @@ export class VehicleService {
       data.vehicleNumber,
     );
     if (existing) {
-      throw new Error('Vehicle number already exists');
+      throw new Error('Vehicle with this number already exists');
     }
     return this.repository.create(data);
   }
@@ -27,6 +27,10 @@ export class VehicleService {
     return this.repository.findById(id);
   }
 
+  async findByOwner(ownerId: string) {
+    return this.repository.findByOwner(ownerId);
+  }
+
   async update(data: IUpdateVehicle) {
     // If vehicle number is being updated, check if new number already exists
     if (data.vehicleNumber) {
@@ -34,7 +38,7 @@ export class VehicleService {
         data.vehicleNumber,
       );
       if (existing && existing.id !== data.id) {
-        throw new Error('Vehicle number already exists');
+        throw new Error('Vehicle with this number already exists');
       }
     }
     return this.repository.update(data);

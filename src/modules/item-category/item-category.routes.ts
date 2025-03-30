@@ -1,17 +1,20 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { VehicleController } from './vehicle.controller';
-import { ICreateVehicle, IUpdateVehicle } from './vehicle.interface';
+import { ItemCategoryController } from './item-category.controller';
+import {
+  ICreateItemCategory,
+  IUpdateItemCategory,
+} from './item-category.interface';
 import { authMiddleware } from '../../middleware/auth.middleware';
 
-export async function vehicleRoutes(fastify: FastifyInstance) {
-  const controller = new VehicleController();
+export async function itemCategoryRoutes(fastify: FastifyInstance) {
+  const controller = new ItemCategoryController();
 
   fastify.route({
     method: 'POST',
     url: '',
     preHandler: [authMiddleware],
     handler: async (
-      req: FastifyRequest<{ Body: ICreateVehicle }>,
+      req: FastifyRequest<{ Body: ICreateItemCategory }>,
       reply: FastifyReply,
     ) => controller.create(req, reply),
   });
@@ -35,23 +38,13 @@ export async function vehicleRoutes(fastify: FastifyInstance) {
   });
 
   fastify.route({
-    method: 'GET',
-    url: '/owner/:ownerId',
-    preHandler: [authMiddleware],
-    handler: async (
-      req: FastifyRequest<{ Params: { ownerId: string } }>,
-      reply: FastifyReply,
-    ) => controller.findByOwner(req, reply),
-  });
-
-  fastify.route({
     method: 'PUT',
     url: '/:id',
     preHandler: [authMiddleware],
     handler: async (
       req: FastifyRequest<{
         Params: { id: string };
-        Body: Omit<IUpdateVehicle, 'id'>;
+        Body: Omit<IUpdateItemCategory, 'id'>;
       }>,
       reply: FastifyReply,
     ) => controller.update(req, reply),
