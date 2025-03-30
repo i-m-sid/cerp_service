@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { ICreateUOM, IUpdateUOM } from './uom.interface';
+import { ICreateUOM, IUpdateUOM, IInternalCreateUOM } from './uom.interface';
 
 export class UOMRepository {
   private prisma: PrismaClient;
@@ -13,7 +13,7 @@ export class UOMRepository {
     items: true,
   };
 
-  async create(data: ICreateUOM) {
+  async create(data: IInternalCreateUOM) {
     return this.prisma.unitOfMeasurement.create({
       data,
       include: this.include,

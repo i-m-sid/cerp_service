@@ -1,5 +1,19 @@
-import { PrismaClient } from '@prisma/client';
-import { ICreateVehicle, IUpdateVehicle } from './vehicle.interface';
+import { PrismaClient, Vehicle } from '@prisma/client';
+import {
+  ICreateVehicle,
+  IUpdateVehicle,
+  IInternalCreateVehicle,
+} from './vehicle.interface';
+
+type VehicleWithRelations = Vehicle & {
+  owner?: { id: string; legalName: string } | null;
+};
+
+const transformVehicle = (vehicle: VehicleWithRelations) => ({
+  ...vehicle,
+  lastFuelOdometerReading: vehicle.lastFuelOdometerReading?.toNumber(),
+  lastServiceOdometerReading: vehicle.lastServiceOdometerReading?.toNumber(),
+});
 
 export class VehicleRepository {
   private prisma: PrismaClient;
@@ -9,55 +23,63 @@ export class VehicleRepository {
   }
 
   private readonly include = {
-    owner: true,
+    owner: false,
   };
 
-  async create(data: ICreateVehicle) {
-    return this.prisma.vehicle.create({
+  async create(data: IInternalCreateVehicle) {
+    const vehicle = await this.prisma.vehicle.create({
       data,
       include: this.include,
     });
+    return transformVehicle(vehicle);
   }
 
   async findAll() {
-    return this.prisma.vehicle.findMany({
+    const vehicles = await this.prisma.vehicle.findMany({
       include: this.include,
     });
+    return vehicles.map(transformVehicle);
   }
 
   async findById(id: string) {
-    return this.prisma.vehicle.findUnique({
+    const vehicle = await this.prisma.vehicle.findUnique({
       where: { id },
       include: this.include,
     });
+    return vehicle ? transformVehicle(vehicle) : null;
   }
 
   async findByVehicleNumber(vehicleNumber: string) {
-    return this.prisma.vehicle.findUnique({
+    const vehicle = await this.prisma.vehicle.findUnique({
       where: { vehicleNumber },
       include: this.include,
     });
+    return vehicle ? transformVehicle(vehicle) : null;
   }
 
   async findByOwner(ownerId: string) {
-    return this.prisma.vehicle.findMany({
+    const vehicles = await this.prisma.vehicle.findMany({
       where: { ownerId },
       include: this.include,
     });
+    return vehicles.map(transformVehicle);
   }
 
   async update(data: IUpdateVehicle) {
     const { id, ...updateData } = data;
-    return this.prisma.vehicle.update({
+    const vehicle = await this.prisma.vehicle.update({
       where: { id },
       data: updateData,
       include: this.include,
     });
+    return transformVehicle(vehicle);
   }
 
   async delete(id: string) {
-    return this.prisma.vehicle.delete({
+    const vehicle = await this.prisma.vehicle.delete({
       where: { id },
+      include: this.include,
     });
+    return transformVehicle(vehicle);
   }
 }

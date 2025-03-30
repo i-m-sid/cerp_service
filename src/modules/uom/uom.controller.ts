@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { UOMService } from './uom.service';
-import { ICreateUOM, IUpdateUOM } from './uom.interface';
+import { ICreateUOM, IUpdateUOM, IInternalCreateUOM } from './uom.interface';
 import {
   sendSuccessResponse,
   sendErrorResponse,
@@ -18,10 +18,11 @@ export class UOMController {
     reply: FastifyReply,
   ) {
     try {
-      const uom = await this.service.create({
+      const internalData: IInternalCreateUOM = {
         ...request.body,
         createdBy: request.user!.userId,
-      });
+      };
+      const uom = await this.service.create(internalData);
       return sendSuccessResponse(reply, 201, uom);
     } catch (error) {
       request.log.error(error);

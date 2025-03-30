@@ -1,4 +1,8 @@
-import { ICreateVehicle, IUpdateVehicle } from './vehicle.interface';
+import {
+  ICreateVehicle,
+  IUpdateVehicle,
+  IInternalCreateVehicle,
+} from './vehicle.interface';
 import { VehicleRepository } from './vehicle.repository';
 
 export class VehicleService {
@@ -8,7 +12,7 @@ export class VehicleService {
     this.repository = new VehicleRepository();
   }
 
-  async create(data: ICreateVehicle) {
+  async create(data: IInternalCreateVehicle) {
     // Check if vehicle number already exists
     const existing = await this.repository.findByVehicleNumber(
       data.vehicleNumber,

@@ -1,6 +1,10 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { VehicleService } from './vehicle.service';
-import { ICreateVehicle, IUpdateVehicle } from './vehicle.interface';
+import {
+  ICreateVehicle,
+  IUpdateVehicle,
+  IInternalCreateVehicle,
+} from './vehicle.interface';
 import {
   sendSuccessResponse,
   sendErrorResponse,
@@ -17,11 +21,13 @@ export class VehicleController {
     request: FastifyRequest<{ Body: ICreateVehicle }>,
     reply: FastifyReply,
   ) {
+    console.log(request.body);
     try {
-      const vehicle = await this.service.create({
+      const internalData: IInternalCreateVehicle = {
         ...request.body,
         createdBy: request.user!.userId,
-      });
+      };
+      const vehicle = await this.service.create(internalData);
       return sendSuccessResponse(reply, 201, vehicle);
     } catch (error) {
       request.log.error(error);
@@ -32,6 +38,7 @@ export class VehicleController {
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
       const vehicles = await this.service.findAll();
+      console.log(vehicles);
       return sendSuccessResponse(reply, 200, vehicles);
     } catch (error) {
       request.log.error(error);

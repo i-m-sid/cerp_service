@@ -1,4 +1,4 @@
-import { ICreateUOM, IUpdateUOM } from './uom.interface';
+import { ICreateUOM, IUpdateUOM, IInternalCreateUOM } from './uom.interface';
 import { UOMRepository } from './uom.repository';
 
 export class UOMService {
@@ -8,7 +8,7 @@ export class UOMService {
     this.repository = new UOMRepository();
   }
 
-  async create(data: ICreateUOM) {
+  async create(data: IInternalCreateUOM) {
     // Check if shortCode already exists
     const existing = await this.repository.findByShortCode(data.shortCode);
     if (existing) {
