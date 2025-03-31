@@ -9,8 +9,7 @@ export class UOMRepository {
   }
 
   private readonly include = {
-    categories: true,
-    items: true,
+    categories: false,
   };
 
   async create(data: IInternalCreateUOM) {

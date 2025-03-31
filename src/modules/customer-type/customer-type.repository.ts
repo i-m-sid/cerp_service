@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import {
   ICreateCustomerType,
   IUpdateCustomerType,
+  IInternalCreateCustomerType,
 } from './customer-type.interface';
 
 export class CustomerTypeRepository {
@@ -16,7 +17,7 @@ export class CustomerTypeRepository {
     templates: true,
   };
 
-  async create(data: ICreateCustomerType) {
+  async create(data: IInternalCreateCustomerType) {
     return this.prisma.customerType.create({
       data,
       include: this.include,

@@ -1,11 +1,143 @@
-// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  firstName String
+  lastName  String
+  password  String
+  picture   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id                   String         @id @default(cuid())
+  gstNumber            String?        @unique
+  legalName            String
+  tradeName            String?
+  phoneNumber          String?
+  email                String?
+  openingBalance       Decimal        @default(0)
+  address              Json?
+  placeOfSupply        Json?
+  customFields         Json?
+  vehicles             Vehicle[]
+  allowedCustomerTypes CustomerType[] @relation("AllowedCustomerCustomerTypes")
+}
+
+model CustomerType {
+  id        String            @id @default(cuid())
+  label     String            @unique
+  createdBy String
+  templates ChallanTemplate[] @relation("AllowedChallanCustomerTypes")
+  customers Customer[]        @relation("AllowedCustomerCustomerTypes")
+}
+
+model ChallanTemplate {
+  id                    String                 @id @default(cuid())
+  name                  String
+  description           String?
+  createdBy             String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  challans              Challan[]
+  statuses              ChallanStatus[]
+  fieldSchema           ChallanTemplateField[]
+  allowedCustomerTypes  CustomerType[]         @relation("AllowedChallanCustomerTypes")
+  allowedItemCategories ItemCategory[]         @relation("SupportedItemCategories")
+}
+
+model ChallanTemplateField {
+  id         String          @id @default(cuid())
+  templateId String
+  label      String
+  key        String
+  type       FieldType
+  isRequired Boolean         @default(false)
+  refModel   String?
+  refKey     String?
+  refDisplay String?
+  flex       Int
+  row        Int
+  column     Int
+  data       String[]
+  template   ChallanTemplate @relation(fields: [templateId], references: [id])
+}
+
+model ItemCategory {
+  id           String              @id @default(cuid())
+  name         String
+  description  String?
+  hsnCode      String?
+  createdBy    String
+  items        Item[]
+  allowedUnits UnitOfMeasurement[] @relation("CategoryUOMs")
+  templates    ChallanTemplate[]   @relation("SupportedItemCategories")
+}
+
+model Item {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  categoryId  String
+  createdBy   String
+  category    ItemCategory @relation(fields: [categoryId], references: [id])
+}
+
+model Challan {
+  id            String          @id @default(cuid())
+  challanNumber String          @unique
+  date          DateTime        @default(now())
+  customerId    String
+  templateId    String
+  statusId      String
+  customFields  Json
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  status        ChallanStatus   @relation(fields: [statusId], references: [id])
+  template      ChallanTemplate @relation(fields: [templateId], references: [id])
+}
+
+model ChallanStatus {
+  id         String          @id @default(cuid())
+  label      String
+  color      String?
+  isDefault  Boolean         @default(false)
+  templateId String
+  challans   Challan[]
+  template   ChallanTemplate @relation(fields: [templateId], references: [id])
+}
+
+model UnitOfMeasurement {
+  id         String         @id @default(cuid())
+  label      String
+  shortCode  String
+  createdBy  String
+  categories ItemCategory[] @relation("CategoryUOMs")
+}
+
+model Vehicle {
+  id                         String    @id @default(cuid())
+  vehicleNumber              String    @unique
+  type                       String
+  registeredAt               DateTime?
+  isActive                   Boolean   @default(true)
+  ownerId                    String?
+  lastFuelOdometerReading    Decimal?
+  lastServiceOdometerReading Decimal?
+  lastServiceDate            DateTime?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+  createdBy                  String
+  owner                      Customer? @relation(fields: [ownerId], references: [id])
 }
 
 enum DiscountType {
@@ -22,152 +154,3 @@ enum FieldType {
   SINGLE_SELECT
   MULTI_SELECT
 }
-
-
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  firstName     String
-  lastName      String
-  password      String    // Hashed password
-  picture       String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-
-model Customer {
-  id              String       @id @default(cuid())
-  customerTypeId  String
-  gstNumber       String?      @unique
-  legalName       String
-  tradeName       String?
-  phoneNumber     String?
-  email           String?
-  openingBalance  Decimal      @default(0)
-  address         Json?        // primary address
-  placeOfSupply   Json?        // array of addresses
-  customFields    Json?        // user-defined extra field
-
-  customerType    CustomerType @relation(fields: [customerTypeId], references: [id])
-  vehicles        Vehicle[]
-}
-
-model CustomerType {
-  id        String      @id @default(cuid())
-  label     String      @unique
-  createdBy String                             // FK to user/org who created it
-
-  customers Customer[]  // reverse relation
-  templates ChallanTemplate[] @relation("AllowedCustomerTypes")
-}
-
-
-model ChallanTemplate {
-  id              String                      @id @default(cuid())
-  name            String
-  description     String?
-  fieldSchema     ChallanTemplateField[]
-  createdBy       String                      // user/org ID
-  createdAt       DateTime                    @default(now())
-  updatedAt       DateTime                    @updatedAt
-
-  challans        Challan[]                   // all challans of this type
-  statuses        ChallanStatus[]             // all status options for this template
-  allowedCustomerTypes  CustomerType[]  @relation("AllowedCustomerTypes")
-  allowedItemCategories ItemCategory[]      @relation("SupportedItemCategories")
-}
-
-model ChallanTemplateField {
-  id          String        @id @default(cuid())
-  templateId  String
-  label       String        // "Vehicle", "Driver", etc.
-  key         String        // JSON key in customFields
-  type        FieldType
-  flex        Int
-  row         Int
-  column      Int
-  isRequired  Boolean       @default(false)
-  data        String[]
-  refModel    String?       // e.g., "Vehicle", "Customer"
-  refKey      String?       // e.g., "id", "vehicleNumber"
-  refDisplay  String?       // e.g., "vehicleNumber (type)"
-
-  template    ChallanTemplate @relation(fields: [templateId], references: [id])
-}
-
-model ItemCategory {
-  id          String       @id @default(cuid())
-  name        String
-  description String?
-  hsnCode     String?
-  createdBy   String        // user/org
-
-  items       Item[]
-  templates   ChallanTemplate[] @relation("SupportedItemCategories")
-  allowedUnits UnitOfMeasurement[] @relation("CategoryUOMs")
-}
-
-model Item {
-  id            String        @id @default(cuid())
-  name          String
-  description   String?
-  categoryId    String
-  createdBy     String         // user/org ID
-
-  category      ItemCategory  @relation(fields: [categoryId], references: [id])
-}
-
-model Challan {
-  id             String           @id @default(cuid())
-  challanNumber  String           @unique
-  date           DateTime         @default(now())
-  customerId     String
-  templateId     String
-  statusId       String
-  customFields   Json             // additional custom fields from template
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-
-  template       ChallanTemplate  @relation(fields: [templateId], references: [id])
-  status         ChallanStatus    @relation(fields: [statusId], references: [id])
-}
-
-model ChallanStatus {
-  id          String           @id @default(cuid())
-  label       String
-  color       String?
-  isDefault   Boolean          @default(false)
-  templateId  String
-
-  template    ChallanTemplate  @relation(fields: [templateId], references: [id])
-  challans    Challan[]        // challans using this status
-}
-
-model UnitOfMeasurement {
-  id         String          @id @default(cuid())
-  label      String          // e.g., "Kilogram"
-  shortCode  String          // e.g., "kg"
-  createdBy  String         // user/org ID
-
-  categories ItemCategory[]  @relation("CategoryUOMs")
-}
-
-model Vehicle {
-  id             String    @id @default(cuid())
-  vehicleNumber  String    @unique               
-  type           String                          
-  registeredAt   DateTime?
-  isActive       Boolean   @default(true)
-  ownerId        String?
-  lastFuelOdometerReading Decimal?
-  lastServiceOdometerReading Decimal?
-  lastServiceDate DateTime?
-  createdBy      String                         
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  owner          Customer?  @relation(fields: [ownerId], references: [id])
-}
-
-
-

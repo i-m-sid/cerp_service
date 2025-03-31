@@ -8,7 +8,7 @@ interface IAddress {
 }
 
 export interface ICreateCustomer {
-  customerTypeId: string;
+  customerTypeIds: string[];
   gstNumber?: string;
   legalName: string;
   tradeName?: string;
@@ -16,8 +16,8 @@ export interface ICreateCustomer {
   email?: string;
   openingBalance?: number;
   address?: IAddress;
-  placeOfSupply?: IAddress[];
-  customFields?: Record<string, any>;
+  placeOfSupply: IAddress[];
+  customFields: Map<string, any>;
 }
 
 export interface IUpdateCustomer extends Partial<ICreateCustomer> {

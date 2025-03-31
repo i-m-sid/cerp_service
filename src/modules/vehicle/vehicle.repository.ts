@@ -27,8 +27,13 @@ export class VehicleRepository {
   };
 
   async create(data: IInternalCreateVehicle) {
+    const { registeredAt, lastServiceDate, ...rest } = data;
     const vehicle = await this.prisma.vehicle.create({
-      data,
+      data: {
+        ...rest,
+        registeredAt: registeredAt ? new Date(registeredAt) : null,
+        lastServiceDate: lastServiceDate ? new Date(lastServiceDate) : null,
+      },
       include: this.include,
     });
     return transformVehicle(vehicle);
@@ -66,10 +71,16 @@ export class VehicleRepository {
   }
 
   async update(data: IUpdateVehicle) {
-    const { id, ...updateData } = data;
+    const { id, registeredAt, lastServiceDate, ...updateData } = data;
     const vehicle = await this.prisma.vehicle.update({
       where: { id },
-      data: updateData,
+      data: {
+        ...updateData,
+        registeredAt: registeredAt ? new Date(registeredAt) : undefined,
+        lastServiceDate: lastServiceDate
+          ? new Date(lastServiceDate)
+          : undefined,
+      },
       include: this.include,
     });
     return transformVehicle(vehicle);

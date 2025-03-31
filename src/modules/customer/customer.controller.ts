@@ -29,6 +29,7 @@ export class CustomerController {
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
       const customers = await this.service.findAll();
+      console.log(customers);
       return sendSuccessResponse(reply, 200, customers);
     } catch (error) {
       request.log.error(error);
@@ -79,6 +80,7 @@ export class CustomerController {
     }>,
     reply: FastifyReply,
   ) {
+    console.log(request.body);
     try {
       const customer = await this.service.update({
         id: request.params.id,

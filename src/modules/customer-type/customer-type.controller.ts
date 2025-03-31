@@ -3,6 +3,7 @@ import { CustomerTypeService } from './customer-type.service';
 import {
   ICreateCustomerType,
   IUpdateCustomerType,
+  IInternalCreateCustomerType,
 } from './customer-type.interface';
 import {
   sendSuccessResponse,
@@ -21,10 +22,11 @@ export class CustomerTypeController {
     reply: FastifyReply,
   ) {
     try {
-      const customerType = await this.service.create({
+      const internalData: IInternalCreateCustomerType = {
         ...request.body,
         createdBy: request.user!.userId,
-      });
+      };
+      const customerType = await this.service.create(internalData);
       return sendSuccessResponse(reply, 201, customerType);
     } catch (error) {
       request.log.error(error);

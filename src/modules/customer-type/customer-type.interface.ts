@@ -1,5 +1,8 @@
 export interface ICreateCustomerType {
   label: string;
+}
+
+export interface IInternalCreateCustomerType extends ICreateCustomerType {
   createdBy: string;
 }
 

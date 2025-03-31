@@ -1,6 +1,7 @@
 import {
   ICreateCustomerType,
   IUpdateCustomerType,
+  IInternalCreateCustomerType,
 } from './customer-type.interface';
 import { CustomerTypeRepository } from './customer-type.repository';
 
@@ -11,7 +12,7 @@ export class CustomerTypeService {
     this.repository = new CustomerTypeRepository();
   }
 
-  async create(data: ICreateCustomerType) {
+  async create(data: IInternalCreateCustomerType) {
     // Check if customer type with this label already exists
     const existing = await this.repository.findByLabel(data.label);
     if (existing) {
