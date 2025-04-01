@@ -1,19 +1,29 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 import { ICreateCustomer, IUpdateCustomer } from './customer.interface';
 
-const transformCustomer = (customer: any) => ({
-  ...customer,
-  openingBalance: customer.openingBalance?.toNumber(),
-  placeOfSupply:
-    customer.placeOfSupply?.map((p: any) => ({
-      ...p,
-      address: p.address ? JSON.parse(p.address) : null,
-    })) || [],
-  address: customer.address ? JSON.parse(customer.address) : null,
-  customFields: customer.customFields
-    ? JSON.parse(customer.customFields)
-    : new Map(),
-});
+const transformCustomer = (customer: any) => {
+  if (!customer) return null;
+
+  const parsedPlaceOfSupply = customer.placeOfSupply
+    ? JSON.parse(customer.placeOfSupply)
+    : [];
+
+  return {
+    ...customer,
+    openingBalance: customer.openingBalance?.toNumber(),
+    placeOfSupply: Array.isArray(parsedPlaceOfSupply)
+      ? parsedPlaceOfSupply.map((p: any) => ({
+          ...p,
+          address: p.address ? JSON.parse(p.address) : null,
+        }))
+      : [],
+    address: customer.address ? JSON.parse(customer.address) : null,
+    customFields: customer.customFields
+      ? JSON.parse(customer.customFields)
+      : new Map(),
+  };
+};
+
 export class CustomerRepository {
   private prisma: PrismaClient;
 
@@ -29,6 +39,7 @@ export class CustomerRepository {
   async create(data: ICreateCustomer) {
     const { address, placeOfSupply, customFields, customerTypeIds, ...rest } =
       data;
+
     const customer = await this.prisma.customer.create({
       data: {
         ...rest,

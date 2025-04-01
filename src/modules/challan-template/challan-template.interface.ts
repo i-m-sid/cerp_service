@@ -2,16 +2,15 @@ import { FieldType } from '@prisma/client';
 
 export interface IChallanTemplateField {
   label: string;
-  key: string;
   type: FieldType;
   flex: number;
   row: number;
   column: number;
   isRequired: boolean;
-  data?: string[];
+  data: string[];
   refModel?: string;
   refKey?: string;
-  refDisplay?: string;
+  dependsOn: string[];
 }
 
 export interface ICreateChallanTemplate {

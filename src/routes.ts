@@ -7,6 +7,7 @@ import { itemCategoryRoutes } from './modules/item-category/item-category.routes
 import { itemRoutes } from './modules/item/item.routes';
 import { customerTypeRoutes } from './modules/customer-type/customer-type.routes';
 import { customerRoutes } from './modules/customer/customer.routes';
+import { referenceRoutes } from './modules/reference/reference.routes';
 
 export async function registerRoutes(fastify: FastifyInstance) {
   // Auth routes
@@ -32,4 +33,7 @@ export async function registerRoutes(fastify: FastifyInstance) {
 
   // Customer routes
   fastify.register(customerRoutes, { prefix: '/api/customers' });
+
+  // Reference routes
+  fastify.register(referenceRoutes, { prefix: '/api/reference' });
 }

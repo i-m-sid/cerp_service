@@ -59,12 +59,11 @@ model ChallanTemplateField {
   id         String          @id @default(cuid())
   templateId String
   label      String
-  key        String
   type       FieldType
   isRequired Boolean         @default(false)
   refModel   String?
   refKey     String?
-  refDisplay String?
+  dependsOn  String[]
   flex       Int
   row        Int
   column     Int
