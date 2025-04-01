@@ -5,6 +5,7 @@ interface IAddress {
   state?: string;
   country?: string;
   pinCode?: string;
+  isInterState: boolean;
 }
 
 export interface ICreateCustomer {

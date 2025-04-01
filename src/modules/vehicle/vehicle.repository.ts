@@ -1,19 +1,8 @@
-import { PrismaClient, Vehicle } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import {
-  ICreateVehicle,
   IUpdateVehicle,
   IInternalCreateVehicle,
 } from './vehicle.interface';
-
-type VehicleWithRelations = Vehicle & {
-  owner?: { id: string; legalName: string } | null;
-};
-
-const transformVehicle = (vehicle: VehicleWithRelations) => ({
-  ...vehicle,
-  lastFuelOdometerReading: vehicle.lastFuelOdometerReading?.toNumber(),
-  lastServiceOdometerReading: vehicle.lastServiceOdometerReading?.toNumber(),
-});
 
 export class VehicleRepository {
   private prisma: PrismaClient;
@@ -36,14 +25,14 @@ export class VehicleRepository {
       },
       include: this.include,
     });
-    return transformVehicle(vehicle);
+    return vehicle;
   }
 
   async findAll() {
     const vehicles = await this.prisma.vehicle.findMany({
       include: this.include,
     });
-    return vehicles.map(transformVehicle);
+    return vehicles;
   }
 
   async findById(id: string) {
@@ -51,7 +40,7 @@ export class VehicleRepository {
       where: { id },
       include: this.include,
     });
-    return vehicle ? transformVehicle(vehicle) : null;
+    return vehicle;
   }
 
   async findByVehicleNumber(vehicleNumber: string) {
@@ -59,7 +48,7 @@ export class VehicleRepository {
       where: { vehicleNumber },
       include: this.include,
     });
-    return vehicle ? transformVehicle(vehicle) : null;
+    return vehicle;
   }
 
   async findByOwner(ownerId: string) {
@@ -67,7 +56,7 @@ export class VehicleRepository {
       where: { ownerId },
       include: this.include,
     });
-    return vehicles.map(transformVehicle);
+    return vehicles;
   }
 
   async update(data: IUpdateVehicle) {
@@ -83,7 +72,7 @@ export class VehicleRepository {
       },
       include: this.include,
     });
-    return transformVehicle(vehicle);
+    return vehicle;
   }
 
   async delete(id: string) {
@@ -91,6 +80,6 @@ export class VehicleRepository {
       where: { id },
       include: this.include,
     });
-    return transformVehicle(vehicle);
+    return vehicle;
   }
 }

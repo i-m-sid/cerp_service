@@ -37,10 +37,14 @@ export class ChallanTemplateRepository {
           },
         },
         allowedCustomerTypes: {
-          connect: allowedCustomerTypes.map((id) => ({ id })),
+          connect: allowedCustomerTypes.map((customerType) => ({
+            id: customerType.id,
+          })),
         },
         allowedItemCategories: {
-          connect: allowedItemCategories.map((id) => ({ id })),
+          connect: allowedItemCategories.map((itemCategory) => ({
+            id: itemCategory.id,
+          })),
         },
       },
       include: this.include,
@@ -105,12 +109,16 @@ export class ChallanTemplateRepository {
         }),
         ...(allowedCustomerTypes && {
           allowedCustomerTypes: {
-            connect: allowedCustomerTypes.map((id) => ({ id })),
+            connect: allowedCustomerTypes.map((customerType) => ({
+              id: customerType.id,
+            })),
           },
         }),
         ...(allowedItemCategories && {
           allowedItemCategories: {
-            connect: allowedItemCategories.map((id) => ({ id })),
+            connect: allowedItemCategories.map((itemCategory) => ({
+              id: itemCategory.id,
+            })),
           },
         }),
       },

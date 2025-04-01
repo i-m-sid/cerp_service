@@ -1,29 +1,6 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 import { ICreateCustomer, IUpdateCustomer } from './customer.interface';
 
-const transformCustomer = (customer: any) => {
-  if (!customer) return null;
-
-  const parsedPlaceOfSupply = customer.placeOfSupply
-    ? JSON.parse(customer.placeOfSupply)
-    : [];
-
-  return {
-    ...customer,
-    openingBalance: customer.openingBalance?.toNumber(),
-    placeOfSupply: Array.isArray(parsedPlaceOfSupply)
-      ? parsedPlaceOfSupply.map((p: any) => ({
-          ...p,
-          address: p.address ? JSON.parse(p.address) : null,
-        }))
-      : [],
-    address: customer.address ? JSON.parse(customer.address) : null,
-    customFields: customer.customFields
-      ? JSON.parse(customer.customFields)
-      : new Map(),
-  };
-};
-
 export class CustomerRepository {
   private prisma: PrismaClient;
 
@@ -57,14 +34,14 @@ export class CustomerRepository {
       },
       include: this.include,
     });
-    return transformCustomer(customer);
+    return customer;
   }
 
   async findAll() {
     const customers = await this.prisma.customer.findMany({
       include: this.include,
     });
-    return customers.map(transformCustomer);
+    return customers;
   }
 
   async findById(id: string) {
@@ -72,7 +49,7 @@ export class CustomerRepository {
       where: { id },
       include: this.include,
     });
-    return transformCustomer(customer);
+    return customer;
   }
 
   async findByGstNumber(gstNumber: string) {
@@ -80,7 +57,7 @@ export class CustomerRepository {
       where: { gstNumber },
       include: this.include,
     });
-    return transformCustomer(customer);
+    return customer;
   }
 
   async findByCustomerType(customerTypeId: string) {
@@ -88,7 +65,7 @@ export class CustomerRepository {
       where: { allowedCustomerTypes: { some: { id: customerTypeId } } },
       include: this.include,
     });
-    return customers.map(transformCustomer);
+    return customers;
   }
 
   async update(data: IUpdateCustomer) {
@@ -115,7 +92,7 @@ export class CustomerRepository {
       },
       include: this.include,
     });
-    return transformCustomer(customer);
+    return customer;
   }
 
   async delete(id: string) {

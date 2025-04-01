@@ -64,10 +64,12 @@ model ChallanTemplateField {
   refModel   String?
   refKey     String?
   dependsOn  String[]
-  flex       Int
-  row        Int
-  column     Int
+  flex       Int?
+  row        Int?
+  column     Int?
   data       String[]
+  isVisible  Boolean          @default(true)
+  formula    String?
   template   ChallanTemplate @relation(fields: [templateId], references: [id])
 }
 
@@ -76,6 +78,9 @@ model ItemCategory {
   name         String
   description  String?
   hsnCode      String?
+  cgst         Decimal            @default(0)
+  sgst         Decimal            @default(0)
+  igst         Decimal            @default(0)
   createdBy    String
   items        Item[]
   allowedUnits UnitOfMeasurement[] @relation("CategoryUOMs")

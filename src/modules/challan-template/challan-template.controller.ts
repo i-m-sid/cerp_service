@@ -69,6 +69,7 @@ export class ChallanTemplateController {
     }>,
     reply: FastifyReply,
   ) {
+    console.log(request.body);
     try {
       const template = await this.service.update({
         id: request.params.id,

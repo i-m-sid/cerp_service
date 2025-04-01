@@ -1,4 +1,4 @@
-import { FieldType } from '@prisma/client';
+import { CustomerType, FieldType, ItemCategory } from '@prisma/client';
 
 export interface IChallanTemplateField {
   label: string;
@@ -18,8 +18,8 @@ export interface ICreateChallanTemplate {
   description?: string;
   fieldSchema: IChallanTemplateField[];
   statuses: IChallanStatus[];
-  allowedCustomerTypes: string[];
-  allowedItemCategories: string[];
+  allowedCustomerTypes: CustomerType[];
+  allowedItemCategories: ItemCategory[];
 }
 
 export interface IUpdateChallanTemplate
@@ -28,9 +28,9 @@ export interface IUpdateChallanTemplate
 }
 
 export interface IChallanStatus {
-  id: string;
+  id?: string;
   label: string;
   color?: string;
   isDefault: boolean;
-  templateId: string;
+  templateId?: string;
 }
