@@ -9,7 +9,11 @@ export class ItemRepository {
   }
 
   private readonly include = {
-    category: true,
+    category: {
+      include: {
+        allowedUnits: true,
+      },
+    },
   };
 
   async create(data: ICreateItem) {

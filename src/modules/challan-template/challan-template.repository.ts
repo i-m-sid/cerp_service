@@ -15,12 +15,16 @@ export class ChallanTemplateRepository {
     fieldSchema: true,
     allowedCustomerTypes: true,
     allowedItemCategories: true,
-    statuses: true,
+    allowedStatuses: true,
   };
 
   async create(data: ICreateChallanTemplate, createdBy: string) {
-    const { allowedCustomerTypes, allowedItemCategories, ...templateData } =
-      data;
+    const {
+      allowedCustomerTypes,
+      allowedItemCategories,
+      allowedStatuses,
+      ...templateData
+    } = data;
 
     return this.prisma.challanTemplate.create({
       data: {
@@ -31,10 +35,10 @@ export class ChallanTemplateRepository {
             data: templateData.fieldSchema,
           },
         },
-        statuses: {
-          createMany: {
-            data: templateData.statuses,
-          },
+        allowedStatuses: {
+          connect: allowedStatuses.map((status) => ({
+            id: status.id,
+          })),
         },
         allowedCustomerTypes: {
           connect: allowedCustomerTypes.map((customerType) => ({
@@ -87,7 +91,7 @@ export class ChallanTemplateRepository {
       allowedCustomerTypes,
       allowedItemCategories,
       fieldSchema,
-      statuses,
+      allowedStatuses,
       ...updateData
     } = data;
 
@@ -101,10 +105,11 @@ export class ChallanTemplateRepository {
             createMany: { data: fieldSchema },
           },
         }),
-        ...(statuses && {
-          statuses: {
-            deleteMany: {},
-            createMany: { data: statuses },
+        ...(allowedStatuses && {
+          allowedStatuses: {
+            connect: allowedStatuses.map((status) => ({
+              id: status.id,
+            })),
           },
         }),
         ...(allowedCustomerTypes && {

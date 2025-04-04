@@ -30,15 +30,15 @@ model Customer {
   placeOfSupply        Json?
   customFields         Json?
   vehicles             Vehicle[]
-  allowedCustomerTypes CustomerType[] @relation("AllowedCustomerCustomerTypes")
+  allowedCustomerTypes CustomerType[] @relation("CustomerCustomerType")
 }
 
 model CustomerType {
   id        String            @id @default(cuid())
   label     String            @unique
   createdBy String
-  templates ChallanTemplate[] @relation("AllowedChallanCustomerTypes")
-  customers Customer[]        @relation("AllowedCustomerCustomerTypes")
+  templates ChallanTemplate[] @relation("ChallanTemplateCustomerType")
+  customers Customer[]        @relation("CustomerCustomerType")
 }
 
 model ChallanTemplate {
@@ -49,10 +49,11 @@ model ChallanTemplate {
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   challans              Challan[]
-  statuses              ChallanStatus[]
   fieldSchema           ChallanTemplateField[]
-  allowedCustomerTypes  CustomerType[]         @relation("AllowedChallanCustomerTypes")
-  allowedItemCategories ItemCategory[]         @relation("SupportedItemCategories")
+  recordTemplates       ChallanRecordTemplate[]
+  allowedStatuses       ChallanStatus[]        @relation("ChallanTemplateChallanStatus")
+  allowedCustomerTypes  CustomerType[]         @relation("ChallanTemplateCustomerType")
+  allowedItemCategories ItemCategory[]         @relation("ChallanTemplateItemCategory")
 }
 
 model ChallanTemplateField {
@@ -63,6 +64,7 @@ model ChallanTemplateField {
   isRequired Boolean         @default(false)
   refModel   String?
   refKey     String?
+  refId      String?
   dependsOn  String[]
   flex       Int?
   row        Int?
@@ -71,6 +73,7 @@ model ChallanTemplateField {
   isVisible  Boolean          @default(true)
   formula    String?
   template   ChallanTemplate @relation(fields: [templateId], references: [id])
+  recordTemplates ChallanRecordTemplate[] @relation("ChallanRecordTemplateChallanTemplateField")
 }
 
 model ItemCategory {
@@ -83,8 +86,8 @@ model ItemCategory {
   igst         Decimal            @default(0)
   createdBy    String
   items        Item[]
-  allowedUnits UnitOfMeasurement[] @relation("CategoryUOMs")
-  templates    ChallanTemplate[]   @relation("SupportedItemCategories")
+  allowedUnits UnitOfMeasurement[] @relation("ItemCategoryUnitOfMeasurement")
+  templates    ChallanTemplate[]   @relation("ChallanTemplateItemCategory")
 }
 
 model Item {
@@ -98,9 +101,8 @@ model Item {
 
 model Challan {
   id            String          @id @default(cuid())
-  challanNumber String          @unique
+  challanNumber String          
   date          DateTime        @default(now())
-  customerId    String
   templateId    String
   statusId      String
   customFields  Json
@@ -110,14 +112,22 @@ model Challan {
   template      ChallanTemplate @relation(fields: [templateId], references: [id])
 }
 
+model ChallanRecordTemplate {
+  id          String                 @id @default(cuid())
+  name        String
+  templateId  String
+  template    ChallanTemplate        @relation(fields: [templateId], references: [id])
+  fields      ChallanTemplateField[] @relation("ChallanRecordTemplateChallanTemplateField")
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+}
+
 model ChallanStatus {
   id         String          @id @default(cuid())
   label      String
   color      String?
-  isDefault  Boolean         @default(false)
-  templateId String
   challans   Challan[]
-  template   ChallanTemplate @relation(fields: [templateId], references: [id])
+  templates  ChallanTemplate[] @relation("ChallanTemplateChallanStatus")
 }
 
 model UnitOfMeasurement {
@@ -125,7 +135,7 @@ model UnitOfMeasurement {
   label      String
   shortCode  String
   createdBy  String
-  categories ItemCategory[] @relation("CategoryUOMs")
+  categories ItemCategory[] @relation("ItemCategoryUnitOfMeasurement")
 }
 
 model Vehicle {

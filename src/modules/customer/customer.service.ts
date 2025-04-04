@@ -8,6 +8,21 @@ export class CustomerService {
     this.repository = new CustomerRepository();
   }
 
+  private transformCustomerData(customer: any) {
+    if (!customer) return null;
+
+    return {
+      ...customer,
+      address: customer.address ? JSON.parse(customer.address) : undefined,
+      placeOfSupply: customer.placeOfSupply
+        ? JSON.parse(customer.placeOfSupply)
+        : [],
+      customFields: customer.customFields
+        ? JSON.parse(customer.customFields)
+        : new Map(),
+    };
+  }
+
   async create(data: ICreateCustomer) {
     // Check if GST number already exists (if provided)
     if (data.gstNumber) {
@@ -16,19 +31,23 @@ export class CustomerService {
         throw new Error('Customer with this GST number already exists');
       }
     }
-    return this.repository.create(data);
+    const customer = await this.repository.create(data);
+    return this.transformCustomerData(customer);
   }
 
   async findAll() {
-    return this.repository.findAll();
+    const customers = await this.repository.findAll();
+    return customers.map((customer) => this.transformCustomerData(customer));
   }
 
   async findById(id: string) {
-    return this.repository.findById(id);
+    const customer = await this.repository.findById(id);
+    return this.transformCustomerData(customer);
   }
 
   async findByCustomerType(customerTypeId: string) {
-    return this.repository.findByCustomerType(customerTypeId);
+    const customers = await this.repository.findByCustomerType(customerTypeId);
+    return customers.map((customer) => this.transformCustomerData(customer));
   }
 
   async update(data: IUpdateCustomer) {
@@ -39,7 +58,8 @@ export class CustomerService {
         throw new Error('Customer with this GST number already exists');
       }
     }
-    return this.repository.update(data);
+    const customer = await this.repository.update(data);
+    return this.transformCustomerData(customer);
   }
 
   async delete(id: string) {
