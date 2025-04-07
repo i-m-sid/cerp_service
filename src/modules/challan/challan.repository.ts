@@ -155,6 +155,24 @@ export class ChallanRepository {
     };
   }
 
+  async bulkUpdate(challans: IUpdateChallan[]) {
+    // Using Promise.all for parallel processing
+    const updatePromises = challans.map(async (challan) => {
+      try {
+        const updatedChallan = await this.update(challan);
+        return { success: true, data: updatedChallan, id: challan.id };
+      } catch (error: any) {
+        return {
+          success: false,
+          error: error.message || 'Unknown error',
+          id: challan.id,
+        };
+      }
+    });
+
+    return Promise.all(updatePromises);
+  }
+
   async delete(id: string) {
     const result = await this.prisma.challan.delete({
       where: { id },

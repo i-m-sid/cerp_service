@@ -1,6 +1,10 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { ChallanController } from './challan.controller';
-import { ICreateChallan, IUpdateChallan } from './challan.interface';
+import {
+  ICreateChallan,
+  IUpdateChallan,
+  IBulkUpdateChallans,
+} from './challan.interface';
 import { authMiddleware } from '../../middleware/auth.middleware';
 
 export async function challanRoutes(fastify: FastifyInstance) {
@@ -42,6 +46,16 @@ export async function challanRoutes(fastify: FastifyInstance) {
       req: FastifyRequest<{ Params: { templateId: string } }>,
       reply: FastifyReply,
     ) => controller.findByTemplateId(req, reply),
+  });
+
+  fastify.route({
+    method: 'PUT',
+    url: '/update',
+    preHandler: [authMiddleware],
+    handler: async (
+      req: FastifyRequest<{ Body: IBulkUpdateChallans }>,
+      reply: FastifyReply,
+    ) => controller.bulkUpdate(req, reply),
   });
 
   fastify.route({

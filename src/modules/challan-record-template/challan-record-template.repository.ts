@@ -88,6 +88,7 @@ export class ChallanRecordTemplateRepository {
     // Get all challans for this template with customFields
     const challans = await this.prisma.challan.findMany({
       where: { templateId: recordTemplate.templateId },
+      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
       include: {
         status: true,
         template: true,

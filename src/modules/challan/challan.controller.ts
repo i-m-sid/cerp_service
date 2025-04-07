@@ -1,6 +1,10 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { ChallanService } from './challan.service';
-import { ICreateChallan, IUpdateChallan } from './challan.interface';
+import {
+  ICreateChallan,
+  IUpdateChallan,
+  IBulkUpdateChallans,
+} from './challan.interface';
 import {
   sendSuccessResponse,
   sendErrorResponse,
@@ -93,6 +97,26 @@ export class ChallanController {
     } catch (error) {
       request.log.error(error);
       return sendErrorResponse(reply, 500, error, 'Failed to update challan');
+    }
+  }
+
+  async bulkUpdate(
+    request: FastifyRequest<{ Body: IBulkUpdateChallans }>,
+    reply: FastifyReply,
+  ) {
+    console.log(request.body);
+    try {
+      const results = await this.service.bulkUpdate(request.body);
+      console.log(results);
+      return sendSuccessResponse(reply, 200, results);
+    } catch (error) {
+      request.log.error(error);
+      return sendErrorResponse(
+        reply,
+        500,
+        error,
+        'Failed to bulk update challans',
+      );
     }
   }
 

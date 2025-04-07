@@ -2,14 +2,18 @@ import {
   ICreateChallan,
   ICustomField,
   IUpdateChallan,
+  IBulkUpdateChallans,
 } from './challan.interface';
 import { ChallanRepository } from './challan.repository';
+import { PrismaClient } from '@prisma/client';
 
 export class ChallanService {
   private repository: ChallanRepository;
+  private prisma: PrismaClient;
 
   constructor() {
     this.repository = new ChallanRepository();
+    this.prisma = new PrismaClient();
   }
 
   async create(data: ICreateChallan) {
@@ -46,6 +50,19 @@ export class ChallanService {
       ...data,
       date: dateObject,
     });
+  }
+
+  async bulkUpdate(data: IBulkUpdateChallans) {
+    const { challans } = data;
+
+    if (!challans || !Array.isArray(challans) || challans.length === 0) {
+      throw new Error('No challans provided for bulk update');
+    }
+    let results = [];
+    for (const challan of challans) {
+      results.push(await this.update(challan));
+    }
+    return results;
   }
 
   async delete(id: string) {

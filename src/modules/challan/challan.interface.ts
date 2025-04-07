@@ -17,6 +17,10 @@ export interface IUpdateChallan extends Partial<ICreateChallan> {
   id: string;
 }
 
+export interface IBulkUpdateChallans {
+  challans: IUpdateChallan[];
+}
+
 export interface IInternalCreateChallan extends ICreateChallan {
   createdAt?: Date;
   updatedAt?: Date;
