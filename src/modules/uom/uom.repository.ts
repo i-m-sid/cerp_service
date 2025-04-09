@@ -12,29 +12,30 @@ export class UOMRepository {
     categories: false,
   };
 
-  async create(data: IInternalCreateUOM) {
+  async create(data: ICreateUOM) {
     return this.prisma.unitOfMeasurement.create({
       data,
       include: this.include,
     });
   }
 
-  async findAll() {
+  async findAll(orgId: string) {
     return this.prisma.unitOfMeasurement.findMany({
+      where: { orgId },
       include: this.include,
     });
   }
 
-  async findById(id: string) {
-    return this.prisma.unitOfMeasurement.findUnique({
-      where: { id },
-      include: this.include,
-    });
-  }
-
-  async findByShortCode(shortCode: string) {
+  async findById(id: string, orgId: string) {
     return this.prisma.unitOfMeasurement.findFirst({
-      where: { shortCode },
+      where: { id, orgId },
+      include: this.include,
+    });
+  }
+
+  async findByShortCode(shortCode: string, orgId: string) {
+    return this.prisma.unitOfMeasurement.findFirst({
+      where: { shortCode, orgId },
       include: this.include,
     });
   }

@@ -1,11 +1,12 @@
 import {
   ChallanStatus,
-  CustomerType,
+  PartyType,
   FieldType,
   ItemCategory,
 } from '@prisma/client';
 
 export interface IChallanTemplateField {
+  id?: string;
   label: string;
   type: FieldType;
   flex: number;
@@ -16,6 +17,7 @@ export interface IChallanTemplateField {
   refModel?: string;
   refKey?: string;
   refId?: string;
+  invoiceField?: string;
   dependsOn: string[];
 }
 
@@ -24,7 +26,7 @@ export interface ICreateChallanTemplate {
   description?: string;
   fieldSchema: IChallanTemplateField[];
   allowedStatuses: ChallanStatus[];
-  allowedCustomerTypes: CustomerType[];
+  allowedPartyTypes: PartyType[];
   allowedItemCategories: ItemCategory[];
 }
 

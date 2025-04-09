@@ -1,4 +1,4 @@
-interface IAddress {
+export interface IAddress {
   shortAddress?: string;
   address?: string;
   city?: string;
@@ -8,8 +8,8 @@ interface IAddress {
   isInterState: boolean;
 }
 
-export interface ICreateCustomer {
-  customerTypeIds: string[];
+export interface ICreateParty {
+  partyTypeIds: string[];
   gstNumber?: string;
   legalName: string;
   tradeName?: string;
@@ -21,6 +21,7 @@ export interface ICreateCustomer {
   customFields: Map<string, any>;
 }
 
-export interface IUpdateCustomer extends Partial<ICreateCustomer> {
+export interface IUpdateParty extends Partial<ICreateParty> {
   id: string;
+  orgId: string;
 }

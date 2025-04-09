@@ -17,35 +17,45 @@ export class ItemRepository {
   };
 
   async create(data: ICreateItem) {
+    const { orgId, categoryId, ...createData } = data;
     return this.prisma.item.create({
-      data,
+      data: {
+        ...createData,
+        organization: {
+          connect: { id: orgId },
+        },
+        category: {
+          connect: { id: categoryId },
+        },
+      },
       include: this.include,
     });
   }
 
-  async findAll() {
+  async findAll(orgId: string) {
     return this.prisma.item.findMany({
+      where: { orgId },
       include: this.include,
     });
   }
 
-  async findById(id: string) {
-    return this.prisma.item.findUnique({
-      where: { id },
-      include: this.include,
-    });
-  }
-
-  async findByName(name: string) {
+  async findById(id: string, orgId: string) {
     return this.prisma.item.findFirst({
-      where: { name },
+      where: { id, orgId },
       include: this.include,
     });
   }
 
-  async findByCategoryId(categoryId: string) {
+  async findByName(name: string, orgId: string) {
+    return this.prisma.item.findFirst({
+      where: { name, orgId },
+      include: this.include,
+    });
+  }
+
+  async findByCategoryId(categoryId: string, orgId: string) {
     return this.prisma.item.findMany({
-      where: { categoryId },
+      where: { categoryId, orgId },
       include: this.include,
     });
   }

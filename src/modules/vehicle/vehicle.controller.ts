@@ -18,16 +18,14 @@ export class VehicleController {
   }
 
   async create(
-    request: FastifyRequest<{ Body: ICreateVehicle }>,
+    request: FastifyRequest<{ Body: Omit<ICreateVehicle, 'orgId'> }>,
     reply: FastifyReply,
   ) {
-    console.log(request.body);
     try {
-      const internalData: IInternalCreateVehicle = {
+      const vehicle = await this.service.create({
         ...request.body,
-        createdBy: request.user!.userId,
-      };
-      const vehicle = await this.service.create(internalData);
+        orgId: request.user!.orgId!,
+      });
       return sendSuccessResponse(reply, 201, vehicle);
     } catch (error) {
       request.log.error(error);
@@ -37,8 +35,7 @@ export class VehicleController {
 
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const vehicles = await this.service.findAll();
-      console.log(vehicles);
+      const vehicles = await this.service.findAll(request.user!.orgId!);
       return sendSuccessResponse(reply, 200, vehicles);
     } catch (error) {
       request.log.error(error);
@@ -51,7 +48,10 @@ export class VehicleController {
     reply: FastifyReply,
   ) {
     try {
-      const vehicle = await this.service.findById(request.params.id);
+      const vehicle = await this.service.findById(
+        request.params.id,
+        request.user!.orgId!,
+      );
       if (!vehicle) {
         return sendErrorResponse(reply, 404, null, 'Vehicle not found');
       }
@@ -67,7 +67,10 @@ export class VehicleController {
     reply: FastifyReply,
   ) {
     try {
-      const vehicles = await this.service.findByOwner(request.params.ownerId);
+      const vehicles = await this.service.findByOwner(
+        request.params.ownerId,
+        request.user!.orgId!,
+      );
       return sendSuccessResponse(reply, 200, vehicles);
     } catch (error) {
       request.log.error(error);
@@ -83,7 +86,7 @@ export class VehicleController {
   async update(
     request: FastifyRequest<{
       Params: { id: string };
-      Body: Omit<IUpdateVehicle, 'id'>;
+      Body: Omit<IUpdateVehicle, 'id' | 'orgId'>;
     }>,
     reply: FastifyReply,
   ) {
@@ -91,6 +94,7 @@ export class VehicleController {
       const vehicle = await this.service.update({
         id: request.params.id,
         ...request.body,
+        orgId: request.user!.orgId!,
       });
       return sendSuccessResponse(reply, 200, vehicle);
     } catch (error) {

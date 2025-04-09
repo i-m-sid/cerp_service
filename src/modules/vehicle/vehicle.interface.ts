@@ -7,6 +7,7 @@ export interface ICreateVehicle {
   lastFuelOdometerReading?: number;
   lastServiceOdometerReading?: number;
   lastServiceDate?: Date;
+  orgId: string;
 }
 
 export interface IInternalCreateVehicle extends ICreateVehicle {
@@ -20,6 +21,7 @@ export interface IUpdateVehicle {
   registeredAt?: Date;
   isActive?: boolean;
   ownerId?: string;
+  orgId: string;
   lastFuelOdometerReading?: number;
   lastServiceOdometerReading?: number;
   lastServiceDate?: Date;

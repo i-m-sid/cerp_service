@@ -16,11 +16,45 @@ model User {
   picture   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  organizations OrganizationMembership[]
 }
 
-model Customer {
+model Organization {
+  id                   String   @id @default(cuid())
+  gstNumber            String?        
+  legalName            String
+  tradeName            String?
+  phoneNumber          String?
+  email                String?
+  address              Json?
+  createdAt   DateTime @default(now())
+
+  members     OrganizationMembership[]
+  challanTemplates   ChallanTemplate[]
+  parties   Party[]
+  partyTypes PartyType[]
+  itemCategories ItemCategory[]
+  items         Item[]
+  invoices      Invoice[]
+  vehicles      Vehicle[]
+  uoms UnitOfMeasurement[]
+}
+
+model OrganizationMembership {
+  id             String        @id @default(cuid())
+  userId         String
+  orgId          String
+  role           UserRole
+
+  user           User          @relation(fields: [userId], references: [id])
+  organization   Organization  @relation(fields: [orgId], references: [id])
+}
+
+
+model Party {
   id                   String         @id @default(cuid())
-  gstNumber            String?        @unique
+  orgId                String
+  gstNumber            String?        
   legalName            String
   tradeName            String?
   phoneNumber          String?
@@ -30,30 +64,38 @@ model Customer {
   placeOfSupply        Json?
   customFields         Json?
   vehicles             Vehicle[]
-  allowedCustomerTypes CustomerType[] @relation("CustomerCustomerType")
+  invoices             Invoice[]
+  allowedPartyTypes    PartyType[] @relation("PartyPartyType")
+  organization   Organization  @relation(fields: [orgId], references: [id])
+
+  @@unique([orgId, gstNumber])
 }
 
-model CustomerType {
+model PartyType {
   id        String            @id @default(cuid())
-  label     String            @unique
-  createdBy String
-  templates ChallanTemplate[] @relation("ChallanTemplateCustomerType")
-  customers Customer[]        @relation("CustomerCustomerType")
+  label     String            
+  orgId     String
+  templates ChallanTemplate[] @relation("ChallanTemplatePartyType")
+  parties   Party[]        @relation("PartyPartyType")
+  organization   Organization  @relation(fields: [orgId], references: [id])
+
+  @@unique([orgId, label])  
 }
 
 model ChallanTemplate {
   id                    String                 @id @default(cuid())
   name                  String
   description           String?
-  createdBy             String
+  orgId                 String
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   challans              Challan[]
   fieldSchema           ChallanTemplateField[]
   recordTemplates       ChallanRecordTemplate[]
   allowedStatuses       ChallanStatus[]        @relation("ChallanTemplateChallanStatus")
-  allowedCustomerTypes  CustomerType[]         @relation("ChallanTemplateCustomerType")
+  allowedPartyTypes     PartyType[]            @relation("ChallanTemplatePartyType")
   allowedItemCategories ItemCategory[]         @relation("ChallanTemplateItemCategory")
+  organization          Organization           @relation(fields: [orgId], references: [id])
 }
 
 model ChallanTemplateField {
@@ -65,7 +107,9 @@ model ChallanTemplateField {
   refModel   String?
   refKey     String?
   refId      String?
+  invoiceField String?
   dependsOn  String[]
+  allowedRoles UserRole[]   @default([OWNER, ADMIN]) 
   flex       Int?
   row        Int?
   column     Int?
@@ -84,10 +128,11 @@ model ItemCategory {
   cgst         Decimal            @default(0)
   sgst         Decimal            @default(0)
   igst         Decimal            @default(0)
-  createdBy    String
+  orgId        String
   items        Item[]
   allowedUnits UnitOfMeasurement[] @relation("ItemCategoryUnitOfMeasurement")
   templates    ChallanTemplate[]   @relation("ChallanTemplateItemCategory")
+  organization   Organization  @relation(fields: [orgId], references: [id])
 }
 
 model Item {
@@ -95,8 +140,9 @@ model Item {
   name        String
   description String?
   categoryId  String
-  createdBy   String
+  orgId        String
   category    ItemCategory @relation(fields: [categoryId], references: [id])
+  organization   Organization  @relation(fields: [orgId], references: [id])
 }
 
 model Challan {
@@ -105,11 +151,13 @@ model Challan {
   date          DateTime        @default(now())
   templateId    String
   statusId      String
+  invoiceId     String?
   customFields  Json
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   status        ChallanStatus   @relation(fields: [statusId], references: [id])
   template      ChallanTemplate @relation(fields: [templateId], references: [id])
+  invoice       Invoice?         @relation(fields: [invoiceId], references: [id])
 }
 
 model ChallanRecordTemplate {
@@ -134,8 +182,9 @@ model UnitOfMeasurement {
   id         String         @id @default(cuid())
   label      String
   shortCode  String
-  createdBy  String
+  orgId      String
   categories ItemCategory[] @relation("ItemCategoryUnitOfMeasurement")
+  organization   Organization  @relation(fields: [orgId], references: [id])
 }
 
 model Vehicle {
@@ -150,8 +199,30 @@ model Vehicle {
   lastServiceDate            DateTime?
   createdAt                  DateTime  @default(now())
   updatedAt                  DateTime  @updatedAt
-  createdBy                  String
-  owner                      Customer? @relation(fields: [ownerId], references: [id])
+  orgId                      String
+  owner                      Party? @relation(fields: [ownerId], references: [id])
+  organization               Organization  @relation(fields: [orgId], references: [id])
+}
+
+model Invoice {
+  id                         String    @id @default(cuid())
+  invoiceNumber              String    @unique
+  date                       DateTime
+  partyId                    String
+  invoiceType                InvoiceType
+  transactionType            TransactionType
+  includeTax                 Boolean
+  roundOff                   Boolean
+  lineItems                  Json
+  remarks                    String?
+  discount                   Decimal?
+  discountType               DiscountType?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+  orgId                      String
+  challans                   Challan[]
+  party                      Party? @relation(fields: [partyId], references: [id])
+  organization               Organization  @relation(fields: [orgId], references: [id])
 }
 
 enum DiscountType {
@@ -168,3 +239,22 @@ enum FieldType {
   SINGLE_SELECT
   MULTI_SELECT
 }
+
+enum TransactionType {
+  SALES
+  PURCHASE
+}
+
+enum InvoiceType {
+  TAX_INVOICE
+  PRO_FORMA_INVOICE
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  DATA_ENTRY
+  VIEWER
+}
+

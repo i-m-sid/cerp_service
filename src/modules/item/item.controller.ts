@@ -14,13 +14,13 @@ export class ItemController {
   }
 
   async create(
-    request: FastifyRequest<{ Body: ICreateItem }>,
+    request: FastifyRequest<{ Body: Omit<ICreateItem, 'orgId'> }>,
     reply: FastifyReply,
   ) {
     try {
       const item = await this.service.create({
         ...request.body,
-        createdBy: request.user!.userId,
+        orgId: request.user!.orgId!,
       });
       return sendSuccessResponse(reply, 201, item);
     } catch (error) {
@@ -31,7 +31,7 @@ export class ItemController {
 
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const items = await this.service.findAll();
+      const items = await this.service.findAll(request.user!.orgId!);
       return sendSuccessResponse(reply, 200, items);
     } catch (error) {
       request.log.error(error);
@@ -44,7 +44,10 @@ export class ItemController {
     reply: FastifyReply,
   ) {
     try {
-      const item = await this.service.findById(request.params.id);
+      const item = await this.service.findById(
+        request.params.id,
+        request.user!.orgId!,
+      );
       if (!item) {
         return sendErrorResponse(reply, 404, null, 'Item not found');
       }
@@ -62,6 +65,7 @@ export class ItemController {
     try {
       const items = await this.service.findByCategoryId(
         request.params.categoryId,
+        request.user!.orgId!,
       );
       return sendSuccessResponse(reply, 200, items);
     } catch (error) {
@@ -78,7 +82,7 @@ export class ItemController {
   async update(
     request: FastifyRequest<{
       Params: { id: string };
-      Body: Omit<IUpdateItem, 'id'>;
+      Body: Omit<IUpdateItem, 'id' | 'orgId'>;
     }>,
     reply: FastifyReply,
   ) {
@@ -86,6 +90,7 @@ export class ItemController {
       const item = await this.service.update({
         id: request.params.id,
         ...request.body,
+        orgId: request.user!.orgId!,
       });
       return sendSuccessResponse(reply, 200, item);
     } catch (error) {

@@ -2,7 +2,7 @@ export interface ICreateItem {
   name: string;
   description?: string;
   categoryId: string;
-  createdBy: string;
+  orgId: string;
 }
 
 export interface IUpdateItem extends Partial<ICreateItem> {

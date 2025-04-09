@@ -1,20 +1,17 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { CustomerTypeController } from './customer-type.controller';
-import {
-  ICreateCustomerType,
-  IUpdateCustomerType,
-} from './customer-type.interface';
+import { PartyController } from './party.controller';
+import { ICreateParty, IUpdateParty } from './party.interface';
 import { authMiddleware } from '../../middleware/auth.middleware';
 
-export async function customerTypeRoutes(fastify: FastifyInstance) {
-  const controller = new CustomerTypeController();
+export async function partyRoutes(fastify: FastifyInstance) {
+  const controller = new PartyController();
 
   fastify.route({
     method: 'POST',
     url: '',
     preHandler: [authMiddleware],
     handler: async (
-      req: FastifyRequest<{ Body: ICreateCustomerType }>,
+      req: FastifyRequest<{ Body: ICreateParty }>,
       reply: FastifyReply,
     ) => controller.create(req, reply),
   });
@@ -38,13 +35,23 @@ export async function customerTypeRoutes(fastify: FastifyInstance) {
   });
 
   fastify.route({
+    method: 'GET',
+    url: '/type/:partyTypeId',
+    preHandler: [authMiddleware],
+    handler: async (
+      req: FastifyRequest<{ Params: { partyTypeId: string } }>,
+      reply: FastifyReply,
+    ) => controller.findByPartyType(req, reply),
+  });
+
+  fastify.route({
     method: 'PUT',
     url: '/:id',
     preHandler: [authMiddleware],
     handler: async (
       req: FastifyRequest<{
         Params: { id: string };
-        Body: Omit<IUpdateCustomerType, 'id'>;
+        Body: Omit<IUpdateParty, 'id'>;
       }>,
       reply: FastifyReply,
     ) => controller.update(req, reply),

@@ -1,8 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import {
-  IUpdateVehicle,
-  IInternalCreateVehicle,
-} from './vehicle.interface';
+import { IUpdateVehicle, IInternalCreateVehicle, ICreateVehicle } from './vehicle.interface';
 
 export class VehicleRepository {
   private prisma: PrismaClient;
@@ -15,7 +12,7 @@ export class VehicleRepository {
     owner: false,
   };
 
-  async create(data: IInternalCreateVehicle) {
+  async create(data: ICreateVehicle) {
     const { registeredAt, lastServiceDate, ...rest } = data;
     const vehicle = await this.prisma.vehicle.create({
       data: {
@@ -28,32 +25,33 @@ export class VehicleRepository {
     return vehicle;
   }
 
-  async findAll() {
+  async findAll(orgId: string) {
     const vehicles = await this.prisma.vehicle.findMany({
+      where: { orgId },
       include: this.include,
     });
     return vehicles;
   }
 
-  async findById(id: string) {
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id },
+  async findById(id: string, orgId: string) {
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { id, orgId },
       include: this.include,
     });
     return vehicle;
   }
 
-  async findByVehicleNumber(vehicleNumber: string) {
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { vehicleNumber },
+  async findByVehicleNumber(vehicleNumber: string, orgId: string) {
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { vehicleNumber, orgId },
       include: this.include,
     });
     return vehicle;
   }
 
-  async findByOwner(ownerId: string) {
+  async findByOwner(ownerId: string, orgId: string) {
     const vehicles = await this.prisma.vehicle.findMany({
-      where: { ownerId },
+      where: { ownerId, orgId },
       include: this.include,
     });
     return vehicles;

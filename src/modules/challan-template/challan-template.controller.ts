@@ -25,7 +25,7 @@ export class ChallanTemplateController {
     try {
       const template = await this.service.create(
         request.body,
-        request.user!.userId,
+        request.user!.orgId!,
       );
       console.log(JSON.stringify(template, null, 2));
       return sendSuccessResponse(reply, 201, template);
@@ -37,7 +37,7 @@ export class ChallanTemplateController {
 
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const templates = await this.service.findAll();
+      const templates = await this.service.findAll(request.user!.orgId!);
       console.log(JSON.stringify(templates, null, 2));
       return sendSuccessResponse(reply, 200, templates);
     } catch (error) {
@@ -51,7 +51,10 @@ export class ChallanTemplateController {
     reply: FastifyReply,
   ) {
     try {
-      const template = await this.service.findById(request.params.id);
+      const template = await this.service.findById(
+        request.params.id,
+        request.user!.orgId!,
+      );
       if (!template) {
         return sendErrorResponse(reply, 404, null, 'Template not found');
       }

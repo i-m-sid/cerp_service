@@ -17,13 +17,13 @@ export class ItemCategoryController {
   }
 
   async create(
-    request: FastifyRequest<{ Body: ICreateItemCategory }>,
+    request: FastifyRequest<{ Body: Omit<ICreateItemCategory, 'orgId'> }>,
     reply: FastifyReply,
   ) {
     try {
       const category = await this.service.create({
         ...request.body,
-        createdBy: request.user!.userId,
+        orgId: request.user!.orgId!,
       });
       return sendSuccessResponse(reply, 201, category);
     } catch (error) {
@@ -39,7 +39,7 @@ export class ItemCategoryController {
 
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const categories = await this.service.findAll();
+      const categories = await this.service.findAll(request.user!.orgId!);
       return sendSuccessResponse(reply, 200, categories);
     } catch (error) {
       request.log.error(error);
@@ -57,7 +57,10 @@ export class ItemCategoryController {
     reply: FastifyReply,
   ) {
     try {
-      const category = await this.service.findById(request.params.id);
+      const category = await this.service.findById(
+        request.params.id,
+        request.user!.orgId!,
+      );
       if (!category) {
         return sendErrorResponse(reply, 404, null, 'Item category not found');
       }

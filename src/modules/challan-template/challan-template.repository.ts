@@ -13,14 +13,14 @@ export class ChallanTemplateRepository {
 
   private readonly include = {
     fieldSchema: true,
-    allowedCustomerTypes: true,
+    allowedPartyTypes: true,
     allowedItemCategories: true,
     allowedStatuses: true,
   };
 
-  async create(data: ICreateChallanTemplate, createdBy: string) {
+  async create(data: ICreateChallanTemplate, orgId: string) {
     const {
-      allowedCustomerTypes,
+      allowedPartyTypes,
       allowedItemCategories,
       allowedStatuses,
       ...templateData
@@ -29,7 +29,9 @@ export class ChallanTemplateRepository {
     return this.prisma.challanTemplate.create({
       data: {
         ...templateData,
-        createdBy: createdBy,
+        organization: {
+          connect: { id: orgId },
+        },
         fieldSchema: {
           createMany: {
             data: templateData.fieldSchema,
@@ -40,9 +42,9 @@ export class ChallanTemplateRepository {
             id: status.id,
           })),
         },
-        allowedCustomerTypes: {
-          connect: allowedCustomerTypes.map((customerType) => ({
-            id: customerType.id,
+        allowedPartyTypes: {
+          connect: allowedPartyTypes.map((partyType) => ({
+            id: partyType.id,
           })),
         },
         allowedItemCategories: {
@@ -55,28 +57,29 @@ export class ChallanTemplateRepository {
     });
   }
 
-  async findAll() {
+  async findAll(orgId: string) {
     return this.prisma.challanTemplate.findMany({
+      where: { orgId },
       include: this.include,
     });
   }
 
-  async findById(id: string) {
+  async findById(id: string, orgId: string) {
     return this.prisma.challanTemplate.findUnique({
-      where: { id },
+      where: { id, orgId },
       include: this.include,
     });
   }
 
   async clearRelations(
     id: string,
-    options: { customerTypes?: boolean; itemCategories?: boolean },
+    options: { partyTypes?: boolean; itemCategories?: boolean },
   ) {
     return this.prisma.challanTemplate.update({
       where: { id },
       data: {
-        ...(options.customerTypes && {
-          allowedCustomerTypes: { set: [] },
+        ...(options.partyTypes && {
+          allowedPartyTypes: { set: [] },
         }),
         ...(options.itemCategories && {
           allowedItemCategories: { set: [] },
@@ -88,23 +91,56 @@ export class ChallanTemplateRepository {
   async update(data: IUpdateChallanTemplate) {
     const {
       id,
-      allowedCustomerTypes,
+      allowedPartyTypes,
       allowedItemCategories,
       fieldSchema,
       allowedStatuses,
       ...updateData
     } = data;
 
+    // Handle field schema updates if provided
+    const fieldSchemaUpdate = fieldSchema && {
+      fieldSchema: {
+        // Update existing fields
+        update: fieldSchema
+          .filter((field) => field.id)
+          .map((field) => ({
+            where: { id: field.id },
+            data: {
+              label: field.label,
+              type: field.type,
+              flex: field.flex,
+              row: field.row,
+              column: field.column,
+              isRequired: field.isRequired,
+              data: field.data,
+              refModel: field.refModel,
+              refKey: field.refKey,
+              refId: field.refId,
+              invoiceField: field.invoiceField,
+              dependsOn: field.dependsOn,
+            },
+          })),
+        // Create new fields
+        createMany: {
+          data: fieldSchema.filter((field) => !field.id),
+        },
+        // Delete fields that are not in the update
+        deleteMany: {
+          id: {
+            notIn: fieldSchema
+              .filter((field) => field.id)
+              .map((field) => field.id as string),
+          },
+        },
+      },
+    };
+
     return this.prisma.challanTemplate.update({
       where: { id },
       data: {
         ...updateData,
-        ...(fieldSchema && {
-          fieldSchema: {
-            deleteMany: {},
-            createMany: { data: fieldSchema },
-          },
-        }),
+        ...fieldSchemaUpdate,
         ...(allowedStatuses && {
           allowedStatuses: {
             connect: allowedStatuses.map((status) => ({
@@ -112,10 +148,10 @@ export class ChallanTemplateRepository {
             })),
           },
         }),
-        ...(allowedCustomerTypes && {
-          allowedCustomerTypes: {
-            connect: allowedCustomerTypes.map((customerType) => ({
-              id: customerType.id,
+        ...(allowedPartyTypes && {
+          allowedPartyTypes: {
+            connect: allowedPartyTypes.map((partyType) => ({
+              id: partyType.id,
             })),
           },
         }),

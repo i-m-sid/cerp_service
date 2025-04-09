@@ -8,12 +8,17 @@ import { vehicleRoutes } from './modules/vehicle/vehicle.routes';
 import { uomRoutes } from './modules/uom/uom.routes';
 import { itemCategoryRoutes } from './modules/item-category/item-category.routes';
 import { itemRoutes } from './modules/item/item.routes';
-import { customerTypeRoutes } from './modules/customer-type/customer-type.routes';
-import { customerRoutes } from './modules/customer/customer.routes';
+import { partyTypeRoutes } from './modules/party-type/party-type.routes';
+import { partyRoutes } from './modules/party/party.routes';
 import { referenceRoutes } from './modules/reference/reference.routes';
 import { challanRecordRoutes } from './modules/challan-record/challan-record.routes';
+import { invoiceRoutes } from './modules/invoice/invoice.routes';
+import { organizationRoutes } from './modules/organization/organization.routes';
 
 export async function registerRoutes(fastify: FastifyInstance) {
+  // Organization routes
+  fastify.register(organizationRoutes, { prefix: '/api/organization' });
+
   // Auth routes
   fastify.register(authRoutes, { prefix: '/api/auth' });
 
@@ -43,15 +48,18 @@ export async function registerRoutes(fastify: FastifyInstance) {
   // Item routes
   fastify.register(itemRoutes, { prefix: '/api/item' });
 
-  // Customer Type routes
-  fastify.register(customerTypeRoutes, { prefix: '/api/customer-type' });
+  // Party Type routes
+  fastify.register(partyTypeRoutes, { prefix: '/api/party-type' });
 
-  // Customer routes
-  fastify.register(customerRoutes, { prefix: '/api/customer' });
+  // Party routes
+  fastify.register(partyRoutes, { prefix: '/api/party' });
 
   // Reference routes
   fastify.register(referenceRoutes, { prefix: '/api/reference' });
 
   // Challan Record routes
   fastify.register(challanRecordRoutes, { prefix: '/api/challan-record' });
+
+  // Invoice routes
+  fastify.register(invoiceRoutes, { prefix: '/api/invoice' });
 }

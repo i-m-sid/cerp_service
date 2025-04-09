@@ -1,11 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import {
-  ICreateCustomerType,
-  IUpdateCustomerType,
-  IInternalCreateCustomerType,
-} from './customer-type.interface';
+  ICreatePartyType,
+  IUpdatePartyType,
+} from './party-type.interface';
 
-export class CustomerTypeRepository {
+export class PartyTypeRepository {
   private prisma: PrismaClient;
 
   constructor() {
@@ -17,36 +16,36 @@ export class CustomerTypeRepository {
     templates: true,
   };
 
-  async create(data: IInternalCreateCustomerType) {
-    return this.prisma.customerType.create({
+  async create(data: ICreatePartyType) {
+    return this.prisma.partyType.create({
       data,
       include: this.include,
     });
   }
 
   async findAll() {
-    return this.prisma.customerType.findMany({
+    return this.prisma.partyType.findMany({
       include: this.include,
     });
   }
 
   async findById(id: string) {
-    return this.prisma.customerType.findUnique({
+    return this.prisma.partyType.findUnique({
       where: { id },
       include: this.include,
     });
   }
 
-  async findByLabel(label: string) {
-    return this.prisma.customerType.findUnique({
-      where: { label },
+  async findByLabel(label: string, orgId: string) {
+    return this.prisma.partyType.findUnique({
+      where: { orgId_label: { orgId, label } },
       include: this.include,
     });
   }
 
-  async update(data: IUpdateCustomerType) {
+  async update(data: IUpdatePartyType) {
     const { id, ...updateData } = data;
-    return this.prisma.customerType.update({
+    return this.prisma.partyType.update({
       where: { id },
       data: updateData,
       include: this.include,
@@ -54,7 +53,7 @@ export class CustomerTypeRepository {
   }
 
   async delete(id: string) {
-    return this.prisma.customerType.delete({
+    return this.prisma.partyType.delete({
       where: { id },
     });
   }

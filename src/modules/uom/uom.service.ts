@@ -8,27 +8,33 @@ export class UOMService {
     this.repository = new UOMRepository();
   }
 
-  async create(data: IInternalCreateUOM) {
+  async create(data: ICreateUOM) {
     // Check if shortCode already exists
-    const existing = await this.repository.findByShortCode(data.shortCode);
+    const existing = await this.repository.findByShortCode(
+      data.shortCode,
+      data.orgId,
+    );
     if (existing) {
       throw new Error('UOM with this short code already exists');
     }
     return this.repository.create(data);
   }
 
-  async findAll() {
-    return this.repository.findAll();
+  async findAll(orgId: string) {
+    return this.repository.findAll(orgId);
   }
 
-  async findById(id: string) {
-    return this.repository.findById(id);
+  async findById(id: string, orgId: string) {
+    return this.repository.findById(id, orgId);
   }
 
   async update(data: IUpdateUOM) {
     // If shortCode is being updated, check if new code already exists
     if (data.shortCode) {
-      const existing = await this.repository.findByShortCode(data.shortCode);
+      const existing = await this.repository.findByShortCode(
+        data.shortCode,
+        data.orgId!,
+      );
       if (existing && existing.id !== data.id) {
         throw new Error('UOM with this short code already exists');
       }

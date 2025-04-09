@@ -11,25 +11,25 @@ export class ChallanTemplateService {
     this.repository = new ChallanTemplateRepository();
   }
 
-  async create(data: ICreateChallanTemplate, userId: string) {
-    return this.repository.create(data, userId);
+  async create(data: ICreateChallanTemplate, orgId: string) {
+    return this.repository.create(data, orgId);
   }
 
-  async findAll() {
-    return this.repository.findAll();
+  async findAll(orgId: string) {
+    return this.repository.findAll(orgId);
   }
 
-  async findById(id: string) {
-    return this.repository.findById(id);
+  async findById(id: string, orgId: string) {
+    return this.repository.findById(id, orgId);
   }
 
   async update(data: IUpdateChallanTemplate) {
-    const { allowedCustomerTypes, allowedItemCategories } = data;
+    const { allowedPartyTypes, allowedItemCategories } = data;
 
     // Clear existing relations if new ones are provided
-    if (allowedCustomerTypes || allowedItemCategories) {
+    if (allowedPartyTypes || allowedItemCategories) {
       await this.repository.clearRelations(data.id, {
-        customerTypes: !!allowedCustomerTypes,
+        partyTypes: !!allowedPartyTypes,
         itemCategories: !!allowedItemCategories,
       });
     }

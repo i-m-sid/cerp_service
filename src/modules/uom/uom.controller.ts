@@ -14,15 +14,14 @@ export class UOMController {
   }
 
   async create(
-    request: FastifyRequest<{ Body: ICreateUOM }>,
+    request: FastifyRequest<{ Body: Omit<ICreateUOM, 'orgId'> }>,
     reply: FastifyReply,
   ) {
     try {
-      const internalData: IInternalCreateUOM = {
+      const uom = await this.service.create({
         ...request.body,
-        createdBy: request.user!.userId,
-      };
-      const uom = await this.service.create(internalData);
+        orgId: request.user!.orgId!,
+      });
       return sendSuccessResponse(reply, 201, uom);
     } catch (error) {
       request.log.error(error);
@@ -32,7 +31,7 @@ export class UOMController {
 
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const uoms = await this.service.findAll();
+      const uoms = await this.service.findAll(request.user!.orgId!);
       return sendSuccessResponse(reply, 200, uoms);
     } catch (error) {
       request.log.error(error);
@@ -45,7 +44,10 @@ export class UOMController {
     reply: FastifyReply,
   ) {
     try {
-      const uom = await this.service.findById(request.params.id);
+      const uom = await this.service.findById(
+        request.params.id,
+        request.user!.orgId!,
+      );
       if (!uom) {
         return sendErrorResponse(reply, 404, null, 'UOM not found');
       }
@@ -59,7 +61,7 @@ export class UOMController {
   async update(
     request: FastifyRequest<{
       Params: { id: string };
-      Body: Omit<IUpdateUOM, 'id'>;
+      Body: Omit<IUpdateUOM, 'id' | 'orgId'>;
     }>,
     reply: FastifyReply,
   ) {
@@ -67,6 +69,7 @@ export class UOMController {
       const uom = await this.service.update({
         id: request.params.id,
         ...request.body,
+        orgId: request.user!.orgId!,
       });
       return sendSuccessResponse(reply, 200, uom);
     } catch (error) {

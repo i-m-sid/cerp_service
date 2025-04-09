@@ -2,7 +2,7 @@ export interface ICreateItemCategory {
   name: string;
   description?: string;
   hsnCode?: string;
-  createdBy: string;
+  orgId: string;
   allowedUnits?: string[]; // Array of UOM IDs
 }
 
