@@ -4,6 +4,7 @@ import {
   IUpdateOrganization,
   ICreateOrganizationMembership,
   IUpdateOrganizationMembership,
+  IOrganizationWithRole,
 } from './organization.interface';
 
 export class OrganizationRepository {
@@ -13,15 +14,35 @@ export class OrganizationRepository {
     this.prisma = new PrismaClient();
   }
 
-  async create(data: ICreateOrganization) {
-    return this.prisma.organization.create({
+  private transformToOrganizationWithRole(org: any): IOrganizationWithRole {
+    return {
+      id: org.id,
+      legalName: org.legalName,
+      tradeName: org.tradeName ?? undefined,
+      gstNumber: org.gstNumber ?? undefined,
+      phoneNumber: org.phoneNumber ?? undefined,
+      email: org.email ?? undefined,
+      address: org.address as any,
+      createdAt: org.createdAt,
+      role: org.members[0].role,
+      notes: org.notes ?? undefined,
+      termsAndConditions: org.termsAndConditions ?? undefined,
+    };
+  }
+
+  async create(data: ICreateOrganization): Promise<IOrganizationWithRole> {
+    const org = await this.prisma.organization.create({
       data: {
         legalName: data.legalName,
         tradeName: data.tradeName,
         gstNumber: data.gstNumber,
         phoneNumber: data.phoneNumber,
+        notes: data.notes,
+        termsAndConditions: data.termsAndConditions,
         email: data.email,
-        address: data.address ? JSON.stringify(data.address) : Prisma.JsonNull,
+        address: data.address
+          ? (data.address as unknown as Prisma.JsonObject)
+          : Prisma.JsonNull,
         members: {
           create: {
             userId: data.createdBy,
@@ -37,35 +58,12 @@ export class OrganizationRepository {
         },
       },
     });
+
+    return this.transformToOrganizationWithRole(org);
   }
 
-  async findAll() {
-    return this.prisma.organization.findMany({
-      include: {
-        members: {
-          include: {
-            user: true,
-          },
-        },
-      },
-    });
-  }
-
-  async findById(id: string) {
-    return this.prisma.organization.findUnique({
-      where: { id },
-      include: {
-        members: {
-          include: {
-            user: true,
-          },
-        },
-      },
-    });
-  }
-
-  async findByUserId(userId: string) {
-    return this.prisma.organization.findMany({
+  async findAll(userId: string): Promise<IOrganizationWithRole[]> {
+    const organizations = await this.prisma.organization.findMany({
       where: {
         members: {
           some: {
@@ -75,24 +73,27 @@ export class OrganizationRepository {
       },
       include: {
         members: {
+          where: {
+            userId,
+          },
           include: {
             user: true,
           },
         },
       },
     });
+
+    return organizations.map((org) =>
+      this.transformToOrganizationWithRole(org),
+    );
   }
 
-  async update(data: IUpdateOrganization) {
-    return this.prisma.organization.update({
-      where: { id: data.id },
-      data: {
-        legalName: data.legalName,
-        tradeName: data.tradeName,
-        gstNumber: data.gstNumber,
-        phoneNumber: data.phoneNumber,
-        email: data.email,
-        address: data.address ? JSON.stringify(data.address) : Prisma.JsonNull,
+  async findById(
+    id: string
+  ): Promise<IOrganizationWithRole | null> {
+    const org = await this.prisma.organization.findFirst({
+      where: {
+        id,
       },
       include: {
         members: {
@@ -102,71 +103,81 @@ export class OrganizationRepository {
         },
       },
     });
+
+    return org ? this.transformToOrganizationWithRole(org) : null;
   }
 
-  async delete(id: string) {
-    return this.prisma.organization.delete({
-      where: { id },
-    });
-  }
-
-  // Organization Membership methods
-  async addMember(data: ICreateOrganizationMembership) {
-    return this.prisma.organizationMembership.create({
-      data,
+  async findByUserId(userId: string): Promise<IOrganizationWithRole[]> {
+    const organizations = await this.prisma.organization.findMany({
+      where: {
+        members: {
+          some: {
+            userId,
+          },
+        },
+      },
       include: {
-        user: true,
-        organization: true,
+        members: {
+          where: {
+            userId,
+          },
+          include: {
+            user: true,
+          },
+        },
       },
     });
+
+    return organizations.map((org) =>
+      this.transformToOrganizationWithRole(org),
+    );
   }
 
-  async updateMembership(data: IUpdateOrganizationMembership) {
-    return this.prisma.organizationMembership.update({
+  async update(
+    data: IUpdateOrganization,
+    userId: string,
+  ): Promise<IOrganizationWithRole> {
+    const org = await this.prisma.organization.update({
       where: { id: data.id },
       data: {
-        role: data.role,
+        legalName: data.legalName,
+        tradeName: data.tradeName,
+        gstNumber: data.gstNumber,
+        phoneNumber: data.phoneNumber,
+        notes: data.notes,
+        termsAndConditions: data.termsAndConditions,
+        email: data.email,
+        address: data.address
+          ? (data.address as unknown as Prisma.JsonObject)
+          : Prisma.JsonNull,
       },
       include: {
-        user: true,
-        organization: true,
+        members: {
+          where: {
+            userId,
+          },
+          include: {
+            user: true,
+          },
+        },
       },
     });
+
+    return this.transformToOrganizationWithRole(org);
   }
 
-  async removeMember(id: string) {
-    return this.prisma.organizationMembership.delete({
+  async delete(id: string): Promise<IOrganizationWithRole> {
+    const org = await this.prisma.organization.delete({
       where: { id },
-    });
-  }
-
-  async findMembershipById(id: string) {
-    return this.prisma.organizationMembership.findUnique({
-      where: { id },
       include: {
-        user: true,
-        organization: true,
+        members: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
-  }
 
-  async findMembershipsByOrgId(orgId: string) {
-    return this.prisma.organizationMembership.findMany({
-      where: { orgId },
-      include: {
-        user: true,
-        organization: true,
-      },
-    });
-  }
-
-  async findMembershipsByUserId(userId: string) {
-    return this.prisma.organizationMembership.findMany({
-      where: { userId },
-      include: {
-        user: true,
-        organization: true,
-      },
-    });
+    return this.transformToOrganizationWithRole(org);
   }
 }

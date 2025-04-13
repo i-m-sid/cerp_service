@@ -10,7 +10,7 @@ export class PartyRepository {
 
   private readonly include = {
     vehicles: false,
-    allowedCustomerTypes: true,
+    allowedPartyTypes: true,
   };
 
   async create(data: ICreateParty, orgId: string) {
@@ -84,14 +84,8 @@ export class PartyRepository {
   }
 
   async update(data: IUpdateParty) {
-    const {
-      id,
-      address,
-      placeOfSupply,
-      customFields,
-      partyTypeIds,
-      ...rest
-    } = data;
+    const { id, address, placeOfSupply, customFields, partyTypeIds, ...rest } =
+      data;
     const party = await this.prisma.party.update({
       where: { id },
       data: {

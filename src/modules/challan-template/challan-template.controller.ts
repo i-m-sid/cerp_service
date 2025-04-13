@@ -8,7 +8,8 @@ import {
   sendSuccessResponse,
   sendErrorResponse,
 } from '../../utils/response-handler';
-
+import { filterTemplateFieldsByRole } from './challan-template.util';
+import { UserRole } from '@prisma/client';
 export class ChallanTemplateController {
   private service: ChallanTemplateService;
 
@@ -22,13 +23,18 @@ export class ChallanTemplateController {
   ) {
     console.log(request.body);
     console.log(request.user);
+    console.log(request.user!.orgId);
     try {
       const template = await this.service.create(
         request.body,
         request.user!.orgId!,
       );
-      console.log(JSON.stringify(template, null, 2));
-      return sendSuccessResponse(reply, 201, template);
+      const filteredTemplate = filterTemplateFieldsByRole(
+        template,
+        request.user!.role as UserRole,
+      );
+      console.log(JSON.stringify(filteredTemplate, null, 2));
+      return sendSuccessResponse(reply, 201, filteredTemplate);
     } catch (error) {
       request.log.error(error);
       return sendErrorResponse(reply, 500, error, 'Failed to create template');
@@ -38,8 +44,10 @@ export class ChallanTemplateController {
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
       const templates = await this.service.findAll(request.user!.orgId!);
-      console.log(JSON.stringify(templates, null, 2));
-      return sendSuccessResponse(reply, 200, templates);
+      const filteredTemplates = templates.map((template) =>
+        filterTemplateFieldsByRole(template, request.user!.role as UserRole),
+      );
+      return sendSuccessResponse(reply, 200, filteredTemplates);
     } catch (error) {
       request.log.error(error);
       return sendErrorResponse(reply, 500, error, 'Failed to fetch templates');
@@ -58,7 +66,11 @@ export class ChallanTemplateController {
       if (!template) {
         return sendErrorResponse(reply, 404, null, 'Template not found');
       }
-      return sendSuccessResponse(reply, 200, template);
+      const filteredTemplate = filterTemplateFieldsByRole(
+        template,
+        request.user!.role as UserRole,
+      );
+      return sendSuccessResponse(reply, 200, filteredTemplate);
     } catch (error) {
       request.log.error(error);
       return sendErrorResponse(reply, 500, error, 'Failed to fetch template');
@@ -78,8 +90,11 @@ export class ChallanTemplateController {
         id: request.params.id,
         ...request.body,
       });
-      console.log(JSON.stringify(template, null, 2));
-      return sendSuccessResponse(reply, 200, template);
+      const filteredTemplate = filterTemplateFieldsByRole(
+        template!,
+        request.user!.role as UserRole,
+      );
+      return sendSuccessResponse(reply, 200, filteredTemplate);
     } catch (error) {
       request.log.error(error);
       return sendErrorResponse(reply, 500, error, 'Failed to update template');

@@ -1,6 +1,6 @@
 import { DiscountType, InvoiceType, TransactionType } from '@prisma/client';
 
-export interface ILineItem {
+export interface ICreateLineItem {
   item: string;
   hsnCode: string;
   uom: string;
@@ -22,16 +22,32 @@ export interface ICreateInvoice {
   transactionType: TransactionType;
   includeTax: boolean;
   roundOff: boolean;
-  lineItems: ILineItem[];
+  lineItems: ICreateLineItem[];
   challanIds?: string[];
-  remarks?: string;
-  discount?: number;
-  discountType?: DiscountType;
+  notes?: string;
+  termsAndConditions?: string;
   orgId: string;
 }
 
-export interface IUpdateInvoice extends Partial<ICreateInvoice> {
+export interface IUpdateLineItem extends Partial<ICreateLineItem> {
   id: string;
+}
+
+export interface ILineItem extends ICreateLineItem {
+  id: string;
+  cgstAmount: number;
+  sgstAmount: number;
+  igstAmount: number;
+  subTotal: number;
+  discountAmount: number;
+  totalAmount: number;
+}
+
+export interface IUpdateInvoice
+  extends Partial<Omit<ICreateInvoice, 'lineItems'>> {
+  id: string;
+  orgId: string;
+  lineItems?: IUpdateLineItem[];
 }
 
 export interface IBulkUpdateInvoices {

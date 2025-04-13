@@ -16,7 +16,7 @@ model User {
   picture   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  organizations OrganizationMembership[]
+  memberships OrganizationMembership[]
 }
 
 model Organization {
@@ -27,6 +27,8 @@ model Organization {
   phoneNumber          String?
   email                String?
   address              Json?
+  notes                String?
+  termsAndConditions   String?
   createdAt   DateTime @default(now())
 
   members     OrganizationMembership[]
@@ -92,6 +94,8 @@ model ChallanTemplate {
   challans              Challan[]
   fieldSchema           ChallanTemplateField[]
   recordTemplates       ChallanRecordTemplate[]
+  invoiceType           InvoiceType
+  transactionType       TransactionType
   allowedStatuses       ChallanStatus[]        @relation("ChallanTemplateChallanStatus")
   allowedPartyTypes     PartyType[]            @relation("ChallanTemplatePartyType")
   allowedItemCategories ItemCategory[]         @relation("ChallanTemplateItemCategory")
@@ -214,9 +218,15 @@ model Invoice {
   includeTax                 Boolean
   roundOff                   Boolean
   lineItems                  Json
-  remarks                    String?
-  discount                   Decimal?
-  discountType               DiscountType?
+  subTotal                   Decimal?
+  cgstAmount                 Decimal?
+  sgstAmount                 Decimal?
+  igstAmount                 Decimal?
+  discountAmount             Decimal?
+  roundOffAmount             Decimal?
+  totalAmount                Decimal?
+  notes                      String?
+  termsAndConditions         String?
   createdAt                  DateTime  @default(now())
   updatedAt                  DateTime  @updatedAt
   orgId                      String
@@ -251,10 +261,16 @@ enum InvoiceType {
 }
 
 enum UserRole {
-  OWNER
-  ADMIN
-  MANAGER
-  DATA_ENTRY
-  VIEWER
+  OWNER           // Full control — usually the organization creator
+  ADMIN           // Manages users, settings, and all data
+  MANAGER         // Handles operational aspects like approving entries
+  ACCOUNTANT      // Manages invoices, ledgers, and finances
+  DATA_ENTRY      // Can create and edit records but limited permissions
+  VIEWER          // Read-only access
+  SALES           // Manages sales orders, parties, and follow-ups
+  PURCHASE        // Handles procurement-related tasks
+  INVENTORY       // Manages stock, batches, and warehouse ops
+  SUPPORT         // Limited access — used for customer support staff
 }
+
 

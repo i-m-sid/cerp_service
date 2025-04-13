@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { ChallanRecordService } from './challan-record.service';
-
+import { UserRole } from '@prisma/client';
 export class ChallanRecordController {
   private service: ChallanRecordService;
 
@@ -22,7 +22,10 @@ export class ChallanRecordController {
 
     try {
       const result =
-        await this.service.getChallansByRecordTemplate(recordTemplateId);
+        await this.service.getChallansByRecordTemplate(
+          recordTemplateId,
+          request.user!.role as UserRole,
+        );
       console.log('Found record template with challans:', result);
       reply.send(result);
     } catch (error) {

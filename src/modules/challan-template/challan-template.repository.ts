@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import {
   ICreateChallanTemplate,
   IUpdateChallanTemplate,
+  IChallanTemplateField,
 } from './challan-template.interface';
 
 export class ChallanTemplateRepository {
@@ -98,49 +99,11 @@ export class ChallanTemplateRepository {
       ...updateData
     } = data;
 
-    // Handle field schema updates if provided
-    const fieldSchemaUpdate = fieldSchema && {
-      fieldSchema: {
-        // Update existing fields
-        update: fieldSchema
-          .filter((field) => field.id)
-          .map((field) => ({
-            where: { id: field.id },
-            data: {
-              label: field.label,
-              type: field.type,
-              flex: field.flex,
-              row: field.row,
-              column: field.column,
-              isRequired: field.isRequired,
-              data: field.data,
-              refModel: field.refModel,
-              refKey: field.refKey,
-              refId: field.refId,
-              invoiceField: field.invoiceField,
-              dependsOn: field.dependsOn,
-            },
-          })),
-        // Create new fields
-        createMany: {
-          data: fieldSchema.filter((field) => !field.id),
-        },
-        // Delete fields that are not in the update
-        deleteMany: {
-          id: {
-            notIn: fieldSchema
-              .filter((field) => field.id)
-              .map((field) => field.id as string),
-          },
-        },
-      },
-    };
-
-    return this.prisma.challanTemplate.update({
+    // Step 1: Update the template basic data and relations
+    const updatedTemplate = await this.prisma.challanTemplate.update({
       where: { id },
       data: {
         ...updateData,
-        ...fieldSchemaUpdate,
         ...(allowedStatuses && {
           allowedStatuses: {
             connect: allowedStatuses.map((status) => ({
@@ -165,6 +128,66 @@ export class ChallanTemplateRepository {
       },
       include: this.include,
     });
+
+    // If no field schema updates, return the updated template
+    if (!fieldSchema || fieldSchema.length === 0) {
+      return updatedTemplate;
+    }
+
+    // Step 2: Update existing fields
+    const existingFields = fieldSchema.filter(
+      (field) => field.id && field.id !== null && field.id !== '',
+    );
+    for (const field of existingFields) {
+      await this.prisma.challanTemplateField.update({
+        where: { id: field.id },
+        data: {
+          label: field.label,
+          type: field.type,
+          flex: field.flex,
+          row: field.row,
+          column: field.column,
+          isRequired: field.isRequired,
+          data: field.data,
+          refModel: field.refModel,
+          refKey: field.refKey,
+          refId: field.refId,
+          invoiceField: field.invoiceField,
+          dependsOn: field.dependsOn,
+          allowedRoles: field.allowedRoles,
+        },
+      });
+    }
+
+    // Step 3: Delete fields that are not in the update
+
+    await this.prisma.challanTemplateField.deleteMany({
+      where: {
+        templateId: id,
+        ...(fieldSchema &&
+          fieldSchema.length > 0 && {
+            id: {
+              notIn: existingFields.map((field) => field.id as string),
+            },
+          }),
+      },
+    });
+
+    // Step 4: Create new fields
+    const newFields = fieldSchema.filter(
+      (field) => !field.id || field.id === null || field.id === '',
+    );
+    if (newFields.length > 0) {
+      await this.prisma.challanTemplateField.createMany({
+        data: newFields.map(({ id, ...field }) => ({
+          ...field,
+          templateId: updatedTemplate.id,
+        })),
+      });
+    }
+
+    // Return the fully updated template
+    return this.findById(updatedTemplate.id, updatedTemplate.orgId);
   }
 
   async delete(id: string) {

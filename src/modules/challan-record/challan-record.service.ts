@@ -1,6 +1,6 @@
 import { IChallanRecordResponse } from './challan-record.interface';
 import { ChallanRecordTemplateRepository } from '../challan-record-template/challan-record-template.repository';
-
+import { UserRole } from '@prisma/client';
 export class ChallanRecordService {
   private repository: ChallanRecordTemplateRepository;
 
@@ -16,9 +16,13 @@ export class ChallanRecordService {
    */
   async getChallansByRecordTemplate(
     recordTemplateId: string,
+    role: UserRole,
   ): Promise<IChallanRecordResponse> {
     const result =
-      await this.repository.getChallansByRecordTemplate(recordTemplateId);
+      await this.repository.getChallansByRecordTemplate(
+        recordTemplateId,
+        role,
+      );
 
     if (!result) {
       throw new Error('Record template not found');

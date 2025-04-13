@@ -1,3 +1,4 @@
+import { UserRole } from '@prisma/client';
 import {
   ICreateChallanRecordTemplate,
   IUpdateChallanRecordTemplate,
@@ -33,9 +34,5 @@ export class ChallanRecordTemplateService {
 
   async delete(id: string) {
     return this.repository.delete(id);
-  }
-
-  async getChallansByRecordTemplate(recordTemplateId: string) {
-    return this.repository.getChallansByRecordTemplate(recordTemplateId);
   }
 }

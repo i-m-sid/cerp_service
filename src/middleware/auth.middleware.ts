@@ -1,10 +1,10 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { AuthService } from '../modules/auth/auth.service';
-import { OrganizationService } from '../modules/organization/organization.service';
 import { sendErrorResponse } from '../utils/response-handler';
+import { OrganizationMembershipService } from '../modules/organization-membership/organization-membership.service';
 
 const authService = new AuthService();
-const organizationService = new OrganizationService();
+const organizationMembershipService = new OrganizationMembershipService();
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -36,7 +36,7 @@ export async function authMiddleware(
     const decoded = await authService.verifyJWT(token);
 
     // Get organization ID from URL if present
-    const orgId = (request.params as { orgId?: string })?.orgId;
+    const orgId = (request.query as { orgId?: string })?.orgId;
 
     // Attach user info to request
     request.user = {
@@ -47,9 +47,9 @@ export async function authMiddleware(
     // If organization ID is present in URL, get and attach user's role and orgId
     if (orgId) {
       try {
-        const role = await organizationService.getUserRole(
-          decoded.userId,
+        const role = await organizationMembershipService.getUserRole(
           orgId,
+          decoded.userId,
         );
         request.user.role = role;
         request.user.orgId = orgId;

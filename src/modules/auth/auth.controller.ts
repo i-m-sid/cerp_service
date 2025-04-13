@@ -39,8 +39,10 @@ export class AuthController {
 
   async login(request: FastifyRequest, reply: FastifyReply) {
     try {
+      console.log('request.body', request.body);
       const loginData = LoginInputSchema.parse(request.body);
       const authResponse = await this.authService.login(loginData);
+      console.log('authResponse', authResponse);
       return sendSuccessResponse(reply, 200, authResponse);
     } catch (error) {
       if (error instanceof z.ZodError) {

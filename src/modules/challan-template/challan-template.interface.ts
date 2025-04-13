@@ -3,6 +3,9 @@ import {
   PartyType,
   FieldType,
   ItemCategory,
+  UserRole,
+  InvoiceType,
+  TransactionType,
 } from '@prisma/client';
 
 export interface IChallanTemplateField {
@@ -18,12 +21,15 @@ export interface IChallanTemplateField {
   refKey?: string;
   refId?: string;
   invoiceField?: string;
+  allowedRoles: UserRole[];
   dependsOn: string[];
 }
 
 export interface ICreateChallanTemplate {
   name: string;
   description?: string;
+  invoiceType: InvoiceType;
+  transactionType: TransactionType;
   fieldSchema: IChallanTemplateField[];
   allowedStatuses: ChallanStatus[];
   allowedPartyTypes: PartyType[];

@@ -1,3 +1,4 @@
+import { UserRole } from '@prisma/client';
 import {
   ICreateChallanTemplate,
   IUpdateChallanTemplate,
@@ -12,6 +13,10 @@ export class ChallanTemplateService {
   }
 
   async create(data: ICreateChallanTemplate, orgId: string) {
+    data.fieldSchema.forEach((field) => {
+      field.allowedRoles.push(UserRole.OWNER);
+      field.allowedRoles = [...new Set(field.allowedRoles)];
+    });
     return this.repository.create(data, orgId);
   }
 
@@ -25,6 +30,12 @@ export class ChallanTemplateService {
 
   async update(data: IUpdateChallanTemplate) {
     const { allowedPartyTypes, allowedItemCategories } = data;
+    if (data.fieldSchema) {
+      data.fieldSchema.forEach((field) => {
+        field.allowedRoles.push(UserRole.OWNER);
+        field.allowedRoles = [...new Set(field.allowedRoles)];
+      });
+    }
 
     // Clear existing relations if new ones are provided
     if (allowedPartyTypes || allowedItemCategories) {

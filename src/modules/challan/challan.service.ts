@@ -5,7 +5,8 @@ import {
   IBulkUpdateChallans,
 } from './challan.interface';
 import { ChallanRepository } from './challan.repository';
-import { PrismaClient } from '@prisma/client';
+import { ChallanTemplateField, PrismaClient } from '@prisma/client';
+import { evaluateFormula } from './challan.utils';
 
 export class ChallanService {
   private repository: ChallanRepository;
@@ -20,6 +21,29 @@ export class ChallanService {
     // Ensure date is a Date object if provided as a string
     const dateObject =
       typeof data.date === 'string' ? new Date(data.date) : data.date;
+
+    const fields = await this.prisma.challanTemplateField.findMany({
+      where: {
+        templateId: data.templateId,
+      },
+    });
+
+    if (fields && data.customFields) {
+      fields.forEach((field) => {
+        const customFields = data.customFields;
+        if (field.formula && customFields) {
+          // Initialize the custom field if it doesn't exist
+          if (!customFields[field.id]) {
+            customFields[field.id] = { value: '0' };
+          }
+          // Now evaluate the formula
+          customFields[field.id].value = evaluateFormula(
+            field.formula,
+            customFields,
+          );
+        }
+      });
+    }
 
     // Pass data directly (customFields is now Record<string, ...>)
     return this.repository.create({
@@ -40,10 +64,34 @@ export class ChallanService {
     return this.repository.findByTemplateId(templateId);
   }
 
-  async update(data: IUpdateChallan) {
-    // Ensure date is a Date object if provided as a string
+  async update(data: IUpdateChallan, fieldSchema?: ChallanTemplateField[]) {
     const dateObject =
       typeof data.date === 'string' ? new Date(data.date) : data.date;
+
+    const fields =
+      fieldSchema ??
+      (await this.prisma.challanTemplateField.findMany({
+        where: {
+          templateId: data.templateId,
+        },
+      }));
+
+    if (fields && data.customFields) {
+      fields.forEach((field) => {
+        const customFields = data.customFields;
+        if (field.formula && customFields) {
+          // Initialize the custom field if it doesn't exist
+          if (!customFields[field.id]) {
+            customFields[field.id] = { value: '0' };
+          }
+          // Now evaluate the formula
+          customFields[field.id].value = evaluateFormula(
+            field.formula,
+            customFields,
+          );
+        }
+      });
+    }
 
     // Pass data directly (customFields is now Record<string, ...>)
     return this.repository.update({
@@ -59,8 +107,13 @@ export class ChallanService {
       throw new Error('No challans provided for bulk update');
     }
     let results = [];
+    const fieldSchema = await this.prisma.challanTemplateField.findMany({
+      where: {
+        templateId: challans[0].templateId,
+      },
+    });
     for (const challan of challans) {
-      results.push(await this.update(challan));
+      results.push(await this.update(challan, fieldSchema));
     }
     return results;
   }

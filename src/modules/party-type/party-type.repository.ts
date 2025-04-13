@@ -1,8 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import {
-  ICreatePartyType,
-  IUpdatePartyType,
-} from './party-type.interface';
+import { ICreatePartyType, IUpdatePartyType } from './party-type.interface';
 
 export class PartyTypeRepository {
   private prisma: PrismaClient;
@@ -12,7 +9,7 @@ export class PartyTypeRepository {
   }
 
   private readonly include = {
-    customers: true,
+    parties: true,
     templates: true,
   };
 

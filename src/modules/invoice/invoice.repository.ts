@@ -4,7 +4,14 @@ import {
   TransactionType,
   InvoiceType,
 } from '@prisma/client';
-import { ICreateInvoice, IUpdateInvoice, ILineItem } from './invoice.interface';
+import {
+  ICreateInvoice,
+  IUpdateInvoice,
+  ILineItem,
+  ICreateLineItem,
+  IUpdateLineItem,
+} from './invoice.interface';
+import { InvoiceCalculator } from './invoice.utils';
 
 export class InvoiceRepository {
   private prisma: PrismaClient;
@@ -14,7 +21,7 @@ export class InvoiceRepository {
   }
 
   private objectToJson(
-    obj?: ILineItem[],
+    obj?: ILineItem[] | ICreateLineItem[] | IUpdateLineItem[],
   ): Prisma.JsonObject | typeof Prisma.JsonNull {
     if (!obj || obj.length === 0) {
       return Prisma.JsonNull;
@@ -71,6 +78,17 @@ export class InvoiceRepository {
   }
 
   async create(data: ICreateInvoice) {
+    // Calculate line items with totals
+    const calculatedLineItems = data.lineItems.map((item) =>
+      InvoiceCalculator.calculateLineItem(item),
+    );
+
+    // Calculate invoice totals
+    const totals = InvoiceCalculator.calculateInvoiceTotals(
+      calculatedLineItems,
+      data.roundOff,
+    );
+
     const createData = {
       invoiceNumber: data.invoiceNumber,
       date: data.date,
@@ -78,10 +96,10 @@ export class InvoiceRepository {
       transactionType: data.transactionType,
       includeTax: data.includeTax,
       roundOff: data.roundOff,
-      lineItems: this.objectToJson(data.lineItems),
-      remarks: data.remarks,
-      discount: data.discount,
-      discountType: data.discountType,
+      lineItems: this.objectToJson(calculatedLineItems),
+      notes: data.notes,
+      termsAndConditions: data.termsAndConditions,
+      ...totals, // Add all calculated totals
       party: {
         connect: { id: data.partyId },
       },
@@ -114,7 +132,7 @@ export class InvoiceRepository {
     const results = await this.prisma.invoice.findMany({
       where: { orgId },
       include: {
-          party: true,
+        party: true,
         challans: true,
         organization: true,
       },
@@ -133,7 +151,7 @@ export class InvoiceRepository {
         orgId,
       },
       include: {
-          party: true,
+        party: true,
         challans: true,
         organization: true,
       },
@@ -167,7 +185,50 @@ export class InvoiceRepository {
   }
 
   async update(data: IUpdateInvoice) {
-    const { id, challanIds, orgId, ...updateFields } = data;
+    const { id, challanIds, orgId, lineItems, ...updateFields } = data;
+
+    // Calculate totals if line items are being updated
+    let totals = {};
+    if (lineItems) {
+      // First get the existing line items to merge with updates
+      const existingInvoice = await this.prisma.invoice.findUnique({
+        where: { id },
+        select: { lineItems: true },
+      });
+
+      const existingLineItems = this.jsonToObject(existingInvoice?.lineItems);
+
+      // Merge existing items with updates
+      const updatedLineItems = existingLineItems.map((existingItem) => {
+        const updateItem = lineItems.find(
+          (item) => item.id === existingItem.id,
+        );
+        if (!updateItem) return existingItem;
+
+        // Create a new line item with merged data
+        return InvoiceCalculator.calculateLineItem({
+          item: updateItem.item ?? existingItem.item,
+          hsnCode: updateItem.hsnCode ?? existingItem.hsnCode,
+          uom: updateItem.uom ?? existingItem.uom,
+          description: updateItem.description ?? existingItem.description,
+          rate: updateItem.rate ?? existingItem.rate,
+          quantity: updateItem.quantity ?? existingItem.quantity,
+          cgstPercentage:
+            updateItem.cgstPercentage ?? existingItem.cgstPercentage,
+          sgstPercentage:
+            updateItem.sgstPercentage ?? existingItem.sgstPercentage,
+          igstPercentage:
+            updateItem.igstPercentage ?? existingItem.igstPercentage,
+          discount: updateItem.discount ?? existingItem.discount,
+          discountType: updateItem.discountType ?? existingItem.discountType,
+        });
+      });
+
+      totals = InvoiceCalculator.calculateInvoiceTotals(
+        updatedLineItems,
+        updateFields.roundOff ?? false,
+      );
+    }
 
     const updateData = {
       invoiceNumber: updateFields.invoiceNumber,
@@ -176,13 +237,10 @@ export class InvoiceRepository {
       transactionType: updateFields.transactionType,
       includeTax: updateFields.includeTax,
       roundOff: updateFields.roundOff,
-      remarks: updateFields.remarks,
-      discount: updateFields.discount,
-      discountType: updateFields.discountType,
-      lineItems:
-        updateFields.lineItems !== undefined
-          ? this.objectToJson(updateFields.lineItems)
-          : undefined,
+      notes: updateFields.notes,
+      termsAndConditions: updateFields.termsAndConditions,
+      ...totals, // Add calculated totals if line items were updated
+      lineItems: lineItems ? this.objectToJson(lineItems) : undefined,
       ...(updateFields.partyId && {
         party: {
           connect: { id: updateFields.partyId },

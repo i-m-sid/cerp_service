@@ -9,10 +9,10 @@ export class ReferenceRepository {
   }
 
   private readonly tables: TableReference[] = [
-    { table: 'Customer', label: 'Customer' },
-    { table: 'Vehicle', label: 'Vehicle' }, 
+    { table: 'Party', label: 'Party' },
+    { table: 'Vehicle', label: 'Vehicle' },
     { table: 'Item', label: 'Item' },
-    { table: 'UOM', label: 'Unit of Measurement' }
+    { table: 'UOM', label: 'Unit of Measurement' },
   ];
 
   async getTableReferences(): Promise<TableReference[]> {

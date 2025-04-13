@@ -14,10 +14,16 @@ import { referenceRoutes } from './modules/reference/reference.routes';
 import { challanRecordRoutes } from './modules/challan-record/challan-record.routes';
 import { invoiceRoutes } from './modules/invoice/invoice.routes';
 import { organizationRoutes } from './modules/organization/organization.routes';
+import { organizationMembershipRoutes } from './modules/organization-membership/organization-membership.routes';
 
 export async function registerRoutes(fastify: FastifyInstance) {
   // Organization routes
   fastify.register(organizationRoutes, { prefix: '/api/organization' });
+
+  // Organization Membership routes
+  fastify.register(organizationMembershipRoutes, {
+    prefix: '/api/organization-membership',
+  });
 
   // Auth routes
   fastify.register(authRoutes, { prefix: '/api/auth' });

@@ -19,25 +19,36 @@ export interface UpdateUserData {
 export class UserRepository {
   private prisma: PrismaClient;
 
-  constructor(prisma: PrismaClient) {
-    this.prisma = prisma;
+  constructor() {
+    this.prisma = new PrismaClient();
   }
+
+  private readonly include = {
+    memberships: {
+      include: {
+        organization: true,
+      },
+    },
+  };
 
   async findById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: { id },
+      include: this.include,
     });
   }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: { email },
+      include: this.include,
     });
   }
 
   async create(data: CreateUserData): Promise<User> {
     return this.prisma.user.create({
       data: data,
+      include: this.include,
     });
   }
 
@@ -45,6 +56,7 @@ export class UserRepository {
     return this.prisma.user.update({
       where: { id },
       data: data,
+      include: this.include,
     });
   }
 
@@ -58,6 +70,7 @@ export class UserRepository {
         where: { email },
         create: createData,
         update: updateData,
+        include: this.include,
       });
       return user;
     } catch (error) {

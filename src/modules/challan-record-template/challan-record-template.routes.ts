@@ -48,16 +48,6 @@ export async function challanRecordTemplateRoutes(fastify: FastifyInstance) {
   });
 
   fastify.route({
-    method: 'GET',
-    url: '/:id/challans',
-    preHandler: [authMiddleware],
-    handler: async (
-      req: FastifyRequest<{ Params: { id: string } }>,
-      reply: FastifyReply,
-    ) => controller.getChallansByRecordTemplate(req, reply),
-  });
-
-  fastify.route({
     method: 'PUT',
     url: '/:id',
     preHandler: [authMiddleware],

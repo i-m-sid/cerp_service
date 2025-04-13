@@ -17,7 +17,7 @@ export class AuthService {
   private readonly SALT_ROUNDS = 10;
 
   constructor() {
-    this.userRepository = new UserRepository(prisma);
+    this.userRepository = new UserRepository();
     this.JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
     // Convert expiration time to seconds

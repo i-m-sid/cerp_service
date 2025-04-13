@@ -1,4 +1,4 @@
-import { PrismaClient, ChallanTemplateField } from '@prisma/client';
+import { PrismaClient, ChallanTemplateField, UserRole } from '@prisma/client';
 import {
   ICreateChallanRecordTemplate,
   IUpdateChallanRecordTemplate,
@@ -74,7 +74,8 @@ export class ChallanRecordTemplateRepository {
     });
   }
 
-  async getChallansByRecordTemplate(recordTemplateId: string) {
+  // TODO: filter by role
+  async getChallansByRecordTemplate(recordTemplateId: string, role: UserRole) {
     // First get the record template with its fields
     const recordTemplate = await this.prisma.challanRecordTemplate.findUnique({
       where: { id: recordTemplateId },

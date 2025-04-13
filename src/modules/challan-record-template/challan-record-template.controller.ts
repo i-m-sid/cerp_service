@@ -8,7 +8,6 @@ import {
   sendSuccessResponse,
   sendErrorResponse,
 } from '../../utils/response-handler';
-
 export class ChallanRecordTemplateController {
   private service: ChallanRecordTemplateService;
 
@@ -136,29 +135,6 @@ export class ChallanRecordTemplateController {
         500,
         error,
         'Failed to delete record template',
-      );
-    }
-  }
-
-  async getChallansByRecordTemplate(
-    request: FastifyRequest<{ Params: { id: string } }>,
-    reply: FastifyReply,
-  ) {
-    try {
-      const result = await this.service.getChallansByRecordTemplate(
-        request.params.id,
-      );
-      if (!result) {
-        return sendErrorResponse(reply, 404, null, 'Record template not found');
-      }
-      return sendSuccessResponse(reply, 200, result);
-    } catch (error) {
-      request.log.error(error);
-      return sendErrorResponse(
-        reply,
-        500,
-        error,
-        'Failed to fetch challans by record template',
       );
     }
   }
