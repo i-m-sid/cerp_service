@@ -10,8 +10,8 @@ export interface ICreateLineItem {
   cgstPercentage?: number;
   sgstPercentage?: number;
   igstPercentage?: number;
-  discount?: number;
-  discountType?: DiscountType;
+  fixedDiscount?: number;
+  percentageDiscount?: number;
 }
 
 export interface ICreateInvoice {

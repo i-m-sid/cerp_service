@@ -183,4 +183,22 @@ export class ChallanRepository {
       customFields: this.jsonToObject(result.customFields), // Use new helper
     };
   }
+
+  async bulkDelete(ids: string[]) {
+    // Using Promise.all for parallel processing
+    const deletePromises = ids.map(async (id) => {
+      try {
+        const deletedChallan = await this.delete(id);
+        return { success: true, data: deletedChallan, id };
+      } catch (error: any) {
+        return {
+          success: false,
+          error: error.message || 'Unknown error',
+          id,
+        };
+      }
+    });
+
+    return Promise.all(deletePromises);
+  }
 }

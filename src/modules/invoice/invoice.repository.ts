@@ -54,10 +54,10 @@ export class InvoiceRepository {
         typeof typedItem.sgstPercentage === 'number') &&
       (typedItem.igstPercentage === undefined ||
         typeof typedItem.igstPercentage === 'number') &&
-      (typedItem.discount === undefined ||
-        typeof typedItem.discount === 'number') &&
-      (typedItem.discountType === undefined ||
-        typeof typedItem.discountType === 'string') &&
+      (typedItem.fixedDiscount === undefined ||
+        typeof typedItem.fixedDiscount === 'number') &&
+      (typedItem.percentageDiscount === undefined ||
+        typeof typedItem.percentageDiscount === 'number') &&
       (typedItem.quantity === undefined ||
         typeof typedItem.quantity === 'number')
     );
@@ -219,8 +219,9 @@ export class InvoiceRepository {
             updateItem.sgstPercentage ?? existingItem.sgstPercentage,
           igstPercentage:
             updateItem.igstPercentage ?? existingItem.igstPercentage,
-          discount: updateItem.discount ?? existingItem.discount,
-          discountType: updateItem.discountType ?? existingItem.discountType,
+          fixedDiscount: updateItem.fixedDiscount ?? existingItem.fixedDiscount,
+          percentageDiscount:
+            updateItem.percentageDiscount ?? existingItem.percentageDiscount,
         });
       });
 

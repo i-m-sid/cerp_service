@@ -5,7 +5,7 @@ import {
   IBulkUpdateChallans,
 } from './challan.interface';
 import { ChallanRepository } from './challan.repository';
-import { ChallanTemplateField, PrismaClient } from '@prisma/client';
+import { ChallanTemplateField, PrismaClient, FieldType } from '@prisma/client';
 import { evaluateFormula } from './challan.utils';
 
 export class ChallanService {
@@ -31,11 +31,14 @@ export class ChallanService {
     if (fields && data.customFields) {
       fields.forEach((field) => {
         const customFields = data.customFields;
+        if (
+          field.type === FieldType.NUMBER &&
+          customFields &&
+          (!customFields[field.id] || !customFields[field.id]?.value)
+        ) {
+          customFields[field.id] = { value: '0' };
+        }
         if (field.formula && customFields) {
-          // Initialize the custom field if it doesn't exist
-          if (!customFields[field.id]) {
-            customFields[field.id] = { value: '0' };
-          }
           // Now evaluate the formula
           customFields[field.id].value = evaluateFormula(
             field.formula,
@@ -79,11 +82,14 @@ export class ChallanService {
     if (fields && data.customFields) {
       fields.forEach((field) => {
         const customFields = data.customFields;
+        if (
+          field.type === FieldType.NUMBER &&
+          customFields &&
+          (!customFields?.[field.id] || !customFields?.[field.id]?.value)
+        ) {
+          customFields[field.id] = { value: '0' };
+        }
         if (field.formula && customFields) {
-          // Initialize the custom field if it doesn't exist
-          if (!customFields[field.id]) {
-            customFields[field.id] = { value: '0' };
-          }
           // Now evaluate the formula
           customFields[field.id].value = evaluateFormula(
             field.formula,
@@ -120,5 +126,13 @@ export class ChallanService {
 
   async delete(id: string) {
     return this.repository.delete(id);
+  }
+
+  async bulkDelete(ids: string[]) {
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      throw new Error('No challan IDs provided for bulk delete');
+    }
+
+    return this.repository.bulkDelete(ids);
   }
 }

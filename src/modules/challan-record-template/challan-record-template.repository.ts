@@ -1,4 +1,9 @@
-import { PrismaClient, ChallanTemplateField, UserRole } from '@prisma/client';
+import {
+  PrismaClient,
+  ChallanTemplateField,
+  UserRole,
+  Prisma,
+} from '@prisma/client';
 import {
   ICreateChallanRecordTemplate,
   IUpdateChallanRecordTemplate,
@@ -14,58 +19,107 @@ export class ChallanRecordTemplateRepository {
   private readonly include = {
     template: true,
     fields: true,
-  };
+  } satisfies Prisma.ChallanRecordTemplateInclude;
+
+  private sortFieldsByOrder(recordTemplate: any) {
+    const sortedFields = [...recordTemplate.fields].sort((a, b) => {
+      const aIndex = recordTemplate.fieldOrder?.indexOf(a.id) ?? -1;
+      const bIndex = recordTemplate.fieldOrder?.indexOf(b.id) ?? -1;
+      return aIndex - bIndex;
+    });
+
+    const { fieldOrder, ...recordTemplateWithoutOrder } = recordTemplate;
+    return {
+      ...recordTemplateWithoutOrder,
+      fields: sortedFields,
+    };
+  }
 
   async create(data: ICreateChallanRecordTemplate) {
     const { fieldIds, ...recordTemplateData } = data;
 
-    return this.prisma.challanRecordTemplate.create({
-      data: {
-        ...recordTemplateData,
-        fields: {
-          connect: fieldIds.map((id) => ({ id })),
-        },
-      },
-      include: this.include,
+    const createData: Prisma.ChallanRecordTemplateUncheckedCreateInput = {
+      ...recordTemplateData,
+      fieldOrder: fieldIds,
+    };
+
+    // Create record template first
+    const recordTemplate = await this.prisma.challanRecordTemplate.create({
+      data: createData,
     });
+
+    // Then connect fields
+    if (fieldIds.length > 0) {
+      await this.prisma.challanRecordTemplate.update({
+        where: { id: recordTemplate.id },
+        data: {
+          fields: {
+            connect: fieldIds.map((id) => ({ id })),
+          },
+        },
+      });
+    }
+
+    // Return with includes and sorted fields
+    const result = await this.findById(recordTemplate.id);
+    return result ? this.sortFieldsByOrder(result) : null;
   }
 
   async findAll() {
-    return this.prisma.challanRecordTemplate.findMany({
+    const results = await this.prisma.challanRecordTemplate.findMany({
       include: this.include,
     });
+    return results.map((result) => this.sortFieldsByOrder(result));
   }
 
   async findById(id: string) {
-    return this.prisma.challanRecordTemplate.findUnique({
+    const result = await this.prisma.challanRecordTemplate.findUnique({
       where: { id },
       include: this.include,
     });
+    return result ? this.sortFieldsByOrder(result) : null;
   }
 
   async findByTemplateId(templateId: string) {
-    return this.prisma.challanRecordTemplate.findMany({
+    const results = await this.prisma.challanRecordTemplate.findMany({
       where: { templateId },
       include: this.include,
     });
+    return results.map((result) => this.sortFieldsByOrder(result));
   }
 
   async update(data: IUpdateChallanRecordTemplate) {
     const { id, fieldIds, ...updateData } = data;
 
-    return this.prisma.challanRecordTemplate.update({
+    const prismaUpdateData: Prisma.ChallanRecordTemplateUncheckedUpdateInput = {
+      ...updateData,
+      ...(fieldIds && {
+        fieldOrder: fieldIds,
+      }),
+    };
+
+    // Update basic data first
+    await this.prisma.challanRecordTemplate.update({
       where: { id },
-      data: {
-        ...updateData,
-        ...(fieldIds && {
+      data: prismaUpdateData,
+    });
+
+    // Then update field connections if needed
+    if (fieldIds) {
+      await this.prisma.challanRecordTemplate.update({
+        where: { id },
+        data: {
           fields: {
             set: [],
             connect: fieldIds.map((id) => ({ id })),
           },
-        }),
-      },
-      include: this.include,
-    });
+        },
+      });
+    }
+
+    // Return with includes and sorted fields
+    const result = await this.findById(id);
+    return result ? this.sortFieldsByOrder(result) : null;
   }
 
   async delete(id: string) {
@@ -96,13 +150,8 @@ export class ChallanRecordTemplateRepository {
       },
     });
 
-    // Filter custom fields based on record template fields
-    const fieldLabels = recordTemplate.fields.map(
-      (field: ChallanTemplateField) => field.label,
-    );
-
     return {
-      recordTemplate,
+      recordTemplate: this.sortFieldsByOrder(recordTemplate),
       challans: challans.map((challan) => ({
         ...challan,
         customFields: challan.customFields as Record<string, any>,

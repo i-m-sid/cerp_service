@@ -4,6 +4,7 @@ import {
   ICreateChallan,
   IUpdateChallan,
   IBulkUpdateChallans,
+  IBulkDeleteChallans,
 } from './challan.interface';
 import {
   sendSuccessResponse,
@@ -104,7 +105,7 @@ export class ChallanController {
     request: FastifyRequest<{ Body: IBulkUpdateChallans }>,
     reply: FastifyReply,
   ) {
-    console.log(request.body);
+    console.log(JSON.stringify(request.body, null, 2));
     try {
       const results = await this.service.bulkUpdate(request.body);
       console.log(results);
@@ -135,6 +136,35 @@ export class ChallanController {
     } catch (error) {
       request.log.error(error);
       return sendErrorResponse(reply, 500, error, 'Failed to delete challan');
+    }
+  }
+
+  async bulkDelete(
+    request: FastifyRequest<{ Body: IBulkDeleteChallans }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const results = await this.service.bulkDelete(request.body.ids);
+
+      // Check if any challans failed to delete
+      const failedDeletions = results.filter((result) => !result.success);
+      const failedIds = failedDeletions.map((result) => result.id);
+
+      if (failedDeletions.length > 0) {
+        return sendSuccessResponse(reply, 207, {
+          message: 'Some challans were not deleted successfully',
+          results,
+          failedIds,
+        });
+      }
+
+      return sendSuccessResponse(reply, 200, {
+        message: 'All challans deleted successfully',
+        results,
+      });
+    } catch (error) {
+      request.log.error(error);
+      return sendErrorResponse(reply, 500, error, 'Failed to delete challans');
     }
   }
 }

@@ -7,12 +7,11 @@ export const evaluateFormula = (
 ): string => {
   // Replace field IDs with their values
   let evaluatableFormula = formula;
-  console.log(evaluatableFormula);
   for (const [fieldId, field] of Object.entries(customFields)) {
     const regex = new RegExp(fieldId, 'g');
     evaluatableFormula = evaluatableFormula.replace(regex, field.value);
   }
-  console.log(evaluatableFormula);
+
   try {
     // Evaluate the formula using JavaScript's eval
     // This is safe since we control the input formula format

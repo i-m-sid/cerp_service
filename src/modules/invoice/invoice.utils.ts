@@ -1,18 +1,22 @@
-import { DiscountType } from '@prisma/client';
 import { ICreateLineItem, ILineItem } from './invoice.interface';
 
 export class InvoiceCalculator {
   private static calculateDiscount(
     amount: number,
-    discount?: number,
-    discountType?: DiscountType,
+    fixedDiscount?: number,
+    percentageDiscount?: number,
   ): number {
-    if (!discount || discount === 0) return 0;
+    let totalDiscount = 0;
 
-    if (discountType === DiscountType.PERCENTAGE) {
-      return (amount * discount) / 100;
+    if (percentageDiscount && percentageDiscount > 0) {
+      totalDiscount += (amount * percentageDiscount) / 100;
     }
-    return discount;
+
+    if (fixedDiscount && fixedDiscount > 0) {
+      totalDiscount += fixedDiscount;
+    }
+
+    return totalDiscount;
   }
 
   private static roundToTwo(num: number): number {
@@ -35,7 +39,11 @@ export class InvoiceCalculator {
     const quantity = item.quantity || 1;
     const baseAmount = this.roundToTwo(item.rate * quantity);
     const discountAmount = this.roundToTwo(
-      this.calculateDiscount(baseAmount, item.discount, item.discountType),
+      this.calculateDiscount(
+        baseAmount,
+        item.fixedDiscount,
+        item.percentageDiscount,
+      ),
     );
     const subTotal = this.roundToTwo(baseAmount - discountAmount);
 

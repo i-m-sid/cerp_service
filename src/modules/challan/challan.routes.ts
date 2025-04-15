@@ -4,6 +4,7 @@ import {
   ICreateChallan,
   IUpdateChallan,
   IBulkUpdateChallans,
+  IBulkDeleteChallans,
 } from './challan.interface';
 import { authMiddleware } from '../../middleware/auth.middleware';
 
@@ -79,5 +80,15 @@ export async function challanRoutes(fastify: FastifyInstance) {
       req: FastifyRequest<{ Params: { id: string } }>,
       reply: FastifyReply,
     ) => controller.delete(req, reply),
+  });
+
+  fastify.route({
+    method: 'DELETE',
+    url: '/delete',
+    preHandler: [authMiddleware],
+    handler: async (
+      req: FastifyRequest<{ Body: IBulkDeleteChallans }>,
+      reply: FastifyReply,
+    ) => controller.bulkDelete(req, reply),
   });
 }
