@@ -29,9 +29,25 @@ export class ItemController {
     }
   }
 
-  async findAll(request: FastifyRequest, reply: FastifyReply) {
+  async findAll(
+    request: FastifyRequest<{ Querystring: { categoryId?: string } }>,
+    reply: FastifyReply,
+  ) {
     try {
-      const items = await this.service.findAll(request.user!.orgId!);
+      const { categoryId } = request.query;
+      console.log('categoryId', categoryId);
+
+      let items;
+      if (categoryId) {
+        items = await this.service.findByCategoryId(
+          categoryId,
+          request.user!.orgId!,
+        );
+      } else {
+        items = await this.service.findAll(request.user!.orgId!);
+      }
+      console.log('items', items);
+
       return sendSuccessResponse(reply, 200, items);
     } catch (error) {
       request.log.error(error);
@@ -55,27 +71,6 @@ export class ItemController {
     } catch (error) {
       request.log.error(error);
       return sendErrorResponse(reply, 500, error, 'Failed to fetch item');
-    }
-  }
-
-  async findByCategoryId(
-    request: FastifyRequest<{ Params: { categoryId: string } }>,
-    reply: FastifyReply,
-  ) {
-    try {
-      const items = await this.service.findByCategoryId(
-        request.params.categoryId,
-        request.user!.orgId!,
-      );
-      return sendSuccessResponse(reply, 200, items);
-    } catch (error) {
-      request.log.error(error);
-      return sendErrorResponse(
-        reply,
-        500,
-        error,
-        'Failed to fetch items by category',
-      );
     }
   }
 

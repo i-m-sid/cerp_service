@@ -1,26 +1,23 @@
 import { ICreateParty, IUpdateParty } from './party.interface';
 import { PartyRepository } from './party.repository';
 
+export function transformPartyData(party: any) {
+  if (!party) return null;
+
+  return {
+    ...party,
+    address: party.address ? JSON.parse(party.address) : undefined,
+    placeOfSupply: party.placeOfSupply ? JSON.parse(party.placeOfSupply) : [],
+    customFields: party.customFields
+      ? JSON.parse(party.customFields)
+      : new Map(),
+  };
+}
 export class PartyService {
   private repository: PartyRepository;
 
   constructor() {
     this.repository = new PartyRepository();
-  }
-
-  private transformPartyData(party: any) {
-    if (!party) return null;
-
-    return {
-      ...party,
-      address: party.address ? JSON.parse(party.address) : undefined,
-      placeOfSupply: party.placeOfSupply
-        ? JSON.parse(party.placeOfSupply)
-        : [],
-      customFields: party.customFields
-        ? JSON.parse(party.customFields)
-        : new Map(),
-    };
   }
 
   async create(data: ICreateParty, orgId: string) {
@@ -35,22 +32,22 @@ export class PartyService {
       }
     }
     const party = await this.repository.create(data, orgId);
-    return this.transformPartyData(party);
+    return transformPartyData(party);
   }
 
   async findAll(orgId: string) {
     const parties = await this.repository.findAll(orgId);
-    return parties.map((party) => this.transformPartyData(party));
+    return parties.map((party) => transformPartyData(party));
   }
 
   async findById(id: string, orgId: string) {
     const party = await this.repository.findById(id, orgId);
-    return this.transformPartyData(party);
+    return transformPartyData(party);
   }
 
   async findByPartyType(partyTypeId: string, orgId: string) {
     const parties = await this.repository.findByPartyType(partyTypeId, orgId);
-    return parties.map((party) => this.transformPartyData(party));
+    return parties.map((party) => transformPartyData(party));
   }
 
   async update(data: IUpdateParty) {
@@ -65,7 +62,7 @@ export class PartyService {
       }
     }
     const party = await this.repository.update(data);
-    return this.transformPartyData(party);
+    return transformPartyData(party);
   }
 
   async delete(id: string) {

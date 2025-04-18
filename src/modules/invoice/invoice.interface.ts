@@ -1,6 +1,7 @@
-import { DiscountType, InvoiceType, TransactionType } from '@prisma/client';
+import { InvoiceType, TransactionType } from '@prisma/client';
 
 export interface ICreateLineItem {
+  itemId: string;
   item: string;
   hsnCode: string;
   uom: string;
@@ -18,6 +19,8 @@ export interface ICreateInvoice {
   invoiceNumber: string;
   date: Date;
   partyId: string;
+  orgDetails: IOrgDetails;
+  partyDetails: IPartyDetails;
   invoiceType: InvoiceType;
   transactionType: TransactionType;
   includeTax: boolean;
@@ -27,6 +30,21 @@ export interface ICreateInvoice {
   notes?: string;
   termsAndConditions?: string;
   orgId: string;
+}
+
+export interface IOrgDetails {
+  name?: string;
+  address?: string;
+  gstin?: string;
+  email?: string;
+  phone?: string;
+}
+export interface IPartyDetails {
+  name?: string;
+  address?: string;
+  gstin?: string;
+  contact?: string;
+  shippingAddress?: string;
 }
 
 export interface IUpdateLineItem extends Partial<ICreateLineItem> {
@@ -52,4 +70,8 @@ export interface IUpdateInvoice
 
 export interface IBulkUpdateInvoices {
   invoices: IUpdateInvoice[];
+}
+
+export interface IBulkDeleteInvoices {
+  ids: string[];
 }

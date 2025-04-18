@@ -4,6 +4,7 @@ import {
   ICreateInvoice,
   IUpdateInvoice,
   IBulkUpdateInvoices,
+  IBulkDeleteInvoices,
 } from './invoice.interface';
 import { authMiddleware } from '../../middleware/auth.middleware';
 import { InvoiceType, TransactionType } from '@prisma/client';
@@ -26,32 +27,19 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.route({
     method: 'GET',
     url: '',
-    schema: {
-      querystring: {
-        type: 'object',
-        properties: {
-          transactionType: {
-            type: 'string',
-            enum: Object.values(TransactionType),
-          },
-          invoiceType: { type: 'string', enum: Object.values(InvoiceType) },
-        },
-      },
-    },
     preHandler: [authMiddleware],
     handler: async (
       req: FastifyRequest<{
         Querystring: {
           transactionType?: TransactionType;
           invoiceType?: InvoiceType;
+          startDate?: string;
+          endDate?: string;
+          partyId?: string;
         };
       }>,
       reply: FastifyReply,
     ) => {
-      const { transactionType, invoiceType } = req.query;
-      if (transactionType || invoiceType) {
-        return controller.findByTypes(req, reply);
-      }
       return controller.findAll(req, reply);
     },
   });
@@ -112,5 +100,16 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
       req: FastifyRequest<{ Params: { id: string } }>,
       reply: FastifyReply,
     ) => controller.delete(req, reply),
+  });
+
+  // Bulk delete invoices
+  fastify.route({
+    method: 'DELETE',
+    url: '/delete',
+    preHandler: [authMiddleware],
+    handler: async (
+      req: FastifyRequest<{ Body: IBulkDeleteInvoices }>,
+      reply: FastifyReply,
+    ) => controller.bulkDelete(req, reply),
   });
 }

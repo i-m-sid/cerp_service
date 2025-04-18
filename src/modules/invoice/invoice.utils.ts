@@ -35,7 +35,10 @@ export class InvoiceCalculator {
     };
   }
 
-  static calculateLineItem(item: ICreateLineItem): ILineItem {
+  static calculateLineItem(
+    item: ICreateLineItem,
+    includeTax: boolean = true,
+  ): ILineItem {
     const quantity = item.quantity || 1;
     const baseAmount = this.roundToTwo(item.rate * quantity);
     const discountAmount = this.roundToTwo(
@@ -47,6 +50,7 @@ export class InvoiceCalculator {
     );
     const subTotal = this.roundToTwo(baseAmount - discountAmount);
 
+    // Calculate tax amounts - rate never includes tax
     const cgstAmount = this.roundToTwo(
       item.cgstPercentage ? (subTotal * item.cgstPercentage) / 100 : 0,
     );
@@ -57,9 +61,17 @@ export class InvoiceCalculator {
       item.igstPercentage ? (subTotal * item.igstPercentage) / 100 : 0,
     );
 
-    const totalAmount = this.roundToTwo(
-      subTotal + cgstAmount + sgstAmount + igstAmount,
-    );
+    // Total amount depends on includeTax flag
+    let totalAmount;
+    if (includeTax) {
+      // If includeTax is true, include tax in the total
+      totalAmount = this.roundToTwo(
+        subTotal + cgstAmount + sgstAmount + igstAmount,
+      );
+    } else {
+      // If includeTax is false, don't include tax in the total
+      totalAmount = subTotal;
+    }
 
     return {
       ...item,
@@ -76,6 +88,7 @@ export class InvoiceCalculator {
   static calculateInvoiceTotals(
     lineItems: ILineItem[],
     shouldRoundOff: boolean = false,
+    includeTax: boolean = true,
   ) {
     const subTotal = this.roundToTwo(
       lineItems.reduce((sum, item) => sum + item.subTotal, 0),
@@ -96,9 +109,17 @@ export class InvoiceCalculator {
       lineItems.reduce((sum, item) => sum + item.igstAmount, 0),
     );
 
-    const totalBeforeRounding = this.roundToTwo(
-      subTotal + cgstAmount + sgstAmount + igstAmount,
-    );
+    // Calculate total based on includeTax flag
+    let totalBeforeRounding;
+    if (includeTax) {
+      // If includeTax is true, include tax in the total
+      totalBeforeRounding = this.roundToTwo(
+        subTotal + cgstAmount + sgstAmount + igstAmount,
+      );
+    } else {
+      // If includeTax is false, don't include tax in the total
+      totalBeforeRounding = subTotal;
+    }
 
     let roundOffAmount = 0;
     let totalAmount = totalBeforeRounding;

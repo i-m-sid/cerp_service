@@ -10,7 +10,14 @@ export async function challanRecordRoutes(fastify: FastifyInstance) {
     url: '/template/:id',
     preHandler: [authMiddleware],
     handler: async (
-      req: FastifyRequest<{ Params: { id: string } }>,
+      req: FastifyRequest<{
+        Params: { id: string };
+        Querystring: {
+          startDate?: string;
+          endDate?: string;
+          partyId?: string;
+        };
+      }>,
       reply: FastifyReply,
     ) => controller.getChallansByRecordTemplate(req, reply),
   });

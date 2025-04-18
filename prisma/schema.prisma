@@ -213,18 +213,20 @@ model Invoice {
   invoiceNumber              String    @unique
   date                       DateTime
   partyId                    String
+  orgDetails                 Json
+  partyDetails               Json
   invoiceType                InvoiceType
   transactionType            TransactionType
-  includeTax                 Boolean
-  roundOff                   Boolean
+  includeTax                 Boolean  @default(true)
+  roundOff                   Boolean  @default(true)
   lineItems                  Json
-  subTotal                   Decimal?
-  cgstAmount                 Decimal?
-  sgstAmount                 Decimal?
-  igstAmount                 Decimal?
-  discountAmount             Decimal?
-  roundOffAmount             Decimal?
-  totalAmount                Decimal?
+  subTotal                   Decimal? @default(0)
+  cgstAmount                 Decimal? @default(0)
+  sgstAmount                 Decimal? @default(0)
+  igstAmount                 Decimal? @default(0)
+  discountAmount             Decimal? @default(0)
+  roundOffAmount             Decimal? @default(0)
+  totalAmount                Decimal? @default(0)
   notes                      String?
   termsAndConditions         String?
   createdAt                  DateTime  @default(now())
@@ -253,6 +255,8 @@ enum TransactionType {
 enum InvoiceType {
   TAX_INVOICE
   PRO_FORMA_INVOICE
+  QUOTE
+  SALES_ORDER
 }
 
 enum UserRole {

@@ -20,8 +20,10 @@ export async function itemRoutes(fastify: FastifyInstance) {
     method: 'GET',
     url: '',
     preHandler: [authMiddleware],
-    handler: async (req: FastifyRequest, reply: FastifyReply) =>
-      controller.findAll(req, reply),
+    handler: async (
+      req: FastifyRequest<{ Querystring: { categoryId?: string } }>,
+      reply: FastifyReply,
+    ) => controller.findAll(req, reply),
   });
 
   fastify.route({
@@ -32,16 +34,6 @@ export async function itemRoutes(fastify: FastifyInstance) {
       req: FastifyRequest<{ Params: { id: string } }>,
       reply: FastifyReply,
     ) => controller.findById(req, reply),
-  });
-
-  fastify.route({
-    method: 'GET',
-    url: '/category/:categoryId',
-    preHandler: [authMiddleware],
-    handler: async (
-      req: FastifyRequest<{ Params: { categoryId: string } }>,
-      reply: FastifyReply,
-    ) => controller.findByCategoryId(req, reply),
   });
 
   fastify.route({

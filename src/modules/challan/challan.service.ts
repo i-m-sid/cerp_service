@@ -6,7 +6,7 @@ import {
 } from './challan.interface';
 import { ChallanRepository } from './challan.repository';
 import { ChallanTemplateField, PrismaClient, FieldType } from '@prisma/client';
-import { evaluateFormula } from './challan.utils';
+import { evaluateFormula, evaluateFormulaFields } from './challan.utils';
 
 export class ChallanService {
   private repository: ChallanRepository;
@@ -15,6 +15,28 @@ export class ChallanService {
   constructor() {
     this.repository = new ChallanRepository();
     this.prisma = new PrismaClient();
+  }
+
+  // Validate required fields
+  private validateRequiredFields(
+    fields: ChallanTemplateField[],
+    customFields: Record<string, ICustomField>,
+  ): void {
+    const missingRequiredFields = fields
+      .filter(
+        (field) =>
+          field.isRequired &&
+          (!customFields[field.id] ||
+            !customFields[field.id].value ||
+            customFields[field.id].value.trim() === ''),
+      )
+      .map((field) => field.label || field.id);
+
+    if (missingRequiredFields.length > 0) {
+      throw new Error(
+        `Missing required fields: ${missingRequiredFields.join(', ')}`,
+      );
+    }
   }
 
   async create(data: ICreateChallan) {
@@ -28,25 +50,34 @@ export class ChallanService {
       },
     });
 
-    if (fields && data.customFields) {
-      fields.forEach((field) => {
-        const customFields = data.customFields;
-        if (
-          field.type === FieldType.NUMBER &&
-          customFields &&
-          (!customFields[field.id] || !customFields[field.id]?.value)
-        ) {
-          customFields[field.id] = { value: '0' };
-        }
-        if (field.formula && customFields) {
-          // Now evaluate the formula
-          customFields[field.id].value = evaluateFormula(
-            field.formula,
-            customFields,
-          );
-        }
-      });
+    if (!fields || fields.length === 0) {
+      throw new Error('No template fields found for the specified template');
     }
+
+    if (!data.customFields) {
+      data.customFields = {};
+    }
+
+    // Validate required fields
+    this.validateRequiredFields(fields, data.customFields);
+
+    // Initialize missing number fields with zero
+    fields.forEach((field) => {
+      if (
+        field.type === FieldType.NUMBER &&
+        (!data.customFields?.[field.id] ||
+          !data.customFields?.[field.id]?.value)
+      ) {
+        // Ensure data.customFields is initialized
+        if (!data.customFields) {
+          data.customFields = {};
+        }
+        data.customFields[field.id] = { value: '0' };
+      }
+    });
+
+    // Evaluate all formulas in the correct dependency order
+    data.customFields = evaluateFormulaFields(fields, data.customFields);
 
     // Pass data directly (customFields is now Record<string, ...>)
     return this.repository.create({
@@ -79,24 +110,31 @@ export class ChallanService {
         },
       }));
 
-    if (fields && data.customFields) {
+    if (!fields || fields.length === 0) {
+      throw new Error('No template fields found for the specified template');
+    }
+
+    if (data.customFields) {
+      // Initialize missing number fields with zero
       fields.forEach((field) => {
-        const customFields = data.customFields;
         if (
           field.type === FieldType.NUMBER &&
-          customFields &&
-          (!customFields?.[field.id] || !customFields?.[field.id]?.value)
+          (!data.customFields?.[field.id] ||
+            !data.customFields?.[field.id]?.value)
         ) {
-          customFields[field.id] = { value: '0' };
-        }
-        if (field.formula && customFields) {
-          // Now evaluate the formula
-          customFields[field.id].value = evaluateFormula(
-            field.formula,
-            customFields,
-          );
+          // Ensure data.customFields is initialized
+          if (!data.customFields) {
+            data.customFields = {};
+          }
+          data.customFields[field.id] = { value: '0' };
         }
       });
+
+      // Evaluate all formulas in the correct dependency order
+      data.customFields = evaluateFormulaFields(fields, data.customFields);
+
+      // Validate required fields after formula evaluation
+      this.validateRequiredFields(fields, data.customFields);
     }
 
     // Pass data directly (customFields is now Record<string, ...>)

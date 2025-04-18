@@ -10,9 +10,11 @@ import {
   ILineItem,
   ICreateLineItem,
   IUpdateLineItem,
+  IPartyDetails,
+  IOrgDetails,
 } from './invoice.interface';
 import { InvoiceCalculator } from './invoice.utils';
-
+import { transformPartyData } from '../party/party.service';
 export class InvoiceRepository {
   private prisma: PrismaClient;
 
@@ -29,10 +31,19 @@ export class InvoiceRepository {
     return obj as unknown as Prisma.JsonObject;
   }
 
+  private partyDetailsToJson(
+    obj?: IPartyDetails | IOrgDetails,
+  ): Prisma.JsonObject | typeof Prisma.JsonNull {
+    if (!obj) {
+      return Prisma.JsonNull;
+    }
+    return obj as unknown as Prisma.JsonObject;
+  }
+
   private isValidLineItem(item: unknown): item is ILineItem {
     if (!item || typeof item !== 'object') return false;
 
-    const requiredFields = ['item', 'hsnCode', 'uom', 'description', 'rate'];
+    const requiredFields = ['item', 'hsnCode', 'uom', 'rate'];
     const hasRequiredFields = requiredFields.every(
       (field) =>
         field in item && item[field as keyof typeof item] !== undefined,
@@ -40,27 +51,7 @@ export class InvoiceRepository {
 
     if (!hasRequiredFields) return false;
 
-    const typedItem = item as Record<string, unknown>;
-
-    return (
-      typeof typedItem.item === 'string' &&
-      typeof typedItem.hsnCode === 'string' &&
-      typeof typedItem.uom === 'string' &&
-      typeof typedItem.description === 'string' &&
-      typeof typedItem.rate === 'number' &&
-      (typedItem.cgstPercentage === undefined ||
-        typeof typedItem.cgstPercentage === 'number') &&
-      (typedItem.sgstPercentage === undefined ||
-        typeof typedItem.sgstPercentage === 'number') &&
-      (typedItem.igstPercentage === undefined ||
-        typeof typedItem.igstPercentage === 'number') &&
-      (typedItem.fixedDiscount === undefined ||
-        typeof typedItem.fixedDiscount === 'number') &&
-      (typedItem.percentageDiscount === undefined ||
-        typeof typedItem.percentageDiscount === 'number') &&
-      (typedItem.quantity === undefined ||
-        typeof typedItem.quantity === 'number')
-    );
+    return true;
   }
 
   private jsonToObject(json?: Prisma.JsonValue | null): ILineItem[] {
@@ -70,7 +61,7 @@ export class InvoiceRepository {
         if (this.isValidLineItem(item)) {
           arr.push(item);
         } else {
-          console.warn('Skipping invalid line item data:', item);
+          throw new Error(`Invalid line item data: ${JSON.stringify(item)}`);
         }
       }
     }
@@ -78,15 +69,26 @@ export class InvoiceRepository {
   }
 
   async create(data: ICreateInvoice) {
+    // Validate challans if provided
+    if (data.challanIds && data.challanIds.length > 0) {
+      const invalidChallans = await this.validateChallans(data.challanIds);
+      if (invalidChallans.length > 0) {
+        throw new Error(
+          `Some challans are already attached to invoices: ${invalidChallans.join(', ')}`,
+        );
+      }
+    }
+
     // Calculate line items with totals
     const calculatedLineItems = data.lineItems.map((item) =>
-      InvoiceCalculator.calculateLineItem(item),
+      InvoiceCalculator.calculateLineItem(item, data.includeTax),
     );
 
     // Calculate invoice totals
     const totals = InvoiceCalculator.calculateInvoiceTotals(
       calculatedLineItems,
       data.roundOff,
+      data.includeTax,
     );
 
     const createData = {
@@ -94,6 +96,8 @@ export class InvoiceRepository {
       date: data.date,
       invoiceType: data.invoiceType,
       transactionType: data.transactionType,
+      partyDetails: this.partyDetailsToJson(data.partyDetails),
+      orgDetails: this.partyDetailsToJson(data.orgDetails),
       includeTax: data.includeTax,
       roundOff: data.roundOff,
       lineItems: this.objectToJson(calculatedLineItems),
@@ -125,12 +129,31 @@ export class InvoiceRepository {
     return {
       ...result,
       lineItems: this.jsonToObject(result.lineItems),
+      party: transformPartyData(result.party),
     };
   }
 
-  async findAll(orgId: string) {
+  async findAll(
+    orgId: string,
+    transactionType?: TransactionType,
+    startDate?: Date,
+    endDate?: Date,
+    partyId?: string,
+  ) {
     const results = await this.prisma.invoice.findMany({
-      where: { orgId },
+      where: {
+        orgId,
+        ...(transactionType && { transactionType }),
+        ...(partyId && { partyId }),
+        ...(startDate || endDate
+          ? {
+              date: {
+                ...(startDate && { gte: startDate }),
+                ...(endDate && { lte: endDate }),
+              },
+            }
+          : {}),
+      },
       include: {
         party: true,
         challans: true,
@@ -141,6 +164,7 @@ export class InvoiceRepository {
     return results.map((result) => ({
       ...result,
       lineItems: this.jsonToObject(result.lineItems),
+      party: transformPartyData(result.party),
     }));
   }
 
@@ -162,6 +186,7 @@ export class InvoiceRepository {
     return {
       ...result,
       lineItems: this.jsonToObject(result.lineItems),
+      party: transformPartyData(result.party),
     };
   }
 
@@ -181,6 +206,7 @@ export class InvoiceRepository {
     return results.map((result) => ({
       ...result,
       lineItems: this.jsonToObject(result.lineItems),
+      party: transformPartyData(result.party),
     }));
   }
 
@@ -193,10 +219,14 @@ export class InvoiceRepository {
       // First get the existing line items to merge with updates
       const existingInvoice = await this.prisma.invoice.findUnique({
         where: { id },
-        select: { lineItems: true },
+        select: { lineItems: true, includeTax: true },
       });
 
       const existingLineItems = this.jsonToObject(existingInvoice?.lineItems);
+      const includeTax =
+        updateFields.includeTax !== undefined
+          ? updateFields.includeTax
+          : existingInvoice?.includeTax || false;
 
       // Merge existing items with updates
       const updatedLineItems = existingLineItems.map((existingItem) => {
@@ -206,28 +236,34 @@ export class InvoiceRepository {
         if (!updateItem) return existingItem;
 
         // Create a new line item with merged data
-        return InvoiceCalculator.calculateLineItem({
-          item: updateItem.item ?? existingItem.item,
-          hsnCode: updateItem.hsnCode ?? existingItem.hsnCode,
-          uom: updateItem.uom ?? existingItem.uom,
-          description: updateItem.description ?? existingItem.description,
-          rate: updateItem.rate ?? existingItem.rate,
-          quantity: updateItem.quantity ?? existingItem.quantity,
-          cgstPercentage:
-            updateItem.cgstPercentage ?? existingItem.cgstPercentage,
-          sgstPercentage:
-            updateItem.sgstPercentage ?? existingItem.sgstPercentage,
-          igstPercentage:
-            updateItem.igstPercentage ?? existingItem.igstPercentage,
-          fixedDiscount: updateItem.fixedDiscount ?? existingItem.fixedDiscount,
-          percentageDiscount:
-            updateItem.percentageDiscount ?? existingItem.percentageDiscount,
-        });
+        return InvoiceCalculator.calculateLineItem(
+          {
+            itemId: updateItem.itemId ?? existingItem.itemId,
+            item: updateItem.item ?? existingItem.item,
+            hsnCode: updateItem.hsnCode ?? existingItem.hsnCode,
+            uom: updateItem.uom ?? existingItem.uom,
+            description: updateItem.description ?? existingItem.description,
+            rate: updateItem.rate ?? existingItem.rate,
+            quantity: updateItem.quantity ?? existingItem.quantity,
+            cgstPercentage:
+              updateItem.cgstPercentage ?? existingItem.cgstPercentage,
+            sgstPercentage:
+              updateItem.sgstPercentage ?? existingItem.sgstPercentage,
+            igstPercentage:
+              updateItem.igstPercentage ?? existingItem.igstPercentage,
+            fixedDiscount:
+              updateItem.fixedDiscount ?? existingItem.fixedDiscount,
+            percentageDiscount:
+              updateItem.percentageDiscount ?? existingItem.percentageDiscount,
+          },
+          includeTax,
+        );
       });
 
       totals = InvoiceCalculator.calculateInvoiceTotals(
         updatedLineItems,
         updateFields.roundOff ?? false,
+        includeTax,
       );
     }
 
@@ -321,6 +357,7 @@ export class InvoiceRepository {
     return results.map((result) => ({
       ...result,
       lineItems: this.jsonToObject(result.lineItems),
+      party: transformPartyData(result.party),
     }));
   }
 
@@ -340,6 +377,7 @@ export class InvoiceRepository {
     return results.map((result) => ({
       ...result,
       lineItems: this.jsonToObject(result.lineItems),
+      party: transformPartyData(result.party),
     }));
   }
 
@@ -364,6 +402,59 @@ export class InvoiceRepository {
     return results.map((result) => ({
       ...result,
       lineItems: this.jsonToObject(result.lineItems),
+      party: transformPartyData(result.party),
     }));
+  }
+
+  async bulkDelete(ids: string[], orgId: string) {
+    // Using transaction for data consistency
+    return this.prisma.$transaction(async (tx) => {
+      const deletePromises = ids.map(async (id) => {
+        try {
+          const result = await tx.invoice.delete({
+            where: {
+              id,
+              orgId,
+            },
+          });
+
+          return {
+            success: true,
+            data: {
+              ...result,
+              lineItems: this.jsonToObject(result.lineItems),
+            },
+            id,
+          };
+        } catch (error: any) {
+          return {
+            success: false,
+            error: error.message || 'Unknown error',
+            id,
+          };
+        }
+      });
+
+      return Promise.all(deletePromises);
+    });
+  }
+
+  /**
+   * Validates if challans are available (not attached to any invoice)
+   * @param challanIds Array of challan IDs to validate
+   * @returns Array of IDs that are already attached to invoices (invalid)
+   */
+  private async validateChallans(challanIds: string[]): Promise<string[]> {
+    const existingChallans = await this.prisma.challan.findMany({
+      where: {
+        id: { in: challanIds },
+        invoiceId: { not: null },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return existingChallans.map((challan) => challan.id);
   }
 }

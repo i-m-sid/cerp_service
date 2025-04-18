@@ -10,22 +10,36 @@ export class ChallanRecordController {
 
   /**
    * Get challans filtered by record template
-   * @param request - Fastify request object containing record template ID
+   * @param request - Fastify request object containing record template ID and optional filters
    * @param reply - Fastify reply object
    */
   async getChallansByRecordTemplate(
-    request: FastifyRequest<{ Params: { id: string } }>,
+    request: FastifyRequest<{
+      Params: { id: string };
+      Querystring: {
+        startDate?: string;
+        endDate?: string;
+        partyId?: string;
+      };
+    }>,
     reply: FastifyReply,
   ): Promise<void> {
     const { id: recordTemplateId } = request.params;
+    const { startDate, endDate, partyId } = request.query;
+
     console.log('Getting challans for record template:', recordTemplateId);
+    console.log('Filters:', { startDate, endDate, partyId });
 
     try {
-      const result =
-        await this.service.getChallansByRecordTemplate(
-          recordTemplateId,
-          request.user!.role as UserRole,
-        );
+      const result = await this.service.getChallansByRecordTemplate(
+        recordTemplateId,
+        request.user!.role as UserRole,
+        {
+          startDate: startDate ? new Date(startDate) : undefined,
+          endDate: endDate ? new Date(endDate) : undefined,
+          partyId,
+        },
+      );
       console.log('Found record template with challans:', result);
       reply.send(result);
     } catch (error) {

@@ -16,11 +16,28 @@ export class InvoiceService {
   }
 
   async create(data: ICreateInvoice) {
-    return this.repository.create(data);
+    try {
+      return await this.repository.create(data);
+    } catch (error) {
+      // Rethrow the error to be handled by the controller
+      throw error;
+    }
   }
 
-  async findAll(orgId: string) {
-    return this.repository.findAll(orgId);
+  async findAll(
+    orgId: string,
+    transactionType?: TransactionType,
+    startDate?: Date,
+    endDate?: Date,
+    partyId?: string,
+  ) {
+    return this.repository.findAll(
+      orgId,
+      transactionType,
+      startDate,
+      endDate,
+      partyId,
+    );
   }
 
   async findById(id: string, orgId: string) {
@@ -63,5 +80,9 @@ export class InvoiceService {
     invoiceType?: InvoiceType,
   ) {
     return this.repository.findByTypes(orgId, transactionType, invoiceType);
+  }
+
+  async bulkDelete(ids: string[], orgId: string) {
+    return this.repository.bulkDelete(ids, orgId);
   }
 }

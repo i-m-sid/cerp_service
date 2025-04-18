@@ -4,6 +4,7 @@ import {
   ICreateInvoice,
   IUpdateInvoice,
   IBulkUpdateInvoices,
+  IBulkDeleteInvoices,
 } from './invoice.interface';
 import {
   sendSuccessResponse,
@@ -43,7 +44,17 @@ export class InvoiceController {
     }
   }
 
-  async findAll(request: FastifyRequest, reply: FastifyReply) {
+  async findAll(
+    request: FastifyRequest<{
+      Querystring: {
+        transactionType?: string;
+        startDate?: string;
+        endDate?: string;
+        partyId?: string;
+      };
+    }>,
+    reply: FastifyReply,
+  ) {
     try {
       if (!request.user?.orgId) {
         return sendErrorResponse(
@@ -54,7 +65,15 @@ export class InvoiceController {
         );
       }
 
-      const invoices = await this.service.findAll(request.user.orgId);
+      const { transactionType, startDate, endDate, partyId } = request.query;
+      const invoices = await this.service.findAll(
+        request.user.orgId,
+        transactionType as TransactionType | undefined,
+        startDate ? new Date(startDate) : undefined,
+        endDate ? new Date(endDate) : undefined,
+        partyId,
+      );
+      console.log(JSON.stringify(invoices, null, 2));
       return sendSuccessResponse(reply, 200, invoices);
     } catch (error) {
       request.log.error(error);
@@ -246,6 +265,47 @@ export class InvoiceController {
         error,
         'Failed to fetch invoices by types',
       );
+    }
+  }
+
+  async bulkDelete(
+    request: FastifyRequest<{ Body: IBulkDeleteInvoices }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      if (!request.user?.orgId) {
+        return sendErrorResponse(
+          reply,
+          400,
+          null,
+          'Organization ID is required',
+        );
+      }
+
+      const results = await this.service.bulkDelete(
+        request.body.ids,
+        request.user.orgId,
+      );
+
+      // Check if any invoices failed to delete
+      const failedDeletions = results.filter((result) => !result.success);
+      const failedIds = failedDeletions.map((result) => result.id);
+
+      if (failedDeletions.length > 0) {
+        return sendSuccessResponse(reply, 207, {
+          message: 'Some invoices were not deleted successfully',
+          results,
+          failedIds,
+        });
+      }
+
+      return sendSuccessResponse(reply, 200, {
+        message: 'All invoices deleted successfully',
+        results,
+      });
+    } catch (error) {
+      request.log.error(error);
+      return sendErrorResponse(reply, 500, error, 'Failed to delete invoices');
     }
   }
 }
