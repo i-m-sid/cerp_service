@@ -44,7 +44,6 @@ export class OrganizationMembershipService {
       userId,
       orgId,
     );
-    console.log(membership);
     return membership?.role;
   }
 }

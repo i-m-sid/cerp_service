@@ -73,7 +73,6 @@ export class InvoiceController {
         endDate ? new Date(endDate) : undefined,
         partyId,
       );
-      console.log(JSON.stringify(invoices, null, 2));
       return sendSuccessResponse(reply, 200, invoices);
     } catch (error) {
       request.log.error(error);

@@ -72,7 +72,6 @@ export class OrganizationMembershipRepository {
   }
 
   async findByUserIdAndOrgId(userId: string, orgId: string) {
-    console.log(userId, orgId);
     return this.prisma.organizationMembership.findFirst({
       where: {
         userId,

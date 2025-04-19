@@ -21,9 +21,6 @@ export class ChallanTemplateController {
     request: FastifyRequest<{ Body: ICreateChallanTemplate }>,
     reply: FastifyReply,
   ) {
-    console.log(request.body);
-    console.log(request.user);
-    console.log(request.user!.orgId);
     try {
       const template = await this.service.create(
         request.body,
@@ -33,7 +30,6 @@ export class ChallanTemplateController {
         template,
         request.user!.role as UserRole,
       );
-      console.log(JSON.stringify(filteredTemplate, null, 2));
       return sendSuccessResponse(reply, 201, filteredTemplate);
     } catch (error) {
       request.log.error(error);
@@ -84,7 +80,6 @@ export class ChallanTemplateController {
     }>,
     reply: FastifyReply,
   ) {
-    console.log(request.body);
     try {
       const template = await this.service.update({
         id: request.params.id,

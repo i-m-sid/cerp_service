@@ -17,6 +17,7 @@ export class OrganizationRepository {
   private transformToOrganizationWithRole(org: any): IOrganizationWithRole {
     return {
       id: org.id,
+      orgName: org.orgName,
       legalName: org.legalName,
       tradeName: org.tradeName ?? undefined,
       gstNumber: org.gstNumber ?? undefined,
@@ -33,6 +34,7 @@ export class OrganizationRepository {
   async create(data: ICreateOrganization): Promise<IOrganizationWithRole> {
     const org = await this.prisma.organization.create({
       data: {
+        orgName: data.orgName,
         legalName: data.legalName,
         tradeName: data.tradeName,
         gstNumber: data.gstNumber,
@@ -140,6 +142,7 @@ export class OrganizationRepository {
     const org = await this.prisma.organization.update({
       where: { id: data.id },
       data: {
+        orgName: data.orgName,
         legalName: data.legalName,
         tradeName: data.tradeName,
         gstNumber: data.gstNumber,

@@ -93,6 +93,7 @@ export class InvoiceRepository {
 
     const createData = {
       invoiceNumber: data.invoiceNumber,
+      poNumber: data.poNumber,
       date: data.date,
       invoiceType: data.invoiceType,
       transactionType: data.transactionType,
@@ -103,7 +104,10 @@ export class InvoiceRepository {
       lineItems: this.objectToJson(calculatedLineItems),
       notes: data.notes,
       termsAndConditions: data.termsAndConditions,
-      ...totals, // Add all calculated totals
+      ...totals,
+      challanTemplate: {
+        connect: { id: data.challanTemplateId },
+      },
       party: {
         connect: { id: data.partyId },
       },
@@ -255,6 +259,7 @@ export class InvoiceRepository {
               updateItem.fixedDiscount ?? existingItem.fixedDiscount,
             percentageDiscount:
               updateItem.percentageDiscount ?? existingItem.percentageDiscount,
+            challanIds: updateItem.challanIds ?? existingItem.challanIds,
           },
           includeTax,
         );
@@ -269,6 +274,7 @@ export class InvoiceRepository {
 
     const updateData = {
       invoiceNumber: updateFields.invoiceNumber,
+      poNumber: updateFields.poNumber,
       date: updateFields.date,
       invoiceType: updateFields.invoiceType,
       transactionType: updateFields.transactionType,
@@ -278,6 +284,11 @@ export class InvoiceRepository {
       termsAndConditions: updateFields.termsAndConditions,
       ...totals, // Add calculated totals if line items were updated
       lineItems: lineItems ? this.objectToJson(lineItems) : undefined,
+      ...(updateFields.challanTemplateId && {
+        challanTemplate: {
+          connect: { id: updateFields.challanTemplateId },
+        },
+      }),
       ...(updateFields.partyId && {
         party: {
           connect: { id: updateFields.partyId },

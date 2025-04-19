@@ -73,9 +73,6 @@ export class PartyTypeController {
     reply: FastifyReply,
   ) {
     try {
-      console.log('request.body', request.body);
-      console.log('request.params', request.params);
-      console.log('request.user', request.user);
       const partyType = await this.service.update({
         id: request.params.id,
         ...request.body,

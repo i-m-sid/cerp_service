@@ -40,7 +40,6 @@ export class OrganizationController {
   }
 
   async findAll(request: FastifyRequest, reply: FastifyReply) {
-    console.log('body', request.body);
     try {
       if (!request.user?.userId) {
         return sendErrorResponse(reply, 401, null, 'User not authenticated');

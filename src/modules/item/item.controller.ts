@@ -35,7 +35,6 @@ export class ItemController {
   ) {
     try {
       const { categoryId } = request.query;
-      console.log('categoryId', categoryId);
 
       let items;
       if (categoryId) {
@@ -46,7 +45,6 @@ export class ItemController {
       } else {
         items = await this.service.findAll(request.user!.orgId!);
       }
-      console.log('items', items);
 
       return sendSuccessResponse(reply, 200, items);
     } catch (error) {

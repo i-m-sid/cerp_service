@@ -1,4 +1,5 @@
-import { InvoiceType, TransactionType } from '@prisma/client';
+import { InvoiceType, TransactionType, } from '@prisma/client';
+import { IChallan } from '../challan/challan.interface';
 
 export interface ICreateLineItem {
   itemId: string;
@@ -13,10 +14,13 @@ export interface ICreateLineItem {
   igstPercentage?: number;
   fixedDiscount?: number;
   percentageDiscount?: number;
+  challanIds: string[];
 }
 
 export interface ICreateInvoice {
+  challanTemplateId: string;
   invoiceNumber: string;
+  poNumber?: string;
   date: Date;
   partyId: string;
   orgDetails: IOrgDetails;
@@ -74,4 +78,13 @@ export interface IBulkUpdateInvoices {
 
 export interface IBulkDeleteInvoices {
   ids: string[];
+}
+
+export interface ILineItemChallan {
+  rate?: number;
+  quantity?: number;
+  cgstPercentage?: number;
+  sgstPercentage?: number;
+  igstPercentage?: number;
+  challans: IChallan[];
 }

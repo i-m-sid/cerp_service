@@ -86,7 +86,6 @@ export class PartyController {
     }>,
     reply: FastifyReply,
   ) {
-    console.log(request.body);
     try {
       const party = await this.service.update({
         id: request.params.id,

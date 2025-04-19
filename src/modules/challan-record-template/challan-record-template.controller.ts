@@ -20,7 +20,6 @@ export class ChallanRecordTemplateController {
     reply: FastifyReply,
   ) {
     try {
-      console.log(request.body);
       const recordTemplate = await this.service.create(request.body);
       return sendSuccessResponse(reply, 201, recordTemplate);
     } catch (error) {
@@ -98,7 +97,6 @@ export class ChallanRecordTemplateController {
     reply: FastifyReply,
   ) {
     try {
-      console.log(request.body);
       const updatedRecordTemplate = await this.service.update({
         id: request.params.id,
         ...request.body,
@@ -106,7 +104,6 @@ export class ChallanRecordTemplateController {
       if (!updatedRecordTemplate) {
         return sendErrorResponse(reply, 404, null, 'Record template not found');
       }
-      console.log(updatedRecordTemplate);
       return sendSuccessResponse(reply, 200, updatedRecordTemplate);
     } catch (error) {
       request.log.error(error);

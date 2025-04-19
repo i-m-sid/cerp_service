@@ -94,6 +94,10 @@ export class ChallanService {
     return this.repository.findById(id);
   }
 
+  async findManyByIds(ids: string[]) {
+    return this.repository.findManyByIds(ids);
+  }
+
   async findByTemplateId(templateId: string) {
     return this.repository.findByTemplateId(templateId);
   }
@@ -145,6 +149,7 @@ export class ChallanService {
   }
 
   async bulkUpdate(data: IBulkUpdateChallans) {
+    console.log('bulkUpdate', data);
     const { challans } = data;
 
     if (!challans || !Array.isArray(challans) || challans.length === 0) {

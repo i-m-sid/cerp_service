@@ -21,6 +21,7 @@ model User {
 
 model Organization {
   id                   String   @id @default(cuid())
+  orgName              String   
   gstNumber            String?        
   legalName            String
   tradeName            String?
@@ -71,6 +72,7 @@ model Party {
   organization   Organization  @relation(fields: [orgId], references: [id])
 
   @@unique([orgId, gstNumber])
+  @@index([orgId])
 }
 
 model PartyType {
@@ -94,11 +96,14 @@ model ChallanTemplate {
   challans              Challan[]
   fieldSchema           ChallanTemplateField[]
   recordTemplates       ChallanRecordTemplate[]
+  invoices              Invoice[]
   transactionType       TransactionType?
   allowedStatuses       ChallanStatus[]        @relation("ChallanTemplateChallanStatus")
   allowedPartyTypes     PartyType[]            @relation("ChallanTemplatePartyType")
   allowedItemCategories ItemCategory[]         @relation("ChallanTemplateItemCategory")
   organization          Organization           @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
 }
 
 model ChallanTemplateField {
@@ -146,6 +151,8 @@ model Item {
   orgId        String
   category    ItemCategory @relation(fields: [categoryId], references: [id])
   organization   Organization  @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
 }
 
 model Challan {
@@ -160,7 +167,9 @@ model Challan {
   updatedAt     DateTime        @updatedAt
   status        ChallanStatus   @relation(fields: [statusId], references: [id])
   template      ChallanTemplate @relation(fields: [templateId], references: [id])
-  invoice       Invoice?         @relation(fields: [invoiceId], references: [id])
+  invoice       Invoice?        @relation(fields: [invoiceId], references: [id])
+
+  @@index([templateId])
 }
 
 model ChallanRecordTemplate {
@@ -193,7 +202,7 @@ model UnitOfMeasurement {
 
 model Vehicle {
   id                         String    @id @default(cuid())
-  vehicleNumber              String    @unique
+  vehicleNumber              String
   type                       String
   registeredAt               DateTime?
   isActive                   Boolean   @default(true)
@@ -206,13 +215,18 @@ model Vehicle {
   orgId                      String
   owner                      Party? @relation(fields: [ownerId], references: [id])
   organization               Organization  @relation(fields: [orgId], references: [id])
+
+  @@unique([orgId, vehicleNumber])
+  @@index([orgId])
 }
 
 model Invoice {
   id                         String    @id @default(cuid())
-  invoiceNumber              String    @unique
+  challanTemplateId          String    
+  invoiceNumber              String
   date                       DateTime
   partyId                    String
+  poNumber                   String?
   orgDetails                 Json
   partyDetails               Json
   invoiceType                InvoiceType
@@ -235,6 +249,7 @@ model Invoice {
   challans                   Challan[]
   party                      Party? @relation(fields: [partyId], references: [id])
   organization               Organization  @relation(fields: [orgId], references: [id])
+  challanTemplate            ChallanTemplate @relation(fields: [challanTemplateId], references: [id])
 }
 
 enum FieldType {

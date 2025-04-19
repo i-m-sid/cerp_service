@@ -48,7 +48,6 @@ export class OrganizationMembershipController {
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
       // Get organization ID from request user (set by middleware)
-      console.log(request.user);
       const orgId = request.user?.orgId;
       if (!orgId) {
         return sendErrorResponse(
@@ -60,7 +59,6 @@ export class OrganizationMembershipController {
       }
 
       const memberships = await this.service.findAll(orgId);
-      console.log(memberships);
       return sendSuccessResponse(reply, 200, memberships);
     } catch (error) {
       return sendErrorResponse(

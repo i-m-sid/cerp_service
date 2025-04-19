@@ -31,10 +31,6 @@ export class OrganizationService {
   }
 
   async update(data: IUpdateOrganization, userId: string) {
-    const org = await this.repository.findById(data.id);
-    if (!org) {
-      throw new Error('Organization not found');
-    }
     return this.repository.update(data, userId);
   }
 

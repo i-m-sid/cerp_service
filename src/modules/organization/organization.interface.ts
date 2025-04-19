@@ -2,6 +2,7 @@ import { UserRole } from '@prisma/client';
 import { IAddress } from '../party/party.interface';
 
 export interface ICreateOrganization {
+  orgName: string;
   legalName: string;
   tradeName?: string;
   gstNumber?: string;
@@ -15,6 +16,7 @@ export interface ICreateOrganization {
 
 export interface IUpdateOrganization {
   id: string;
+  orgName?: string;
   legalName?: string;
   tradeName?: string;
   gstNumber?: string;
@@ -38,6 +40,7 @@ export interface IUpdateOrganizationMembership {
 
 export interface IOrganizationWithRole {
   id: string;
+  orgName: string;
   legalName: string;
   tradeName?: string;
   gstNumber?: string;

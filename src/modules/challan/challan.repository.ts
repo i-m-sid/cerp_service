@@ -103,6 +103,20 @@ export class ChallanRepository {
     };
   }
 
+  async findManyByIds(ids: string[]) {
+    const results = await this.prisma.challan.findMany({
+      where: { id: { in: ids } },
+      include: {
+        status: true,
+        template: true,
+      },
+    });
+    return results.map((result) => ({
+      ...result,
+      customFields: this.jsonToObject(result.customFields), // Use new helper
+    }));
+  }
+
   async findByTemplateId(templateId: string) {
     const results = await this.prisma.challan.findMany({
       where: { templateId },

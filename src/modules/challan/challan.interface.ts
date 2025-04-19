@@ -13,6 +13,12 @@ export interface ICreateChallan {
   customFields: Record<string, ICustomField>;
 }
 
+export interface IChallan extends ICreateChallan {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface IUpdateChallan extends Partial<ICreateChallan> {
   id: string;
 }

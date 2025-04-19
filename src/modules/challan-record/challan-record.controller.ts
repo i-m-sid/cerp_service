@@ -27,9 +27,6 @@ export class ChallanRecordController {
     const { id: recordTemplateId } = request.params;
     const { startDate, endDate, partyId } = request.query;
 
-    console.log('Getting challans for record template:', recordTemplateId);
-    console.log('Filters:', { startDate, endDate, partyId });
-
     try {
       const result = await this.service.getChallansByRecordTemplate(
         recordTemplateId,
@@ -40,7 +37,6 @@ export class ChallanRecordController {
           partyId,
         },
       );
-      console.log('Found record template with challans:', result);
       reply.send(result);
     } catch (error) {
       console.error('Error in getChallansByRecordTemplate:', error);
