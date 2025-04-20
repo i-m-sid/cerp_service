@@ -28,8 +28,7 @@ model Organization {
   phoneNumber          String?
   email                String?
   address              Json?
-  notes                String?
-  termsAndConditions   String?
+  config               Json?
   createdAt   DateTime @default(now())
 
   members     OrganizationMembership[]
@@ -268,10 +267,10 @@ enum TransactionType {
 }
 
 enum InvoiceType {
-  TAX_INVOICE
-  PRO_FORMA_INVOICE
+  INVOICE
+  PRO_FORMA
   QUOTE
-  SALES_ORDER
+  ORDER
 }
 
 enum UserRole {

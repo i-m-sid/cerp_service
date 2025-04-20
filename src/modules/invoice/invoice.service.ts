@@ -11,17 +11,24 @@ import {
 import { InvoiceRepository } from './invoice.repository';
 import { InvoiceType, TransactionType, PrismaClient } from '@prisma/client';
 import { IUpdateChallan } from '../challan/challan.interface';
+import { OrganizationService } from '../organization/organization.service';
+import {
+  getInvoiceConfigCurrentNumber,
+  getInvoiceNumericPart,
+  updateInvoiceConfigCurrentNumber,
+} from './invoice.utils';
 export class InvoiceService {
   private repository: InvoiceRepository;
   private prisma: PrismaClient;
   private challanTemplateService: ChallanTemplateService;
   private challanService: ChallanService;
-
+  private organizationService: OrganizationService;
   constructor() {
     this.repository = new InvoiceRepository();
     this.prisma = new PrismaClient();
     this.challanTemplateService = new ChallanTemplateService();
     this.challanService = new ChallanService();
+    this.organizationService = new OrganizationService();
   }
 
   async create(data: ICreateInvoice) {
@@ -29,9 +36,16 @@ export class InvoiceService {
       await this.updateChallansByLineItems(
         data.challanTemplateId,
         data.orgId,
+        data.invoiceType ?? InvoiceType.INVOICE,
         data.lineItems,
       );
-      return await this.repository.create(data);
+      const invoice = await this.repository.create(data);
+      await this.updateInvoiceConfig(
+        invoice.invoiceNumber,
+        invoice.invoiceType,
+        invoice.orgId,
+      );
+      return invoice;
     } catch (error) {
       // Rethrow the error to be handled by the controller
       throw error;
@@ -66,9 +80,16 @@ export class InvoiceService {
     await this.updateChallansByLineItems(
       data.challanTemplateId ?? '',
       data.orgId,
+      data.invoiceType ?? InvoiceType.INVOICE,
       data.lineItems ?? [],
     );
-    return this.repository.update(data);
+    const invoice = await this.repository.update(data);
+    await this.updateInvoiceConfig(
+      invoice.invoiceNumber,
+      invoice.invoiceType,
+      invoice.orgId,
+    );
+    return invoice;
   }
 
   async bulkUpdate(data: IBulkUpdateInvoices) {
@@ -82,9 +103,16 @@ export class InvoiceService {
   }
 
   async delete(id: string, orgId: string) {
+    const invoice = await this.repository.findById(id, orgId);
+    if (invoice?.challans) {
+      await this.resetChallanStatus(
+        invoice.challanTemplateId,
+        orgId,
+        invoice.challans.map((challan) => challan.id),
+      );
+    }
     return this.repository.delete(id, orgId);
   }
-
   async findByTransactionType(transactionType: TransactionType, orgId: string) {
     return this.repository.findByTransactionType(transactionType, orgId);
   }
@@ -102,12 +130,81 @@ export class InvoiceService {
   }
 
   async bulkDelete(ids: string[], orgId: string) {
+    for (const id of ids) {
+      const invoice = await this.repository.findById(id, orgId);
+      if (invoice?.challans) {
+        await this.resetChallanStatus(
+          invoice.challanTemplateId,
+          orgId,
+          invoice.challans.map((challan) => challan.id),
+        );
+      }
+    }
     return this.repository.bulkDelete(ids, orgId);
+  }
+
+  async resetChallanStatus(
+    challanTemplateId: string,
+    orgId: string,
+    challanIds: string[],
+  ) {
+    const challans = await this.challanService.findManyByIds(challanIds);
+    const org = await this.organizationService.findById(orgId);
+    const statusId = org?.config?.challanDefaultStatus?.[challanTemplateId];
+    console.log('statusId', statusId);
+    for (const challan of challans) {
+      if (statusId) {
+        challan.statusId = statusId;
+      }
+    }
+    if (challans.length > 0) {
+      await this.challanService.bulkUpdate({
+        challans: challans as IUpdateChallan[],
+      });
+    }
+  }
+
+  async updateInvoiceConfig(
+    invoiceNumber: string,
+    invoiceType: InvoiceType,
+    orgId: string,
+  ) {
+    try {
+      const org = await this.organizationService.findById(orgId);
+      if (org?.config) {
+        const documentNumber = getInvoiceNumericPart(
+          invoiceNumber,
+          invoiceType,
+          org?.config,
+        );
+        if (documentNumber) {
+          const currentNumber = getInvoiceConfigCurrentNumber(
+            invoiceType,
+            org?.config,
+          );
+          const updatedConfig = updateInvoiceConfigCurrentNumber(
+            invoiceType,
+            Math.max(
+              parseInt(currentNumber),
+              parseInt(documentNumber),
+            ).toString(),
+            org?.config!,
+          );
+          await this.organizationService.update(
+            { id: orgId, config: updatedConfig },
+            orgId,
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error updating invoice config:', error);
+    }
   }
 
   async updateChallansByLineItems(
     challanTemplateId: string,
     orgId: string,
+    invoiceType: InvoiceType,
     lineItems: ICreateLineItem[] | IUpdateLineItem[],
   ) {
     try {
@@ -115,6 +212,11 @@ export class InvoiceService {
         challanTemplateId,
         orgId,
       );
+      const org = await this.organizationService.findById(orgId);
+      const statusId =
+        org?.config?.invoiceTypeToChallanStatus?.[challanTemplateId]?.[
+          invoiceType
+        ];
       const fieldSchema = challanTemplate?.fieldSchema;
       if (fieldSchema) {
         const rateField = fieldSchema!.find(
@@ -151,6 +253,15 @@ export class InvoiceService {
         for (const lineItemChallan of lineItemChallans) {
           for (const challan of lineItemChallan.challans) {
             if (challan && challan.customFields) {
+              if (
+                invoiceType == InvoiceType.INVOICE ||
+                invoiceType == InvoiceType.PRO_FORMA
+              ) {
+                if (statusId) {
+                  challan.statusId = statusId;
+                }
+              }
+
               if (rateField && lineItemChallan.rate) {
                 challan.customFields[rateField!.id] = {
                   ...challan.customFields[rateField!.id],

@@ -1,3 +1,5 @@
+import { InvoiceType, TransactionType } from '@prisma/client';
+import { IDocumentConfig, IOrganizationConfig } from '../organization/organization.interface';
 import { ICreateLineItem, ILineItem } from './invoice.interface';
 
 export class InvoiceCalculator {
@@ -141,3 +143,109 @@ export class InvoiceCalculator {
     };
   }
 }
+
+function escapeRegex(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function extractNumber(
+  text: string,
+  prefix: string,
+  suffix: string,
+): string | null {
+  const escapedPrefix = escapeRegex(prefix);
+  const escapedSuffix = escapeRegex(suffix);
+  const re = new RegExp(`^${escapedPrefix}(\\d+)${escapedSuffix}$`);
+  const match = re.exec(text);
+  return match ? match[1] : null;
+}
+
+export function getInvoiceNumericPart(
+  documentNumber: string,
+  invoiceType: InvoiceType,
+  organizationConfig?: IOrganizationConfig,
+): string | null {
+  switch (invoiceType) {
+    case InvoiceType.INVOICE:
+      return organizationConfig?.invoice
+        ? extractNumber(documentNumber, organizationConfig.invoice.prefix, organizationConfig.invoice.suffix)
+        : null;
+
+    case InvoiceType.PRO_FORMA:
+      return organizationConfig?.proForma
+        ? extractNumber(documentNumber, organizationConfig.proForma.prefix, organizationConfig.proForma.suffix)
+        : null;
+
+    case InvoiceType.QUOTE:
+      return organizationConfig?.quote
+        ? extractNumber(documentNumber, organizationConfig.quote.prefix, organizationConfig.quote.suffix)
+        : null;
+
+    case InvoiceType.ORDER:
+      return organizationConfig?.purchaseOrder
+        ? extractNumber(documentNumber, organizationConfig.purchaseOrder.prefix, organizationConfig.purchaseOrder.suffix)
+        : null;
+
+    default:
+      return null;
+  }
+}
+
+export function getInvoiceConfigCurrentNumber(
+  invoiceType: InvoiceType,
+  organizationConfig?: IOrganizationConfig,
+): string {
+  switch (invoiceType) {
+    case InvoiceType.INVOICE:
+      return organizationConfig?.invoice?.currentNumber ?? '0';
+    case InvoiceType.PRO_FORMA:
+      return organizationConfig?.proForma?.currentNumber ?? '0';
+    case InvoiceType.QUOTE:
+      return organizationConfig?.quote?.currentNumber ?? '0';
+    case InvoiceType.ORDER:
+      return organizationConfig?.purchaseOrder?.currentNumber ?? '0';
+    default:
+      return '0';
+  }
+}
+
+export function updateInvoiceConfigCurrentNumber(
+  invoiceType: InvoiceType,
+  currentNumber: string,
+  organizationConfig: IOrganizationConfig,
+): IOrganizationConfig {
+  if (!organizationConfig) return organizationConfig;
+
+  switch (invoiceType) {
+    case InvoiceType.INVOICE:
+      return { ...organizationConfig, invoice: { ...organizationConfig.invoice!, currentNumber } };
+
+    case InvoiceType.PRO_FORMA:
+      return { ...organizationConfig, proForma: { ...organizationConfig.proForma!, currentNumber } };
+
+    case InvoiceType.QUOTE:
+      return { ...organizationConfig, quote: { ...organizationConfig.quote!, currentNumber } };
+
+    case InvoiceType.ORDER:
+      return { ...organizationConfig, purchaseOrder: { ...organizationConfig.purchaseOrder!, currentNumber } };
+
+    default:
+      return organizationConfig;
+  }
+}
+
+export function shouldUpdateInvoiceConfigCurrentNumber(
+  transactionType: TransactionType,
+  invoiceType: InvoiceType,
+): boolean {
+  return (
+    (transactionType === TransactionType.SALES &&
+      (invoiceType === InvoiceType.INVOICE ||
+        invoiceType === InvoiceType.PRO_FORMA ||
+        invoiceType === InvoiceType.QUOTE)) ||
+    (transactionType === TransactionType.PURCHASE &&
+      invoiceType === InvoiceType.ORDER)
+  );
+}
+
+

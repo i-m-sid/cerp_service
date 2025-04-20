@@ -26,8 +26,7 @@ export class OrganizationRepository {
       address: org.address as any,
       createdAt: org.createdAt,
       role: org.members[0].role,
-      notes: org.notes ?? undefined,
-      termsAndConditions: org.termsAndConditions ?? undefined,
+      config: (org.config as any) ?? undefined,
     };
   }
 
@@ -39,11 +38,12 @@ export class OrganizationRepository {
         tradeName: data.tradeName,
         gstNumber: data.gstNumber,
         phoneNumber: data.phoneNumber,
-        notes: data.notes,
-        termsAndConditions: data.termsAndConditions,
         email: data.email,
         address: data.address
           ? (data.address as unknown as Prisma.JsonObject)
+          : Prisma.JsonNull,
+        config: data.config
+          ? (data.config as unknown as Prisma.JsonObject)
           : Prisma.JsonNull,
         members: {
           create: {
@@ -90,9 +90,7 @@ export class OrganizationRepository {
     );
   }
 
-  async findById(
-    id: string
-  ): Promise<IOrganizationWithRole | null> {
+  async findById(id: string): Promise<IOrganizationWithRole | null> {
     const org = await this.prisma.organization.findFirst({
       where: {
         id,
@@ -147,12 +145,13 @@ export class OrganizationRepository {
         tradeName: data.tradeName,
         gstNumber: data.gstNumber,
         phoneNumber: data.phoneNumber,
-        notes: data.notes,
-        termsAndConditions: data.termsAndConditions,
         email: data.email,
         address: data.address
           ? (data.address as unknown as Prisma.JsonObject)
           : Prisma.JsonNull,
+        config: data.config
+          ? (data.config as unknown as Prisma.JsonObject)
+          : undefined,
       },
       include: {
         members: {
