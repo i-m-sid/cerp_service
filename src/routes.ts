@@ -3,7 +3,6 @@ import { authRoutes } from './modules/auth/auth.routes';
 import { challanTemplateRoutes } from './modules/challan-template/challan-template.routes';
 import { challanRoutes } from './modules/challan/challan.routes';
 import { challanStatusRoutes } from './modules/challan-status/challan-status.routes';
-import { challanRecordTemplateRoutes } from './modules/challan-record-template/challan-record-template.routes';
 import { vehicleRoutes } from './modules/vehicle/vehicle.routes';
 import { uomRoutes } from './modules/uom/uom.routes';
 import { itemCategoryRoutes } from './modules/item-category/item-category.routes';
@@ -11,10 +10,10 @@ import { itemRoutes } from './modules/item/item.routes';
 import { partyTypeRoutes } from './modules/party-type/party-type.routes';
 import { partyRoutes } from './modules/party/party.routes';
 import { referenceRoutes } from './modules/reference/reference.routes';
-import { challanRecordRoutes } from './modules/challan-record/challan-record.routes';
 import { invoiceRoutes } from './modules/invoice/invoice.routes';
 import { organizationRoutes } from './modules/organization/organization.routes';
 import { organizationMembershipRoutes } from './modules/organization-membership/organization-membership.routes';
+import { stateCodeRoutes } from './modules/state-code/state-code.routes';
 
 export async function registerRoutes(fastify: FastifyInstance) {
   // Organization routes
@@ -37,11 +36,6 @@ export async function registerRoutes(fastify: FastifyInstance) {
   // Challan Status routes
   fastify.register(challanStatusRoutes, { prefix: '/api/challan-status' });
 
-  // Challan Record Template routes
-  fastify.register(challanRecordTemplateRoutes, {
-    prefix: '/api/challan-record-template',
-  });
-
   // Vehicle routes
   fastify.register(vehicleRoutes, { prefix: '/api/vehicle' });
 
@@ -63,9 +57,9 @@ export async function registerRoutes(fastify: FastifyInstance) {
   // Reference routes
   fastify.register(referenceRoutes, { prefix: '/api/reference' });
 
-  // Challan Record routes
-  fastify.register(challanRecordRoutes, { prefix: '/api/challan-record' });
-
   // Invoice routes
   fastify.register(invoiceRoutes, { prefix: '/api/invoice' });
+
+  // State Code routes
+  fastify.register(stateCodeRoutes, { prefix: '/api/state-code' });
 }

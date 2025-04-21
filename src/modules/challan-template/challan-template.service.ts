@@ -1,4 +1,4 @@
-import { UserRole } from '@prisma/client';
+import { TransactionType, UserRole } from '@prisma/client';
 import {
   ICreateChallanTemplate,
   IUpdateChallanTemplate,
@@ -14,14 +14,15 @@ export class ChallanTemplateService {
 
   async create(data: ICreateChallanTemplate, orgId: string) {
     data.fieldSchema.forEach((field) => {
-      field.allowedRoles.push(UserRole.OWNER);
-      field.allowedRoles = [...new Set(field.allowedRoles)];
+      if (!field.accessLevel) {
+        field.accessLevel = UserRole.OWNER;
+      }
     });
     return this.repository.create(data, orgId);
   }
 
-  async findAll(orgId: string) {
-    return this.repository.findAll(orgId);
+  async findAll(orgId: string, transactionType?: TransactionType) {
+    return this.repository.findAll(orgId, transactionType);
   }
 
   async findById(id: string, orgId: string) {
@@ -32,8 +33,9 @@ export class ChallanTemplateService {
     const { allowedPartyTypes, allowedItemCategories } = data;
     if (data.fieldSchema) {
       data.fieldSchema.forEach((field) => {
-        field.allowedRoles.push(UserRole.OWNER);
-        field.allowedRoles = [...new Set(field.allowedRoles)];
+        if (!field.accessLevel) {
+          field.accessLevel = UserRole.OWNER;
+        }
       });
     }
 

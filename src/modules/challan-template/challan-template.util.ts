@@ -1,5 +1,5 @@
 import { ChallanTemplate, UserRole } from '@prisma/client';
-
+import { isUserRoleAccessible } from '../../utils/utils';
 /**
  * Filters the fieldSchema of a challan template based on user role
  * @param template The challan template to filter
@@ -19,7 +19,7 @@ export function filterTemplateFieldsByRole(
   const filteredTemplate = {
     ...template,
     fieldSchema: template.fieldSchema.filter((field) =>
-      field.allowedRoles.includes(userRole),
+      isUserRoleAccessible(userRole, field.accessLevel),
     ),
   };
 

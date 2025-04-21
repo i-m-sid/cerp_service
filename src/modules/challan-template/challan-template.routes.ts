@@ -5,6 +5,7 @@ import {
   IUpdateChallanTemplate,
 } from './challan-template.interface';
 import { authMiddleware } from '../../middleware/auth.middleware';
+import { TransactionType } from '@prisma/client';
 
 export async function challanTemplateRoutes(fastify: FastifyInstance) {
   const controller = new ChallanTemplateController();
@@ -23,7 +24,7 @@ export async function challanTemplateRoutes(fastify: FastifyInstance) {
     method: 'GET',
     url: '',
     preHandler: [authMiddleware],
-    handler: async (req: FastifyRequest, reply: FastifyReply) =>
+    handler: async (req: FastifyRequest<{ Querystring: { transactionType?: TransactionType } }>, reply: FastifyReply) =>
       controller.findAll(req, reply),
   });
 

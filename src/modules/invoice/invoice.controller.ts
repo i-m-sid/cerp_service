@@ -33,10 +33,13 @@ export class InvoiceController {
         );
       }
 
-      const invoice = await this.service.create({
-        ...request.body,
-        orgId: request.user.orgId,
-      });
+      const invoice = await this.service.create(
+        {
+          ...request.body,
+          orgId: request.user.orgId,
+        },
+        request.user.userId,
+      );
       return sendSuccessResponse(reply, 201, invoice);
     } catch (error) {
       request.log.error(error);
@@ -48,6 +51,7 @@ export class InvoiceController {
     request: FastifyRequest<{
       Querystring: {
         transactionType?: string;
+        invoiceType?: string;
         startDate?: string;
         endDate?: string;
         partyId?: string;
@@ -65,10 +69,12 @@ export class InvoiceController {
         );
       }
 
-      const { transactionType, startDate, endDate, partyId } = request.query;
+      const { transactionType, invoiceType, startDate, endDate, partyId } =
+        request.query;
       const invoices = await this.service.findAll(
         request.user.orgId,
         transactionType as TransactionType | undefined,
+        invoiceType as InvoiceType | undefined,
         startDate ? new Date(startDate) : undefined,
         endDate ? new Date(endDate) : undefined,
         partyId,
@@ -155,11 +161,14 @@ export class InvoiceController {
         );
       }
 
-      const invoice = await this.service.update({
-        ...request.body,
-        id: request.params.id,
-        orgId: request.user.orgId,
-      });
+      const invoice = await this.service.update(
+        {
+          ...request.body,
+          id: request.params.id,
+          orgId: request.user.orgId,
+        },
+        request.user.userId,
+      );
       return sendSuccessResponse(reply, 200, invoice);
     } catch (error) {
       request.log.error(error);

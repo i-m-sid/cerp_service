@@ -31,7 +31,7 @@ export class InvoiceService {
     this.organizationService = new OrganizationService();
   }
 
-  async create(data: ICreateInvoice) {
+  async create(data: ICreateInvoice, userId: string) {
     try {
       await this.updateChallansByLineItems(
         data.challanTemplateId,
@@ -44,6 +44,7 @@ export class InvoiceService {
         invoice.invoiceNumber,
         invoice.invoiceType,
         invoice.orgId,
+        userId,
       );
       return invoice;
     } catch (error) {
@@ -55,6 +56,7 @@ export class InvoiceService {
   async findAll(
     orgId: string,
     transactionType?: TransactionType,
+    invoiceType?: InvoiceType,
     startDate?: Date,
     endDate?: Date,
     partyId?: string,
@@ -62,6 +64,7 @@ export class InvoiceService {
     return this.repository.findAll(
       orgId,
       transactionType,
+      invoiceType,
       startDate,
       endDate,
       partyId,
@@ -76,7 +79,7 @@ export class InvoiceService {
     return this.repository.findByPartyId(partyId, orgId);
   }
 
-  async update(data: IUpdateInvoice) {
+  async update(data: IUpdateInvoice, userId: string) {
     await this.updateChallansByLineItems(
       data.challanTemplateId ?? '',
       data.orgId,
@@ -88,6 +91,7 @@ export class InvoiceService {
       invoice.invoiceNumber,
       invoice.invoiceType,
       invoice.orgId,
+      userId,
     );
     return invoice;
   }
@@ -151,7 +155,6 @@ export class InvoiceService {
     const challans = await this.challanService.findManyByIds(challanIds);
     const org = await this.organizationService.findById(orgId);
     const statusId = org?.config?.challanDefaultStatus?.[challanTemplateId];
-    console.log('statusId', statusId);
     for (const challan of challans) {
       if (statusId) {
         challan.statusId = statusId;
@@ -168,6 +171,7 @@ export class InvoiceService {
     invoiceNumber: string,
     invoiceType: InvoiceType,
     orgId: string,
+    userId: string,
   ) {
     try {
       const org = await this.organizationService.findById(orgId);
@@ -192,7 +196,7 @@ export class InvoiceService {
           );
           await this.organizationService.update(
             { id: orgId, config: updatedConfig },
-            orgId,
+            userId,
           );
         }
       }
@@ -231,9 +235,6 @@ export class InvoiceService {
         const igstPercentageField = fieldSchema!.find(
           (field) => field.invoiceField === 'igst',
         );
-
-        console.log('cgstPercentageField', cgstPercentageField);
-        console.log('igstPercentageField', igstPercentageField);
 
         const lineItemChallans: ILineItemChallan[] = [];
 

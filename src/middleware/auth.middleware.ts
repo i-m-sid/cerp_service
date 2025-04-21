@@ -2,6 +2,8 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { AuthService } from '../modules/auth/auth.service';
 import { sendErrorResponse } from '../utils/response-handler';
 import { OrganizationMembershipService } from '../modules/organization-membership/organization-membership.service';
+import { UserRole } from '@prisma/client';
+import { isUserRoleAccessible } from '../utils/utils';
 
 const authService = new AuthService();
 const organizationMembershipService = new OrganizationMembershipService();
@@ -11,7 +13,7 @@ declare module 'fastify' {
     user?: {
       userId: string;
       email: string;
-      role?: string;
+      role?: UserRole;
       orgId?: string;
     };
   }
@@ -51,7 +53,7 @@ export async function authMiddleware(
           orgId,
           decoded.userId,
         );
-        request.user.role = role;
+        request.user.role = role as UserRole;
         request.user.orgId = orgId;
       } catch (error) {
         // If user is not a member, don't attach role or orgId
@@ -77,7 +79,7 @@ export async function authMiddleware(
 }
 
 // Middleware to check if user has required role
-export function requireRole(allowedRoles: string[]) {
+export function requireRole(accessLevel: UserRole) {
   return async function roleMiddleware(
     request: FastifyRequest,
     reply: FastifyReply,
@@ -98,7 +100,7 @@ export function requireRole(allowedRoles: string[]) {
       );
     }
 
-    if (!allowedRoles.includes(userRole)) {
+    if (!isUserRoleAccessible(userRole, accessLevel)) {
       return sendErrorResponse(
         reply,
         403,

@@ -46,7 +46,6 @@ export class OrganizationController {
       }
 
       const organizations = await this.service.findAll(request.user.userId);
-      console.log('organizations', organizations);
       return sendSuccessResponse(reply, 200, organizations);
     } catch (error) {
       request.log.error(error);
@@ -88,7 +87,6 @@ export class OrganizationController {
     reply: FastifyReply,
   ) {
     try {
-      console.log('request.body', JSON.stringify(request.body, null, 2));
       const org = await this.service.update(
         {
           id: request.params.orgId,
@@ -96,7 +94,6 @@ export class OrganizationController {
         },
         request.user!.userId,
       );
-      console.log('org', JSON.stringify(org, null, 2));
       return sendSuccessResponse(reply, 200, org);
     } catch (error) {
       request.log.error(error);

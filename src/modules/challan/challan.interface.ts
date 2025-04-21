@@ -35,3 +35,9 @@ export interface IInternalCreateChallan extends ICreateChallan {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface IChallanFilter {
+  startDate?: Date;
+  endDate?: Date;
+  partyId?: string;
+}

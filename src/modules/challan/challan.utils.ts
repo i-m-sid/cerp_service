@@ -1,5 +1,5 @@
 import { ICustomField } from './challan.interface';
-import { ChallanTemplateField } from '@prisma/client';
+import { ChallanTemplateField, FieldType } from '@prisma/client';
 
 // Helper function to evaluate formula based on resolved dependencies
 export const evaluateFormula = (
@@ -120,7 +120,7 @@ export const evaluateFormulaFields = (
 
   // Ensure all fields have a value (default to 0 for numeric fields)
   fields.forEach((field) => {
-    if (!resultFields[field.id]) {
+    if (field.type === FieldType.NUMBER && !resultFields[field.id]) {
       resultFields[field.id] = { value: '0' };
     }
   });

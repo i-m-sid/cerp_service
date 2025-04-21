@@ -10,6 +10,7 @@ import {
   sendSuccessResponse,
   sendErrorResponse,
 } from '../../utils/response-handler';
+import { UserRole } from '@prisma/client';
 
 export class ChallanController {
   private service: ChallanService;
@@ -22,23 +23,12 @@ export class ChallanController {
     request: FastifyRequest<{ Body: ICreateChallan }>,
     reply: FastifyReply,
   ) {
-    console.log(request.body);
     try {
       const challan = await this.service.create(request.body);
       return sendSuccessResponse(reply, 201, challan);
     } catch (error) {
       request.log.error(error);
       return sendErrorResponse(reply, 500, error, 'Failed to create challan');
-    }
-  }
-
-  async findAll(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const challans = await this.service.findAll();
-      return sendSuccessResponse(reply, 200, challans);
-    } catch (error) {
-      request.log.error(error);
-      return sendErrorResponse(reply, 500, error, 'Failed to fetch challans');
     }
   }
 
@@ -58,23 +48,41 @@ export class ChallanController {
     }
   }
 
-  async findByTemplateId(
-    request: FastifyRequest<{ Params: { templateId: string } }>,
+  async getChallansByTemplateId(
+    request: FastifyRequest<{
+      Params: { templateId: string };
+      Querystring: {
+        startDate?: string;
+        endDate?: string;
+        partyId?: string;
+      };
+    }>,
     reply: FastifyReply,
-  ) {
+  ): Promise<void> {
+    const { templateId } = request.params;
+    const { startDate, endDate, partyId } = request.query;
+
     try {
-      const challans = await this.service.findByTemplateId(
-        request.params.templateId,
+      const result = await this.service.getChallansByTemplateId(
+        templateId,
+        request.user!.role as UserRole,
+        {
+          startDate: startDate ? new Date(startDate) : undefined,
+          endDate: endDate ? new Date(endDate) : undefined,
+          partyId,
+        },
       );
-      return sendSuccessResponse(reply, 200, challans);
+      reply.send(result);
     } catch (error) {
-      request.log.error(error);
-      return sendErrorResponse(
-        reply,
-        500,
-        error,
-        'Failed to fetch challans by template',
-      );
+      console.error('Error in getChallansByRecordTemplate:', error);
+      if (
+        error instanceof Error &&
+        error.message === 'Record template not found'
+      ) {
+        reply.code(404).send({ error: error.message });
+      } else {
+        reply.code(500).send({ error: 'Internal server error' });
+      }
     }
   }
 
@@ -105,7 +113,6 @@ export class ChallanController {
     request: FastifyRequest<{ Body: IBulkUpdateChallans }>,
     reply: FastifyReply,
   ) {
-    console.log(JSON.stringify(request.body, null, 2));
     try {
       const results = await this.service.bulkUpdate(request.body);
       console.log(results);
