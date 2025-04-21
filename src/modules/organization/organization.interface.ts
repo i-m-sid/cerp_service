@@ -13,6 +13,7 @@ export interface IOrganizationConfig {
   challanHistoryFieldOrder?: Record<string, string[]>;
   challanReportFieldOrder?: Record<string, string[]>;
   challanSummaryFieldOrder?: Record<string, string[]>;
+  challanSummationFields?: Record<string, string[]>;
   challanDefaultStatus?: Record<string, string>;
   invoiceTypeToChallanStatus?: Record<string, Record<InvoiceType, string>>;
   invoice?: IDocumentConfig;
