@@ -46,7 +46,6 @@ export class OrganizationController {
       }
 
       const organizations = await this.service.findAll(request.user.userId);
-      console.log('organizations', organizations);
       return sendSuccessResponse(reply, 200, organizations);
     } catch (error) {
       request.log.error(error);

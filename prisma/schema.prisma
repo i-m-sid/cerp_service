@@ -28,8 +28,7 @@ model Organization {
   phoneNumber          String?
   email                String?
   address              Json?
-  notes                String?
-  termsAndConditions   String?
+  config               Json?
   createdAt   DateTime @default(now())
 
   members     OrganizationMembership[]
@@ -95,9 +94,8 @@ model ChallanTemplate {
   updatedAt             DateTime               @updatedAt
   challans              Challan[]
   fieldSchema           ChallanTemplateField[]
-  recordTemplates       ChallanRecordTemplate[]
   invoices              Invoice[]
-  transactionType       TransactionType?
+  transactionType       TransactionType
   allowedStatuses       ChallanStatus[]        @relation("ChallanTemplateChallanStatus")
   allowedPartyTypes     PartyType[]            @relation("ChallanTemplatePartyType")
   allowedItemCategories ItemCategory[]         @relation("ChallanTemplateItemCategory")
@@ -117,7 +115,7 @@ model ChallanTemplateField {
   refId      String?
   invoiceField String?
   dependsOn  String[]
-  allowedRoles UserRole[]   @default([OWNER, ADMIN]) 
+  accessLevel UserRole   @default(OWNER) 
   flex       Int?
   row        Int?
   column     Int?
@@ -125,7 +123,6 @@ model ChallanTemplateField {
   isVisible  Boolean          @default(true)
   formula    String?
   template   ChallanTemplate @relation(fields: [templateId], references: [id])
-  recordTemplates ChallanRecordTemplate[] @relation("ChallanRecordTemplateChallanTemplateField")
 }
 
 model ItemCategory {
@@ -170,17 +167,6 @@ model Challan {
   invoice       Invoice?        @relation(fields: [invoiceId], references: [id])
 
   @@index([templateId])
-}
-
-model ChallanRecordTemplate {
-  id          String                 @id @default(cuid())
-  name        String
-  templateId  String
-  template    ChallanTemplate        @relation(fields: [templateId], references: [id])
-  fields      ChallanTemplateField[] @relation("ChallanRecordTemplateChallanTemplateField")
-  fieldOrder  String[]              // Store field IDs in order
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
 }
 
 model ChallanStatus {
@@ -268,10 +254,10 @@ enum TransactionType {
 }
 
 enum InvoiceType {
-  TAX_INVOICE
-  PRO_FORMA_INVOICE
+  INVOICE
+  PRO_FORMA
   QUOTE
-  SALES_ORDER
+  ORDER
 }
 
 enum UserRole {
@@ -280,11 +266,7 @@ enum UserRole {
   MANAGER         // Handles operational aspects like approving entries
   ACCOUNTANT      // Manages invoices, ledgers, and finances
   DATA_ENTRY      // Can create and edit records but limited permissions
-  VIEWER          // Read-only access
-  SALES           // Manages sales orders, parties, and follow-ups
-  PURCHASE        // Handles procurement-related tasks
-  INVENTORY       // Manages stock, batches, and warehouse ops
-  SUPPORT         // Limited access — used for customer support staff
+  VIEWER          // Read-only access 
 }
 
 

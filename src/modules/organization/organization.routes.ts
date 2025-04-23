@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { OrganizationController } from './organization.controller';
 import { requireRole, authMiddleware } from '../../middleware/auth.middleware';
+import { UserRole } from '@prisma/client';
 
 const controller = new OrganizationController();
 
@@ -22,12 +23,12 @@ export async function organizationRoutes(fastify: FastifyInstance) {
   });
 
   fastify.put('/:orgId', {
-    preHandler: [authMiddleware, requireRole(['OWNER', 'ADMIN'])],
+    preHandler: [authMiddleware, requireRole(UserRole.OWNER)],
     handler: controller.update.bind(controller),
   });
 
   fastify.delete('/:orgId', {
-    preHandler: [authMiddleware, requireRole(['OWNER'])],
+    preHandler: [authMiddleware, requireRole(UserRole.OWNER)],
     handler: controller.delete.bind(controller),
   });
 }

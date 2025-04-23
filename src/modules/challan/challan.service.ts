@@ -3,9 +3,11 @@ import {
   ICustomField,
   IUpdateChallan,
   IBulkUpdateChallans,
+  IChallanFilter,
+  IChallan,
 } from './challan.interface';
 import { ChallanRepository } from './challan.repository';
-import { ChallanTemplateField, PrismaClient, FieldType } from '@prisma/client';
+import { ChallanTemplateField, PrismaClient, FieldType, UserRole } from '@prisma/client';
 import { evaluateFormula, evaluateFormulaFields } from './challan.utils';
 
 export class ChallanService {
@@ -86,10 +88,6 @@ export class ChallanService {
     });
   }
 
-  async findAll() {
-    return this.repository.findAll();
-  }
-
   async findById(id: string) {
     return this.repository.findById(id);
   }
@@ -98,8 +96,22 @@ export class ChallanService {
     return this.repository.findManyByIds(ids);
   }
 
-  async findByTemplateId(templateId: string) {
-    return this.repository.findByTemplateId(templateId);
+  async getChallansByTemplateId(
+    templateId: string,
+    role: UserRole,
+    filters?: IChallanFilter,
+  ) {
+    const result = await this.repository.getChallansByTemplateId(
+      templateId,
+      role,
+      filters,
+    );
+
+    if (!result) {
+      throw new Error('Record template not found');
+    }
+
+    return result;
   }
 
   async update(data: IUpdateChallan, fieldSchema?: ChallanTemplateField[]) {
@@ -149,7 +161,6 @@ export class ChallanService {
   }
 
   async bulkUpdate(data: IBulkUpdateChallans) {
-    console.log('bulkUpdate', data);
     const { challans } = data;
 
     if (!challans || !Array.isArray(challans) || challans.length === 0) {

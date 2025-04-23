@@ -1,11 +1,12 @@
 export interface IAddress {
   shortAddress?: string;
-  address?: string;
+  addressLine1?: string;
+  addressLine2?: string;
   city?: string;
-  state?: string;
-  country?: string;
+  state: string;
+  country: string;
   pinCode?: string;
-  isInterState: boolean;
+  stateCode: string;
 }
 
 export interface ICreateParty {

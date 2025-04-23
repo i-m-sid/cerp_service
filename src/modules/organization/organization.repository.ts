@@ -1,9 +1,7 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, UserRole } from '@prisma/client';
 import {
   ICreateOrganization,
   IUpdateOrganization,
-  ICreateOrganizationMembership,
-  IUpdateOrganizationMembership,
   IOrganizationWithRole,
 } from './organization.interface';
 
@@ -15,6 +13,10 @@ export class OrganizationRepository {
   }
 
   private transformToOrganizationWithRole(org: any): IOrganizationWithRole {
+    if (!org.members || org.members.length === 0) {
+      throw new Error('User does not have access to this organization');
+    }
+
     return {
       id: org.id,
       orgName: org.orgName,
@@ -26,8 +28,7 @@ export class OrganizationRepository {
       address: org.address as any,
       createdAt: org.createdAt,
       role: org.members[0].role,
-      notes: org.notes ?? undefined,
-      termsAndConditions: org.termsAndConditions ?? undefined,
+      config: (org.config as any) ?? undefined,
     };
   }
 
@@ -39,16 +40,17 @@ export class OrganizationRepository {
         tradeName: data.tradeName,
         gstNumber: data.gstNumber,
         phoneNumber: data.phoneNumber,
-        notes: data.notes,
-        termsAndConditions: data.termsAndConditions,
         email: data.email,
         address: data.address
           ? (data.address as unknown as Prisma.JsonObject)
           : Prisma.JsonNull,
+        config: data.config
+          ? (data.config as unknown as Prisma.JsonObject)
+          : Prisma.JsonNull,
         members: {
           create: {
             userId: data.createdBy,
-            role: 'OWNER',
+            role: UserRole.OWNER,
           },
         },
       },
@@ -90,9 +92,7 @@ export class OrganizationRepository {
     );
   }
 
-  async findById(
-    id: string
-  ): Promise<IOrganizationWithRole | null> {
+  async findById(id: string): Promise<IOrganizationWithRole | null> {
     const org = await this.prisma.organization.findFirst({
       where: {
         id,
@@ -139,21 +139,30 @@ export class OrganizationRepository {
     data: IUpdateOrganization,
     userId: string,
   ): Promise<IOrganizationWithRole> {
+    const updateData: any = {};
+
+    // Only include fields that are actually provided
+    if (data.orgName !== undefined) updateData.orgName = data.orgName;
+    if (data.legalName !== undefined) updateData.legalName = data.legalName;
+    if (data.tradeName !== undefined) updateData.tradeName = data.tradeName;
+    if (data.gstNumber !== undefined) updateData.gstNumber = data.gstNumber;
+    if (data.phoneNumber !== undefined)
+      updateData.phoneNumber = data.phoneNumber;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.address !== undefined) {
+      updateData.address = data.address
+        ? (data.address as unknown as Prisma.JsonObject)
+        : Prisma.JsonNull;
+    }
+    if (data.config !== undefined) {
+      updateData.config = data.config
+        ? (data.config as unknown as Prisma.JsonObject)
+        : undefined;
+    }
+
     const org = await this.prisma.organization.update({
       where: { id: data.id },
-      data: {
-        orgName: data.orgName,
-        legalName: data.legalName,
-        tradeName: data.tradeName,
-        gstNumber: data.gstNumber,
-        phoneNumber: data.phoneNumber,
-        notes: data.notes,
-        termsAndConditions: data.termsAndConditions,
-        email: data.email,
-        address: data.address
-          ? (data.address as unknown as Prisma.JsonObject)
-          : Prisma.JsonNull,
-      },
+      data: updateData,
       include: {
         members: {
           where: {

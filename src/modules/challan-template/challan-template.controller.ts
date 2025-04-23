@@ -9,7 +9,7 @@ import {
   sendErrorResponse,
 } from '../../utils/response-handler';
 import { filterTemplateFieldsByRole } from './challan-template.util';
-import { UserRole } from '@prisma/client';
+import { TransactionType, UserRole } from '@prisma/client';
 export class ChallanTemplateController {
   private service: ChallanTemplateService;
 
@@ -37,9 +37,18 @@ export class ChallanTemplateController {
     }
   }
 
-  async findAll(request: FastifyRequest, reply: FastifyReply) {
+  async findAll(
+    request: FastifyRequest<{
+      Querystring: { transactionType?: TransactionType };
+    }>,
+    reply: FastifyReply,
+  ) {
     try {
-      const templates = await this.service.findAll(request.user!.orgId!);
+      const { transactionType } = request.query;
+      const templates = await this.service.findAll(
+        request.user!.orgId!,
+        transactionType,
+      );
       const filteredTemplates = templates.map((template) =>
         filterTemplateFieldsByRole(template, request.user!.role as UserRole),
       );

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, TransactionType } from '@prisma/client';
 import {
   ICreateChallanTemplate,
   IUpdateChallanTemplate,
@@ -58,9 +58,9 @@ export class ChallanTemplateRepository {
     });
   }
 
-  async findAll(orgId: string) {
+  async findAll(orgId: string, transactionType?: TransactionType) {
     return this.prisma.challanTemplate.findMany({
-      where: { orgId },
+      where: { orgId, ...(transactionType && { transactionType }) },
       include: this.include,
     });
   }
@@ -154,7 +154,7 @@ export class ChallanTemplateRepository {
           refId: field.refId,
           invoiceField: field.invoiceField,
           dependsOn: field.dependsOn,
-          allowedRoles: field.allowedRoles,
+          accessLevel: field.accessLevel,
         },
       });
     }

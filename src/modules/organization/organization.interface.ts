@@ -1,5 +1,26 @@
-import { UserRole } from '@prisma/client';
+import { UserRole, InvoiceType } from '@prisma/client';
 import { IAddress } from '../party/party.interface';
+
+export interface IDocumentConfig {
+  prefix: string;
+  suffix: string;
+  currentNumber: string;
+}
+
+export interface IOrganizationConfig {
+  notes?: string;
+  termsAndConditions?: string;
+  challanHistoryFieldOrder?: Record<string, string[]>;
+  challanReportFieldOrder?: Record<string, string[]>;
+  challanSummaryFieldOrder?: Record<string, string[]>;
+  challanSummationFields?: Record<string, string[]>;
+  challanDefaultStatus?: Record<string, string>;
+  invoiceTypeToChallanStatus?: Record<string, Record<InvoiceType, string>>;
+  invoice?: IDocumentConfig;
+  proForma?: IDocumentConfig;
+  quote?: IDocumentConfig;
+  purchaseOrder?: IDocumentConfig;
+}
 
 export interface ICreateOrganization {
   orgName: string;
@@ -10,8 +31,7 @@ export interface ICreateOrganization {
   email?: string;
   address?: IAddress;
   createdBy: string;
-  notes?: string;
-  termsAndConditions?: string;
+  config?: IOrganizationConfig;
 }
 
 export interface IUpdateOrganization {
@@ -25,6 +45,7 @@ export interface IUpdateOrganization {
   address?: IAddress;
   notes?: string;
   termsAndConditions?: string;
+  config?: IOrganizationConfig;
 }
 
 export interface ICreateOrganizationMembership {
@@ -51,4 +72,5 @@ export interface IOrganizationWithRole {
   role: UserRole;
   notes?: string;
   termsAndConditions?: string;
+  config?: IOrganizationConfig;
 }

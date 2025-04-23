@@ -1,5 +1,6 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, UserRole } from '@prisma/client';
 import {
+  IChallanFilter,
   ICreateChallan,
   ICustomField,
   IUpdateChallan,
@@ -70,20 +71,6 @@ export class ChallanRepository {
       ...result,
       customFields: this.jsonToObject(result.customFields), // Use new helper
     };
-  }
-
-  async findAll() {
-    const results = await this.prisma.challan.findMany({
-      include: {
-        status: true,
-        template: true,
-      },
-    });
-
-    return results.map((result) => ({
-      ...result,
-      customFields: this.jsonToObject(result.customFields), // Use new helper
-    }));
   }
 
   async findById(id: string) {
@@ -214,5 +201,79 @@ export class ChallanRepository {
     });
 
     return Promise.all(deletePromises);
+  }
+
+  // TODO: filter by role
+  async getChallansByTemplateId(
+    templateId: string,
+    role: UserRole,
+    filters?: IChallanFilter,
+  ) {
+    // First get the record template with its fields
+    const recordTemplate: Record<string, string[]> = {};
+
+    if (!recordTemplate) {
+      return null;
+    }
+
+    // Build where clause for challans query
+    const whereClause: Prisma.ChallanWhereInput = {
+      templateId: templateId,
+    };
+
+    // Add date filter if provided
+    if (filters?.startDate || filters?.endDate) {
+      whereClause.date = {};
+
+      if (filters.startDate) {
+        whereClause.date.gte = filters.startDate;
+      }
+
+      if (filters.endDate) {
+        whereClause.date.lte = filters.endDate;
+      }
+    }
+
+    // Add partyId filter if provided
+    if (filters?.partyId) {
+      // First find the template field that represents the party
+      const partyField = await this.prisma.challanTemplateField.findFirst({
+        where: {
+          templateId: templateId,
+          refModel: 'party',
+          refKey: {
+            in: ['tradeName', 'legalName'],
+          },
+        },
+      });
+
+      if (partyField) {
+        // Now filter challans where the customField matching this field ID has the party ID
+        // PartyId is always stored in the id field
+        whereClause.customFields = {
+          path: [`$.${partyField.id}.id`],
+          equals: filters.partyId,
+        };
+      } else {
+        console.warn(
+          `No party field found for template ${templateId}`,
+        );
+      }
+    }
+
+    // Get all challans for this template with customFields
+    const challans = await this.prisma.challan.findMany({
+      where: whereClause,
+      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+      include: {
+        status: true,
+        template: true,
+      },
+    });
+
+    return challans.map((challan) => ({
+      ...challan,
+      customFields: challan.customFields as Record<string, any>,
+    }));
   }
 }

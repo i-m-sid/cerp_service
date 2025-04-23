@@ -140,6 +140,7 @@ export class InvoiceRepository {
   async findAll(
     orgId: string,
     transactionType?: TransactionType,
+    invoiceType?: InvoiceType,
     startDate?: Date,
     endDate?: Date,
     partyId?: string,
@@ -148,6 +149,7 @@ export class InvoiceRepository {
       where: {
         orgId,
         ...(transactionType && { transactionType }),
+        ...(invoiceType && { invoiceType }),
         ...(partyId && { partyId }),
         ...(startDate || endDate
           ? {

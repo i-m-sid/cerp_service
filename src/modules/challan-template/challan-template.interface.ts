@@ -20,14 +20,14 @@ export interface IChallanTemplateField {
   refKey?: string;
   refId?: string;
   invoiceField?: string;
-  allowedRoles: UserRole[];
+  accessLevel: UserRole;
   dependsOn: string[];
 }
 
 export interface ICreateChallanTemplate {
   name: string;
   description?: string;
-  transactionType?: TransactionType;
+  transactionType: TransactionType;
   fieldSchema: IChallanTemplateField[];
   allowedStatuses: ChallanStatus[];
   allowedPartyTypes: PartyType[];

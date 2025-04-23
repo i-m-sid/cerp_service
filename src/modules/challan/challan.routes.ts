@@ -23,14 +23,6 @@ export async function challanRoutes(fastify: FastifyInstance) {
 
   fastify.route({
     method: 'GET',
-    url: '',
-    preHandler: [authMiddleware],
-    handler: async (req: FastifyRequest, reply: FastifyReply) =>
-      controller.findAll(req, reply),
-  });
-
-  fastify.route({
-    method: 'GET',
     url: '/:id',
     preHandler: [authMiddleware],
     handler: async (
@@ -44,9 +36,16 @@ export async function challanRoutes(fastify: FastifyInstance) {
     url: '/template/:templateId',
     preHandler: [authMiddleware],
     handler: async (
-      req: FastifyRequest<{ Params: { templateId: string } }>,
+      req: FastifyRequest<{
+        Params: { templateId: string };
+        Querystring: {
+          startDate?: string;
+          endDate?: string;
+          partyId?: string;
+        };
+      }>,
       reply: FastifyReply,
-    ) => controller.findByTemplateId(req, reply),
+    ) => controller.getChallansByTemplateId(req, reply),
   });
 
   fastify.route({
