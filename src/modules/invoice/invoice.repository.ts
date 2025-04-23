@@ -22,52 +22,6 @@ export class InvoiceRepository {
     this.prisma = new PrismaClient();
   }
 
-  private objectToJson(
-    obj?: ILineItem[] | ICreateLineItem[] | IUpdateLineItem[],
-  ): Prisma.JsonObject | typeof Prisma.JsonNull {
-    if (!obj || obj.length === 0) {
-      return Prisma.JsonNull;
-    }
-    return obj as unknown as Prisma.JsonObject;
-  }
-
-  private partyDetailsToJson(
-    obj?: IPartyDetails | IOrgDetails,
-  ): Prisma.JsonObject | typeof Prisma.JsonNull {
-    if (!obj) {
-      return Prisma.JsonNull;
-    }
-    return obj as unknown as Prisma.JsonObject;
-  }
-
-  private isValidLineItem(item: unknown): item is ILineItem {
-    if (!item || typeof item !== 'object') return false;
-
-    const requiredFields = ['item', 'hsnCode', 'isService', 'uom', 'rate'];
-    const hasRequiredFields = requiredFields.every(
-      (field) =>
-        field in item && item[field as keyof typeof item] !== undefined,
-    );
-
-    if (!hasRequiredFields) return false;
-
-    return true;
-  }
-
-  private jsonToObject(json?: Prisma.JsonValue | null): ILineItem[] {
-    const arr: ILineItem[] = [];
-    if (json && Array.isArray(json)) {
-      for (const item of json) {
-        if (this.isValidLineItem(item)) {
-          arr.push(item);
-        } else {
-          throw new Error(`Invalid line item data: ${JSON.stringify(item)}`);
-        }
-      }
-    }
-    return arr;
-  }
-
   async create(data: ICreateInvoice) {
     // Validate challans if provided
     if (data.challanIds && data.challanIds.length > 0) {
@@ -97,11 +51,11 @@ export class InvoiceRepository {
       date: data.date,
       invoiceType: data.invoiceType,
       transactionType: data.transactionType,
-      partyDetails: this.partyDetailsToJson(data.partyDetails),
-      orgDetails: this.partyDetailsToJson(data.orgDetails),
+      partyDetails: data.partyDetails as unknown as Prisma.JsonObject,
+      orgDetails: data.orgDetails as unknown as Prisma.JsonObject,
       includeTax: data.includeTax,
       roundOff: data.roundOff,
-      lineItems: this.objectToJson(calculatedLineItems),
+      lineItems: calculatedLineItems as unknown as Prisma.JsonObject,
       notes: data.notes,
       termsAndConditions: data.termsAndConditions,
       ...totals,
@@ -132,7 +86,7 @@ export class InvoiceRepository {
 
     return {
       ...result,
-      lineItems: this.jsonToObject(result.lineItems),
+      lineItems: result.lineItems as unknown as ILineItem[],
       party: transformPartyData(result.party),
     };
   }
@@ -169,7 +123,7 @@ export class InvoiceRepository {
 
     return results.map((result) => ({
       ...result,
-      lineItems: this.jsonToObject(result.lineItems),
+      lineItems: result.lineItems as unknown as ILineItem[],
       party: transformPartyData(result.party),
     }));
   }
@@ -191,7 +145,7 @@ export class InvoiceRepository {
 
     return {
       ...result,
-      lineItems: this.jsonToObject(result.lineItems),
+      lineItems: result.lineItems as unknown as ILineItem[],
       party: transformPartyData(result.party),
     };
   }
@@ -211,7 +165,7 @@ export class InvoiceRepository {
 
     return results.map((result) => ({
       ...result,
-      lineItems: this.jsonToObject(result.lineItems),
+      lineItems: result.lineItems as unknown as ILineItem[],
       party: transformPartyData(result.party),
     }));
   }
@@ -228,7 +182,8 @@ export class InvoiceRepository {
         select: { lineItems: true, includeTax: true },
       });
 
-      const existingLineItems = this.jsonToObject(existingInvoice?.lineItems);
+      const existingLineItems =
+        existingInvoice?.lineItems as unknown as ILineItem[];
       const includeTax =
         updateFields.includeTax !== undefined
           ? updateFields.includeTax
@@ -286,7 +241,9 @@ export class InvoiceRepository {
       notes: updateFields.notes,
       termsAndConditions: updateFields.termsAndConditions,
       ...totals, // Add calculated totals if line items were updated
-      lineItems: lineItems ? this.objectToJson(lineItems) : undefined,
+      lineItems: lineItems
+        ? (lineItems as unknown as Prisma.JsonObject)
+        : undefined,
       ...(updateFields.challanTemplateId && {
         challanTemplate: {
           connect: { id: updateFields.challanTemplateId },
@@ -320,7 +277,7 @@ export class InvoiceRepository {
 
     return {
       ...result,
-      lineItems: this.jsonToObject(result.lineItems),
+      lineItems: result.lineItems as unknown as ILineItem[],
     };
   }
 
@@ -351,7 +308,7 @@ export class InvoiceRepository {
 
     return {
       ...result,
-      lineItems: this.jsonToObject(result.lineItems),
+      lineItems: result.lineItems as unknown as ILineItem[],
     };
   }
 
@@ -370,7 +327,7 @@ export class InvoiceRepository {
 
     return results.map((result) => ({
       ...result,
-      lineItems: this.jsonToObject(result.lineItems),
+      lineItems: result.lineItems as unknown as ILineItem[],
       party: transformPartyData(result.party),
     }));
   }
@@ -390,7 +347,7 @@ export class InvoiceRepository {
 
     return results.map((result) => ({
       ...result,
-      lineItems: this.jsonToObject(result.lineItems),
+      lineItems: result.lineItems as unknown as ILineItem[],
       party: transformPartyData(result.party),
     }));
   }
@@ -415,7 +372,7 @@ export class InvoiceRepository {
 
     return results.map((result) => ({
       ...result,
-      lineItems: this.jsonToObject(result.lineItems),
+      lineItems: result.lineItems as unknown as ILineItem[],
       party: transformPartyData(result.party),
     }));
   }
@@ -436,7 +393,7 @@ export class InvoiceRepository {
             success: true,
             data: {
               ...result,
-              lineItems: this.jsonToObject(result.lineItems),
+              lineItems: result.lineItems as unknown as ILineItem[],
             },
             id,
           };

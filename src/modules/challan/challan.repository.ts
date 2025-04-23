@@ -13,17 +13,6 @@ export class ChallanRepository {
     this.prisma = new PrismaClient();
   }
 
-  // Renamed and simplified helpers
-  private objectToJson(
-    obj?: Record<string, ICustomField>,
-  ): Prisma.JsonObject | typeof Prisma.JsonNull {
-    if (!obj || Object.keys(obj).length === 0) {
-      return Prisma.JsonNull;
-    }
-    // The object is already in the correct format for Prisma
-    return obj as unknown as Prisma.JsonObject;
-  }
-
   private jsonToObject(
     json?: Prisma.JsonValue | null,
   ): Record<string, ICustomField> {
@@ -49,7 +38,7 @@ export class ChallanRepository {
     const createData: Prisma.ChallanCreateInput = {
       challanNumber: data.challanNumber,
       date: data.date || new Date(),
-      customFields: this.objectToJson(data.customFields), // Use new helper
+      customFields: data.customFields as unknown as Prisma.JsonObject, // Use new helper
       status: {
         connect: { id: data.statusId },
       },
@@ -127,7 +116,7 @@ export class ChallanRepository {
       date: updateFields.date,
       customFields:
         updateFields.customFields !== undefined
-          ? this.objectToJson(updateFields.customFields) // Use new helper
+          ? (updateFields.customFields as unknown as Prisma.JsonObject)
           : undefined,
       ...(updateFields.statusId && {
         status: {
@@ -152,7 +141,10 @@ export class ChallanRepository {
 
     return {
       ...result,
-      customFields: this.jsonToObject(result.customFields), // Use new helper
+      customFields: result.customFields as unknown as Record<
+        string,
+        ICustomField
+      >,
     };
   }
 
@@ -181,7 +173,10 @@ export class ChallanRepository {
 
     return {
       ...result,
-      customFields: this.jsonToObject(result.customFields), // Use new helper
+      customFields: result.customFields as unknown as Record<
+        string,
+        ICustomField
+      >,
     };
   }
 
@@ -255,9 +250,7 @@ export class ChallanRepository {
           equals: filters.partyId,
         };
       } else {
-        console.warn(
-          `No party field found for template ${templateId}`,
-        );
+        console.warn(`No party field found for template ${templateId}`);
       }
     }
 
