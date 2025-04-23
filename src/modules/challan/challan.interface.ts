@@ -9,7 +9,7 @@ export interface ICreateChallan {
   challanNumber: string;
   date: Date;
   templateId: string;
-  statusId: string;
+  statusId?: string;
   customFields: Record<string, ICustomField>;
 }
 

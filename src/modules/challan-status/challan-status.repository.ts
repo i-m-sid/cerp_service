@@ -11,55 +11,78 @@ export class ChallanStatusRepository {
     this.prisma = new PrismaClient();
   }
 
-  async create(data: ICreateChallanStatus) {
+  async create(data: ICreateChallanStatus, orgId: string) {
     const createData: Prisma.ChallanStatusCreateInput = {
       label: data.label,
       color: data.color,
+      organization: {
+        connect: {
+          id: orgId,
+        },
+      },
     };
 
     return this.prisma.challanStatus.create({
       data: createData,
-      include: {
-        challans: true,
+      select: {
+        id: true,
+        label: true,
+        color: true,
       },
     });
   }
 
-  async findAll() {
+  async findAll(orgId: string) {
     return this.prisma.challanStatus.findMany({
-      include: {
-        challans: true,
+      where: {
+        organization: {
+          id: orgId,
+        },
+      },
+      select: {
+        id: true,
+        label: true,
+        color: true,
       },
     });
   }
 
-  async findById(id: string) {
+  async findById(id: string, orgId: string) {
     return this.prisma.challanStatus.findUnique({
-      where: { id },
-      include: {
-        challans: true,
+      where: { id, organization: { id: orgId } },
+      select: {
+        id: true,
+        label: true,
+        color: true,
       },
     });
   }
 
-  async update(id: string, data: IUpdateChallanStatus) {
+  async update(id: string, data: IUpdateChallanStatus, orgId: string) {
     const updateData: Prisma.ChallanStatusUpdateInput = {
       label: data.label,
       color: data.color,
     };
 
     return this.prisma.challanStatus.update({
-      where: { id },
+      where: { id, organization: { id: orgId } },
       data: updateData,
-      include: {
-        challans: true,
+      select: {
+        id: true,
+        label: true,
+        color: true,
       },
     });
   }
 
-  async delete(id: string) {
+  async delete(id: string, orgId: string) {
     return this.prisma.challanStatus.delete({
-      where: { id },
+      where: { id, organization: { id: orgId } },
+      select: {
+        id: true,
+        label: true,
+        color: true,
+      },
     });
   }
 }

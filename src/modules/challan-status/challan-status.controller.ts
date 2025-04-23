@@ -21,7 +21,7 @@ export class ChallanStatusController {
     reply: FastifyReply,
   ) {
     try {
-      const status = await this.service.create(request.body);
+      const status = await this.service.create(request.body, request.user!.orgId!);
       return sendSuccessResponse(reply, 201, status);
     } catch (error) {
       request.log.error(error);
@@ -36,7 +36,7 @@ export class ChallanStatusController {
 
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const statuses = await this.service.findAll();
+      const statuses = await this.service.findAll(request.user!.orgId!);
       return sendSuccessResponse(reply, 200, statuses);
     } catch (error) {
       request.log.error(error);
@@ -54,7 +54,7 @@ export class ChallanStatusController {
     reply: FastifyReply,
   ) {
     try {
-      const status = await this.service.findById(request.params.id);
+      const status = await this.service.findById(request.params.id, request.user!.orgId!);
       if (!status) {
         return sendErrorResponse(reply, 404, null, 'Challan status not found');
       }
@@ -78,7 +78,7 @@ export class ChallanStatusController {
     reply: FastifyReply,
   ) {
     try {
-      const status = await this.service.update(request.params.id, request.body);
+      const status = await this.service.update(request.params.id, request.body, request.user!.orgId!);
       if (!status) {
         return sendErrorResponse(reply, 404, null, 'Challan status not found');
       }
@@ -99,7 +99,7 @@ export class ChallanStatusController {
     reply: FastifyReply,
   ) {
     try {
-      const status = await this.service.delete(request.params.id);
+      const status = await this.service.delete(request.params.id, request.user!.orgId!);
       if (!status) {
         return sendErrorResponse(reply, 404, null, 'Challan status not found');
       }

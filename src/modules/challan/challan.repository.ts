@@ -13,26 +13,6 @@ export class ChallanRepository {
     this.prisma = new PrismaClient();
   }
 
-  private jsonToObject(
-    json?: Prisma.JsonValue | null,
-  ): Record<string, ICustomField> {
-    const obj: Record<string, ICustomField> = {};
-    if (json && typeof json === 'object' && !Array.isArray(json)) {
-      for (const key in json) {
-        if (Object.prototype.hasOwnProperty.call(json, key)) {
-          const value = json[key];
-          if (value !== null && typeof value === 'object' && 'value' in value) {
-            // Assume structure matches ICustomField
-            obj[key] = value as unknown as ICustomField;
-          } else {
-            console.warn(`Skipping invalid custom field data for key: ${key}`);
-          }
-        }
-      }
-    }
-    return obj;
-  }
-
   async create(data: ICreateChallan) {
     // Ignoring customerId error as requested
     const createData: Prisma.ChallanCreateInput = {
@@ -58,7 +38,10 @@ export class ChallanRepository {
 
     return {
       ...result,
-      customFields: this.jsonToObject(result.customFields), // Use new helper
+      customFields: result.customFields as unknown as Record<
+        string,
+        ICustomField
+      >,
     };
   }
 
@@ -75,7 +58,10 @@ export class ChallanRepository {
 
     return {
       ...result,
-      customFields: this.jsonToObject(result.customFields), // Use new helper
+      customFields: result.customFields as unknown as Record<
+        string,
+        ICustomField
+      >,
     };
   }
 
@@ -89,7 +75,10 @@ export class ChallanRepository {
     });
     return results.map((result) => ({
       ...result,
-      customFields: this.jsonToObject(result.customFields), // Use new helper
+      customFields: result.customFields as unknown as Record<
+        string,
+        ICustomField
+      >,
     }));
   }
 
@@ -104,7 +93,10 @@ export class ChallanRepository {
 
     return results.map((result) => ({
       ...result,
-      customFields: this.jsonToObject(result.customFields), // Use new helper
+      customFields: result.customFields as unknown as Record<
+        string,
+        ICustomField
+      >,
     }));
   }
 

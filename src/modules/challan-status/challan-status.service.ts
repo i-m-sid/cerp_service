@@ -11,23 +11,23 @@ export class ChallanStatusService {
     this.repository = new ChallanStatusRepository();
   }
 
-  async create(data: ICreateChallanStatus) {
-    return this.repository.create(data);
+  async create(data: ICreateChallanStatus, orgId: string) {
+    return this.repository.create(data, orgId);
   }
 
-  async findAll() {
-    return this.repository.findAll();
+  async findAll(orgId: string) {
+    return this.repository.findAll(orgId);
   }
 
-  async findById(id: string) {
-    return this.repository.findById(id);
+  async findById(id: string, orgId: string) {
+    return this.repository.findById(id, orgId);
   }
 
-  async update(id: string, data: IUpdateChallanStatus) {
-    return this.repository.update(id, data);
+  async update(id: string, data: IUpdateChallanStatus, orgId: string) {
+    return this.repository.update(id, data, orgId);
   }
 
-  async delete(id: string) {
-    return this.repository.delete(id);
+  async delete(id: string, orgId: string) {
+    return this.repository.delete(id, orgId);
   }
 }

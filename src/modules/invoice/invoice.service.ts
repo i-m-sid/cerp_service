@@ -1,22 +1,23 @@
-import { ChallanTemplateService } from '../challan-template/challan-template.service';
-import { ChallanService } from '../challan/challan.service';
 import {
   ICreateInvoice,
+  ICreateLineItem,
+  ILineItemChallan,
   IUpdateInvoice,
   IBulkUpdateInvoices,
-  ICreateLineItem,
   IUpdateLineItem,
-  ILineItemChallan,
 } from './invoice.interface';
 import { InvoiceRepository } from './invoice.repository';
-import { InvoiceType, TransactionType, PrismaClient } from '@prisma/client';
-import { IUpdateChallan } from '../challan/challan.interface';
+import { InvoiceType, PrismaClient, TransactionType } from '@prisma/client';
+import { ChallanService } from '../challan/challan.service';
 import { OrganizationService } from '../organization/organization.service';
+import { ChallanTemplateService } from '../challan-template/challan-template.service';
 import {
-  getInvoiceConfigCurrentNumber,
   getInvoiceNumericPart,
+  getInvoiceConfigCurrentNumber,
   updateInvoiceConfigCurrentNumber,
 } from './invoice.utils';
+import { IChallan, IUpdateChallan } from '../challan/challan.interface';
+
 export class InvoiceService {
   private repository: InvoiceRepository;
   private prisma: PrismaClient;
@@ -247,7 +248,11 @@ export class InvoiceService {
             cgstPercentage: lineItem.cgstPercentage,
             sgstPercentage: lineItem.sgstPercentage,
             igstPercentage: lineItem.igstPercentage,
-            challans: challans,
+            challans: challans.map((challan) => ({
+              ...challan,
+              statusId:
+                challan.statusId === null ? undefined : challan.statusId,
+            })) as IChallan[],
           });
         }
 
