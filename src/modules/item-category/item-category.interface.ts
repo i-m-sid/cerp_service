@@ -1,5 +1,6 @@
 export interface ICreateItemCategory {
   name: string;
+  isService: boolean;
   description?: string;
   hsnCode?: string;
   orgId: string;

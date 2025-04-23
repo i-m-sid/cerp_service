@@ -43,7 +43,7 @@ export class InvoiceRepository {
   private isValidLineItem(item: unknown): item is ILineItem {
     if (!item || typeof item !== 'object') return false;
 
-    const requiredFields = ['item', 'hsnCode', 'uom', 'rate'];
+    const requiredFields = ['item', 'hsnCode', 'isService', 'uom', 'rate'];
     const hasRequiredFields = requiredFields.every(
       (field) =>
         field in item && item[field as keyof typeof item] !== undefined,
@@ -247,6 +247,7 @@ export class InvoiceRepository {
             itemId: updateItem.itemId ?? existingItem.itemId,
             item: updateItem.item ?? existingItem.item,
             hsnCode: updateItem.hsnCode ?? existingItem.hsnCode,
+            isService: updateItem.isService ?? existingItem.isService,
             uom: updateItem.uom ?? existingItem.uom,
             description: updateItem.description ?? existingItem.description,
             rate: updateItem.rate ?? existingItem.rate,
