@@ -5,6 +5,7 @@ export interface ICreateLineItem {
   itemId: string;
   item: string;
   hsnCode: string;
+  isService: boolean;
   uom: string;
   description: string;
   rate: number;
