@@ -21,7 +21,9 @@ export async function itemRoutes(fastify: FastifyInstance) {
     url: '',
     preHandler: [authMiddleware],
     handler: async (
-      req: FastifyRequest<{ Querystring: { categoryId?: string } }>,
+      req: FastifyRequest<{
+        Querystring: { categoryId?: string; templateId?: string };
+      }>,
       reply: FastifyReply,
     ) => controller.findAll(req, reply),
   });

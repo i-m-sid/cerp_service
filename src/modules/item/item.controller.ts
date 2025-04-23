@@ -30,16 +30,23 @@ export class ItemController {
   }
 
   async findAll(
-    request: FastifyRequest<{ Querystring: { categoryId?: string } }>,
+    request: FastifyRequest<{
+      Querystring: { categoryId?: string; templateId?: string };
+    }>,
     reply: FastifyReply,
   ) {
     try {
-      const { categoryId } = request.query;
+      const { categoryId, templateId } = request.query;
 
       let items;
       if (categoryId) {
         items = await this.service.findByCategoryId(
           categoryId,
+          request.user!.orgId!,
+        );
+      } else if (templateId) {
+        items = await this.service.findByTemplateId(
+          templateId,
           request.user!.orgId!,
         );
       } else {

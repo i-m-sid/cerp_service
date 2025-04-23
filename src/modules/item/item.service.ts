@@ -29,6 +29,10 @@ export class ItemService {
     return this.repository.findByCategoryId(categoryId, orgId);
   }
 
+  async findByTemplateId(templateId: string, orgId: string) {
+    return this.repository.findByTemplateId(templateId, orgId);
+  }
+
   async update(data: IUpdateItem) {
     // If name is being updated, check if new name already exists in the category
     if (data.name) {

@@ -60,6 +60,36 @@ export class ItemRepository {
     });
   }
 
+  async findByTemplateId(templateId: string, orgId: string) {
+    // First, get the challan template with its allowed categories
+    const template = await this.prisma.challanTemplate.findUnique({
+      where: { id: templateId },
+      include: {
+        allowedItemCategories: true,
+      },
+    });
+
+    if (!template || !template.allowedItemCategories.length) {
+      return [];
+    }
+
+    // Extract the category IDs
+    const allowedCategoryIds = template.allowedItemCategories.map(
+      (category: { id: string }) => category.id,
+    );
+
+    // Get items that belong to the allowed categories
+    return this.prisma.item.findMany({
+      where: {
+        orgId,
+        categoryId: {
+          in: allowedCategoryIds,
+        },
+      },
+      include: this.include,
+    });
+  }
+
   async update(data: IUpdateItem) {
     const { id, ...updateData } = data;
     return this.prisma.item.update({
