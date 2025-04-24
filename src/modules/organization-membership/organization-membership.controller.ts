@@ -95,6 +95,7 @@ export class OrganizationMembershipController {
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
+    console.log(request.body);
     try {
       const { id } = request.params as { id: string };
       const data = request.body as Omit<IUpdateOrganizationMembership, 'id'>;
@@ -106,6 +107,7 @@ export class OrganizationMembershipController {
       };
 
       const membership = await this.service.update(updateData);
+      console.log(membership);
       return sendSuccessResponse(reply, 200, membership);
     } catch (error) {
       return sendErrorResponse(

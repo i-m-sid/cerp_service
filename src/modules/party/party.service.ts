@@ -1,4 +1,4 @@
-import { ICreateParty, IUpdateParty, IAddress } from './party.interface';
+import { ICreateParty, IUpdateParty } from './party.interface';
 import { PartyRepository } from './party.repository';
 
 export function transformPartyData(party: any) {
@@ -6,9 +6,11 @@ export function transformPartyData(party: any) {
 
   return {
     ...party,
-    address: party.address as unknown as IAddress,
-    placeOfSupply: party.placeOfSupply as unknown as IAddress[],
-    customFields: party.customFields as unknown as Map<string, string>,
+    address: party.address ? JSON.parse(party.address) : undefined,
+    placeOfSupply: party.placeOfSupply ? JSON.parse(party.placeOfSupply) : [],
+    customFields: party.customFields
+      ? JSON.parse(party.customFields)
+      : new Map(),
   };
 }
 export class PartyService {
