@@ -78,16 +78,13 @@ export class InvoiceRepository {
     const result = await this.prisma.invoice.create({
       data: createData,
       include: {
-        party: true,
         challans: true,
-        organization: true,
       },
     });
 
     return {
       ...result,
       lineItems: result.lineItems as unknown as ILineItem[],
-      party: transformPartyData(result.party),
     };
   }
 
@@ -115,16 +112,13 @@ export class InvoiceRepository {
           : {}),
       },
       include: {
-        party: true,
         challans: true,
-        organization: true,
       },
     });
 
     return results.map((result) => ({
       ...result,
       lineItems: result.lineItems as unknown as ILineItem[],
-      party: transformPartyData(result.party),
     }));
   }
 
@@ -135,9 +129,7 @@ export class InvoiceRepository {
         orgId,
       },
       include: {
-        party: true,
         challans: true,
-        organization: true,
       },
     });
 
@@ -146,7 +138,6 @@ export class InvoiceRepository {
     return {
       ...result,
       lineItems: result.lineItems as unknown as ILineItem[],
-      party: transformPartyData(result.party),
     };
   }
 
@@ -157,16 +148,13 @@ export class InvoiceRepository {
         orgId,
       },
       include: {
-        party: true,
         challans: true,
-        organization: true,
       },
     });
 
     return results.map((result) => ({
       ...result,
       lineItems: result.lineItems as unknown as ILineItem[],
-      party: transformPartyData(result.party),
     }));
   }
 
@@ -269,9 +257,7 @@ export class InvoiceRepository {
       },
       data: updateData,
       include: {
-        party: true,
         challans: true,
-        organization: true,
       },
     });
 
@@ -319,16 +305,13 @@ export class InvoiceRepository {
         orgId,
       },
       include: {
-        party: true,
         challans: true,
-        organization: true,
       },
     });
 
     return results.map((result) => ({
       ...result,
       lineItems: result.lineItems as unknown as ILineItem[],
-      party: transformPartyData(result.party),
     }));
   }
 
@@ -339,16 +322,13 @@ export class InvoiceRepository {
         orgId,
       },
       include: {
-        party: true,
         challans: true,
-        organization: true,
       },
     });
 
     return results.map((result) => ({
       ...result,
       lineItems: result.lineItems as unknown as ILineItem[],
-      party: transformPartyData(result.party),
     }));
   }
 
@@ -364,16 +344,13 @@ export class InvoiceRepository {
     const results = await this.prisma.invoice.findMany({
       where,
       include: {
-        party: true,
         challans: true,
-        organization: true,
       },
     });
 
     return results.map((result) => ({
       ...result,
       lineItems: result.lineItems as unknown as ILineItem[],
-      party: transformPartyData(result.party),
     }));
   }
 

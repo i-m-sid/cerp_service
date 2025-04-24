@@ -23,6 +23,7 @@ export class InvoiceController {
     request: FastifyRequest<{ Body: ICreateInvoice }>,
     reply: FastifyReply,
   ) {
+    console.log(request.body);
     try {
       if (!request.user?.orgId) {
         return sendErrorResponse(
@@ -151,6 +152,7 @@ export class InvoiceController {
     }>,
     reply: FastifyReply,
   ) {
+    console.log(request.body);
     try {
       if (!request.user?.orgId) {
         return sendErrorResponse(
@@ -169,6 +171,7 @@ export class InvoiceController {
         },
         request.user.userId,
       );
+      console.log(invoice);
       return sendSuccessResponse(reply, 200, invoice);
     } catch (error) {
       request.log.error(error);
