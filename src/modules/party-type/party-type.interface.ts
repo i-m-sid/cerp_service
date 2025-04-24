@@ -1,4 +1,4 @@
-export interface ICreatePartyType  {
+export interface ICreatePartyType {
   label: string;
   orgId: string;
 }

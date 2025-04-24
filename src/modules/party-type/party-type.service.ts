@@ -17,26 +17,26 @@ export class PartyTypeService {
     return this.repository.create(data);
   }
 
-  async findAll() {
-    return this.repository.findAll();
+  async findAll(orgId: string) {
+    return this.repository.findAll(orgId);
   }
 
-  async findById(id: string) {
-    return this.repository.findById(id);
+  async findById(id: string, orgId: string) {
+    return this.repository.findById(id, orgId);
   }
 
-  async update(data: IUpdatePartyType) {
+  async update(data: IUpdatePartyType, orgId: string) {
     // If label is being updated, check if new label already exists
     if (data.label) {
-      const existing = await this.repository.findById(data.id);
+      const existing = await this.repository.findById(data.id, orgId!);
       if (existing && existing.id !== data.id) {
         throw new Error('Party type with this label already exists');
       }
     }
-    return this.repository.update(data);
+    return this.repository.update(data, data.orgId!);
   }
 
-  async delete(id: string) {
-    return this.repository.delete(id);
+  async delete(id: string, orgId: string) {
+    return this.repository.delete(id, orgId);
   }
 }

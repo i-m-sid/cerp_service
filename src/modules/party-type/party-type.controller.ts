@@ -36,7 +36,7 @@ export class PartyTypeController {
 
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const partyTypes = await this.service.findAll();
+      const partyTypes = await this.service.findAll(request.user!.orgId!);
       return sendSuccessResponse(reply, 200, partyTypes);
     } catch (error) {
       request.log.error(error);
@@ -54,7 +54,10 @@ export class PartyTypeController {
     reply: FastifyReply,
   ) {
     try {
-      const partyType = await this.service.findById(request.params.id);
+      const partyType = await this.service.findById(
+        request.params.id,
+        request.user!.orgId!,
+      );
       if (!partyType) {
         return sendErrorResponse(reply, 404, null, 'Party type not found');
       }
@@ -73,10 +76,13 @@ export class PartyTypeController {
     reply: FastifyReply,
   ) {
     try {
-      const partyType = await this.service.update({
-        id: request.params.id,
-        ...request.body,
-      });
+      const partyType = await this.service.update(
+        {
+          id: request.params.id,
+          ...request.body,
+        },
+        request.user!.orgId!,
+      );
       return sendSuccessResponse(reply, 200, partyType);
     } catch (error) {
       request.log.error(error);
@@ -94,7 +100,10 @@ export class PartyTypeController {
     reply: FastifyReply,
   ) {
     try {
-      const partyType = await this.service.delete(request.params.id);
+      const partyType = await this.service.delete(
+        request.params.id,
+        request.user!.orgId!,
+      );
       if (!partyType) {
         return sendErrorResponse(reply, 404, null, 'Party type not found');
       }

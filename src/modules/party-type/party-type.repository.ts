@@ -20,15 +20,19 @@ export class PartyTypeRepository {
     });
   }
 
-  async findAll() {
+  async findAll(orgId: string) {
     return this.prisma.partyType.findMany({
+      where: { orgId },
       include: this.include,
+      orderBy: {
+        label: 'asc',
+      },
     });
   }
 
-  async findById(id: string) {
+  async findById(id: string, orgId: string) {
     return this.prisma.partyType.findUnique({
-      where: { id },
+      where: { id, orgId },
       include: this.include,
     });
   }
@@ -40,18 +44,18 @@ export class PartyTypeRepository {
     });
   }
 
-  async update(data: IUpdatePartyType) {
+  async update(data: IUpdatePartyType, orgId: string) {
     const { id, ...updateData } = data;
     return this.prisma.partyType.update({
-      where: { id },
-      data: updateData,
+      where: { id, orgId },
+      data: data,
       include: this.include,
     });
   }
 
-  async delete(id: string) {
+  async delete(id: string, orgId: string) {
     return this.prisma.partyType.delete({
-      where: { id },
+      where: { id, orgId },
     });
   }
 }
