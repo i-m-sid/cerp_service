@@ -108,7 +108,7 @@ export class PartyController {
       if (!party) {
         return sendErrorResponse(reply, 404, null, 'Party not found');
       }
-      return sendSuccessResponse(reply, 200, {
+      return sendSuccessResponse(reply, 204, {
         message: 'Party deleted successfully',
       });
     } catch (error) {

@@ -108,7 +108,7 @@ export class ItemController {
       if (!item) {
         return sendErrorResponse(reply, 404, null, 'Item not found');
       }
-      return sendSuccessResponse(reply, 200, {
+      return sendSuccessResponse(reply, 204, {
         message: 'Item deleted successfully',
       });
     } catch (error) {

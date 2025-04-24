@@ -98,7 +98,7 @@ export class PartyTypeController {
       if (!partyType) {
         return sendErrorResponse(reply, 404, null, 'Party type not found');
       }
-      return sendSuccessResponse(reply, 200, {
+      return sendSuccessResponse(reply, 204, {
         message: 'Party type deleted successfully',
       });
     } catch (error) {
