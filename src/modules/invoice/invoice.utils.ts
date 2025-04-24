@@ -1,6 +1,10 @@
 import { InvoiceType, TransactionType } from '@prisma/client';
-import { IDocumentConfig, IOrganizationConfig } from '../organization/organization.interface';
+import {
+  IDocumentConfig,
+  IOrganizationConfig,
+} from '../organization/organization.interface';
 import { ICreateLineItem, ILineItem } from './invoice.interface';
+import { nanoid } from 'nanoid';
 
 export class InvoiceCalculator {
   private static calculateDiscount(
@@ -77,7 +81,7 @@ export class InvoiceCalculator {
 
     return {
       ...item,
-      id: crypto.randomUUID(),
+      id: nanoid(),
       subTotal,
       cgstAmount,
       sgstAmount,
@@ -168,22 +172,38 @@ export function getInvoiceNumericPart(
   switch (invoiceType) {
     case InvoiceType.INVOICE:
       return organizationConfig?.invoice
-        ? extractNumber(documentNumber, organizationConfig.invoice.prefix, organizationConfig.invoice.suffix)
+        ? extractNumber(
+            documentNumber,
+            organizationConfig.invoice.prefix,
+            organizationConfig.invoice.suffix,
+          )
         : null;
 
     case InvoiceType.PRO_FORMA:
       return organizationConfig?.proForma
-        ? extractNumber(documentNumber, organizationConfig.proForma.prefix, organizationConfig.proForma.suffix)
+        ? extractNumber(
+            documentNumber,
+            organizationConfig.proForma.prefix,
+            organizationConfig.proForma.suffix,
+          )
         : null;
 
     case InvoiceType.QUOTE:
       return organizationConfig?.quote
-        ? extractNumber(documentNumber, organizationConfig.quote.prefix, organizationConfig.quote.suffix)
+        ? extractNumber(
+            documentNumber,
+            organizationConfig.quote.prefix,
+            organizationConfig.quote.suffix,
+          )
         : null;
 
     case InvoiceType.ORDER:
       return organizationConfig?.purchaseOrder
-        ? extractNumber(documentNumber, organizationConfig.purchaseOrder.prefix, organizationConfig.purchaseOrder.suffix)
+        ? extractNumber(
+            documentNumber,
+            organizationConfig.purchaseOrder.prefix,
+            organizationConfig.purchaseOrder.suffix,
+          )
         : null;
 
     default:
@@ -218,16 +238,28 @@ export function updateInvoiceConfigCurrentNumber(
 
   switch (invoiceType) {
     case InvoiceType.INVOICE:
-      return { ...organizationConfig, invoice: { ...organizationConfig.invoice!, currentNumber } };
+      return {
+        ...organizationConfig,
+        invoice: { ...organizationConfig.invoice!, currentNumber },
+      };
 
     case InvoiceType.PRO_FORMA:
-      return { ...organizationConfig, proForma: { ...organizationConfig.proForma!, currentNumber } };
+      return {
+        ...organizationConfig,
+        proForma: { ...organizationConfig.proForma!, currentNumber },
+      };
 
     case InvoiceType.QUOTE:
-      return { ...organizationConfig, quote: { ...organizationConfig.quote!, currentNumber } };
+      return {
+        ...organizationConfig,
+        quote: { ...organizationConfig.quote!, currentNumber },
+      };
 
     case InvoiceType.ORDER:
-      return { ...organizationConfig, purchaseOrder: { ...organizationConfig.purchaseOrder!, currentNumber } };
+      return {
+        ...organizationConfig,
+        purchaseOrder: { ...organizationConfig.purchaseOrder!, currentNumber },
+      };
 
     default:
       return organizationConfig;
@@ -247,5 +279,3 @@ export function shouldUpdateInvoiceConfigCurrentNumber(
       invoiceType === InvoiceType.ORDER)
   );
 }
-
-
