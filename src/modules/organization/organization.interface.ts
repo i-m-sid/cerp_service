@@ -8,8 +8,8 @@ export interface IDocumentConfig {
 }
 
 export interface IOrganizationConfig {
-  notes?: string;
-  termsAndConditions?: string;
+  notes?: Record<InvoiceType, string>;
+  termsAndConditions?: Record<InvoiceType, string>;
   challanHistoryFieldOrder?: Record<string, string[]>;
   challanReportFieldOrder?: Record<string, string[]>;
   challanSummaryFieldOrder?: Record<string, string[]>;
