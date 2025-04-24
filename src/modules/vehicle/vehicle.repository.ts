@@ -1,5 +1,9 @@
 import { PrismaClient } from '@prisma/client';
-import { IUpdateVehicle, IInternalCreateVehicle, ICreateVehicle } from './vehicle.interface';
+import {
+  IUpdateVehicle,
+  IInternalCreateVehicle,
+  ICreateVehicle,
+} from './vehicle.interface';
 
 export class VehicleRepository {
   private prisma: PrismaClient;
@@ -29,6 +33,9 @@ export class VehicleRepository {
     const vehicles = await this.prisma.vehicle.findMany({
       where: { orgId },
       include: this.include,
+      orderBy: {
+        vehicleNumber: 'asc',
+      },
     });
     return vehicles;
   }
@@ -53,6 +60,9 @@ export class VehicleRepository {
     const vehicles = await this.prisma.vehicle.findMany({
       where: { ownerId, orgId },
       include: this.include,
+      orderBy: {
+        vehicleNumber: 'asc',
+      },
     });
     return vehicles;
   }

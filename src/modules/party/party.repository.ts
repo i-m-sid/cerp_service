@@ -45,6 +45,9 @@ export class PartyRepository {
       where: {
         orgId,
       },
+      orderBy: {
+        tradeName: 'asc',
+      },
       include: this.include,
     });
     return parties;
@@ -77,6 +80,9 @@ export class PartyRepository {
       where: {
         allowedPartyTypes: { some: { id: partyTypeId } },
         orgId,
+      },
+      orderBy: {
+        tradeName: 'asc',
       },
       include: this.include,
     });

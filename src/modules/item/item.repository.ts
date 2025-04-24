@@ -36,6 +36,9 @@ export class ItemRepository {
     return this.prisma.item.findMany({
       where: { orgId },
       include: this.include,
+      orderBy: {
+        name: 'asc',
+      },
     });
   }
 
@@ -57,6 +60,9 @@ export class ItemRepository {
     return this.prisma.item.findMany({
       where: { categoryId, orgId },
       include: this.include,
+      orderBy: {
+        name: 'asc',
+      },
     });
   }
 
@@ -85,6 +91,9 @@ export class ItemRepository {
         categoryId: {
           in: allowedCategoryIds,
         },
+      },
+      orderBy: {
+        name: 'asc',
       },
       include: this.include,
     });
