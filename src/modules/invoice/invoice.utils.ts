@@ -4,7 +4,7 @@ import {
   IOrganizationConfig,
 } from '../organization/organization.interface';
 import { ICreateLineItem, ILineItem } from './invoice.interface';
-import { nanoid } from 'nanoid/non-secure';
+import { nanoid } from 'nanoid';
 
 export class InvoiceCalculator {
   private static calculateDiscount(
