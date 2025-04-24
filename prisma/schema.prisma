@@ -41,6 +41,7 @@ model Organization {
   vehicles      Vehicle[]
   uoms UnitOfMeasurement[]
   challanStatuses ChallanStatus[]
+  challans Challan[]
 }
 
 model OrganizationMembership {
@@ -161,14 +162,16 @@ model Challan {
   templateId    String
   statusId      String?
   invoiceId     String?
+  orgId         String
   customFields  Json
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   status        ChallanStatus?   @relation(fields: [statusId], references: [id])
   template      ChallanTemplate @relation(fields: [templateId], references: [id])
   invoice       Invoice?        @relation(fields: [invoiceId], references: [id])
+  organization  Organization    @relation(fields: [orgId], references: [id])
 
-  @@index([templateId])
+  @@index([orgId])
 }
 
 model ChallanStatus {

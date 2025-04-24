@@ -13,7 +13,7 @@ export class ChallanRepository {
     this.prisma = new PrismaClient();
   }
 
-  async create(data: ICreateChallan) {
+  async create(data: ICreateChallan, orgId: string) {
     // Ignoring customerId error as requested
     const createData: Prisma.ChallanCreateInput = {
       challanNumber: data.challanNumber,
@@ -24,6 +24,9 @@ export class ChallanRepository {
       },
       template: {
         connect: { id: data.templateId },
+      },
+      organization: {
+        connect: { id: orgId },
       },
       // customerId: data.customerId, // Ignored
     };
@@ -45,9 +48,9 @@ export class ChallanRepository {
     };
   }
 
-  async findById(id: string) {
+  async findById(id: string, orgId: string) {
     const result = await this.prisma.challan.findUnique({
-      where: { id },
+      where: { id, orgId },
       include: {
         status: true,
         template: true,
@@ -65,9 +68,9 @@ export class ChallanRepository {
     };
   }
 
-  async findManyByIds(ids: string[]) {
+  async findManyByIds(ids: string[], orgId: string) {
     const results = await this.prisma.challan.findMany({
-      where: { id: { in: ids } },
+      where: { id: { in: ids }, orgId },
       include: {
         status: true,
         template: true,
@@ -82,9 +85,9 @@ export class ChallanRepository {
     }));
   }
 
-  async findByTemplateId(templateId: string) {
+  async findByTemplateId(templateId: string, orgId: string) {
     const results = await this.prisma.challan.findMany({
-      where: { templateId },
+      where: { templateId, orgId },
       include: {
         status: true,
         template: true,
@@ -100,7 +103,7 @@ export class ChallanRepository {
     }));
   }
 
-  async update(data: IUpdateChallan) {
+  async update(data: IUpdateChallan, orgId: string) {
     const { id, ...updateFields } = data;
 
     const updateData: Prisma.ChallanUpdateInput = {
@@ -140,11 +143,11 @@ export class ChallanRepository {
     };
   }
 
-  async bulkUpdate(challans: IUpdateChallan[]) {
+  async bulkUpdate(challans: IUpdateChallan[], orgId: string) {
     // Using Promise.all for parallel processing
     const updatePromises = challans.map(async (challan) => {
       try {
-        const updatedChallan = await this.update(challan);
+        const updatedChallan = await this.update(challan, orgId);
         return { success: true, data: updatedChallan, id: challan.id };
       } catch (error: any) {
         return {
@@ -158,9 +161,9 @@ export class ChallanRepository {
     return Promise.all(updatePromises);
   }
 
-  async delete(id: string) {
+  async delete(id: string, orgId: string) {
     const result = await this.prisma.challan.delete({
-      where: { id },
+      where: { id, orgId },
     });
 
     return {
@@ -172,11 +175,11 @@ export class ChallanRepository {
     };
   }
 
-  async bulkDelete(ids: string[]) {
+  async bulkDelete(ids: string[], orgId: string) {
     // Using Promise.all for parallel processing
     const deletePromises = ids.map(async (id) => {
       try {
-        const deletedChallan = await this.delete(id);
+        const deletedChallan = await this.delete(id, orgId);
         return { success: true, data: deletedChallan, id };
       } catch (error: any) {
         return {
@@ -193,6 +196,7 @@ export class ChallanRepository {
   // TODO: filter by role
   async getChallansByTemplateId(
     templateId: string,
+    orgId: string,
     role: UserRole,
     filters?: IChallanFilter,
   ) {
@@ -206,6 +210,7 @@ export class ChallanRepository {
     // Build where clause for challans query
     const whereClause: Prisma.ChallanWhereInput = {
       templateId: templateId,
+      orgId: orgId,
     };
 
     // Add date filter if provided

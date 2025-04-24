@@ -153,7 +153,7 @@ export class InvoiceService {
     orgId: string,
     challanIds: string[],
   ) {
-    const challans = await this.challanService.findManyByIds(challanIds);
+    const challans = await this.challanService.findManyByIds(challanIds, orgId);
     const org = await this.organizationService.findById(orgId);
     const statusId = org?.config?.challanDefaultStatus?.[challanTemplateId];
     for (const challan of challans) {
@@ -164,7 +164,7 @@ export class InvoiceService {
     if (challans.length > 0) {
       await this.challanService.bulkUpdate({
         challans: challans as IUpdateChallan[],
-      });
+      }, orgId);
     }
   }
 
@@ -241,7 +241,7 @@ export class InvoiceService {
 
         for (const lineItem of lineItems) {
           const challanIds = lineItem.challanIds ?? [];
-          const challans = await this.challanService.findManyByIds(challanIds);
+          const challans = await this.challanService.findManyByIds(challanIds, orgId);
           lineItemChallans.push({
             rate: lineItem.rate,
             quantity: lineItem.quantity,
@@ -297,7 +297,7 @@ export class InvoiceService {
           if (lineItemChallan.challans.length > 0) {
             await this.challanService.bulkUpdate({
               challans: lineItemChallan.challans as IUpdateChallan[],
-            });
+            }, orgId);
           }
         }
       }

@@ -41,7 +41,7 @@ export class ChallanService {
     }
   }
 
-  async create(data: ICreateChallan) {
+  async create(data: ICreateChallan, orgId: string) {
     // Ensure date is a Date object if provided as a string
     const dateObject =
       typeof data.date === 'string' ? new Date(data.date) : data.date;
@@ -85,24 +85,26 @@ export class ChallanService {
     return this.repository.create({
       ...data,
       date: dateObject,
-    });
+    }, orgId);
   }
 
-  async findById(id: string) {
-    return this.repository.findById(id);
+  async findById(id: string, orgId: string) {
+    return this.repository.findById(id, orgId);
   }
 
-  async findManyByIds(ids: string[]) {
-    return this.repository.findManyByIds(ids);
+  async findManyByIds(ids: string[], orgId: string) {
+    return this.repository.findManyByIds(ids, orgId);
   }
 
   async getChallansByTemplateId(
     templateId: string,
+    orgId: string,
     role: UserRole,
     filters?: IChallanFilter,
   ) {
     const result = await this.repository.getChallansByTemplateId(
       templateId,
+      orgId,
       role,
       filters,
     );
@@ -114,7 +116,7 @@ export class ChallanService {
     return result;
   }
 
-  async update(data: IUpdateChallan, fieldSchema?: ChallanTemplateField[]) {
+  async update(data: IUpdateChallan, orgId: string, fieldSchema?: ChallanTemplateField[]) {
     const dateObject =
       typeof data.date === 'string' ? new Date(data.date) : data.date;
 
@@ -157,10 +159,10 @@ export class ChallanService {
     return this.repository.update({
       ...data,
       date: dateObject,
-    });
+    }, orgId);
   }
 
-  async bulkUpdate(data: IBulkUpdateChallans) {
+  async bulkUpdate(data: IBulkUpdateChallans, orgId: string) {
     const { challans } = data;
 
     if (!challans || !Array.isArray(challans) || challans.length === 0) {
@@ -173,20 +175,20 @@ export class ChallanService {
       },
     });
     for (const challan of challans) {
-      results.push(await this.update(challan, fieldSchema));
+      results.push(await this.update(challan, orgId, fieldSchema));
     }
     return results;
   }
 
-  async delete(id: string) {
-    return this.repository.delete(id);
+  async delete(id: string, orgId: string) {
+    return this.repository.delete(id, orgId);
   }
 
-  async bulkDelete(ids: string[]) {
+  async bulkDelete(ids: string[], orgId: string) {
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       throw new Error('No challan IDs provided for bulk delete');
     }
 
-    return this.repository.bulkDelete(ids);
+    return this.repository.bulkDelete(ids, orgId);
   }
 }

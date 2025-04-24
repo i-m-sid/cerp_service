@@ -24,7 +24,7 @@ export class ChallanController {
     reply: FastifyReply,
   ) {
     try {
-      const challan = await this.service.create(request.body);
+      const challan = await this.service.create(request.body, request.user!.orgId!);
       return sendSuccessResponse(reply, 201, challan);
     } catch (error) {
       request.log.error(error);
@@ -37,7 +37,7 @@ export class ChallanController {
     reply: FastifyReply,
   ) {
     try {
-      const challan = await this.service.findById(request.params.id);
+      const challan = await this.service.findById(request.params.id, request.user!.orgId!);
       if (!challan) {
         return sendErrorResponse(reply, 404, null, 'Challan not found');
       }
@@ -65,6 +65,7 @@ export class ChallanController {
     try {
       const result = await this.service.getChallansByTemplateId(
         templateId,
+        request.user!.orgId!,
         request.user!.role as UserRole,
         {
           startDate: startDate ? new Date(startDate) : undefined,
@@ -98,7 +99,7 @@ export class ChallanController {
         ...request.body,
         id: request.params.id,
       };
-      const challan = await this.service.update(updateData);
+      const challan = await this.service.update(updateData, request.user!.orgId!);
       if (!challan) {
         return sendErrorResponse(reply, 404, null, 'Challan not found');
       }
@@ -114,7 +115,7 @@ export class ChallanController {
     reply: FastifyReply,
   ) {
     try {
-      const results = await this.service.bulkUpdate(request.body);
+      const results = await this.service.bulkUpdate(request.body, request.user!.orgId!);
       console.log(results);
       return sendSuccessResponse(reply, 200, results);
     } catch (error) {
@@ -133,7 +134,7 @@ export class ChallanController {
     reply: FastifyReply,
   ) {
     try {
-      const challan = await this.service.delete(request.params.id);
+      const challan = await this.service.delete(request.params.id, request.user!.orgId!);
       if (!challan) {
         return sendErrorResponse(reply, 404, null, 'Challan not found');
       }
@@ -151,7 +152,7 @@ export class ChallanController {
     reply: FastifyReply,
   ) {
     try {
-      const results = await this.service.bulkDelete(request.body.ids);
+      const results = await this.service.bulkDelete(request.body.ids, request.user!.orgId!);
 
       // Check if any challans failed to delete
       const failedDeletions = results.filter((result) => !result.success);
