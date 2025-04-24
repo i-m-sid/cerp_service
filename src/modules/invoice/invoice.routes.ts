@@ -6,8 +6,9 @@ import {
   IBulkUpdateInvoices,
   IBulkDeleteInvoices,
 } from './invoice.interface';
-import { authMiddleware } from '../../middleware/auth.middleware';
+import { authMiddleware, requireRole } from '../../middleware/auth.middleware';
 import { InvoiceType, TransactionType } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 
 export async function invoiceRoutes(fastify: FastifyInstance) {
   const controller = new InvoiceController();
@@ -16,7 +17,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.route({
     method: 'POST',
     url: '',
-    preHandler: [authMiddleware],
+    preHandler: [authMiddleware, requireRole(UserRole.ACCOUNTANT)],
     handler: async (
       req: FastifyRequest<{ Body: ICreateInvoice }>,
       reply: FastifyReply,
@@ -27,7 +28,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.route({
     method: 'GET',
     url: '',
-    preHandler: [authMiddleware],
+    preHandler: [authMiddleware, requireRole(UserRole.ACCOUNTANT)],
     handler: async (
       req: FastifyRequest<{
         Querystring: {
@@ -48,7 +49,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.route({
     method: 'GET',
     url: '/:id',
-    preHandler: [authMiddleware],
+    preHandler: [authMiddleware, requireRole(UserRole.ACCOUNTANT)],
     handler: async (
       req: FastifyRequest<{ Params: { id: string } }>,
       reply: FastifyReply,
@@ -59,7 +60,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.route({
     method: 'GET',
     url: '/customer/:customerId',
-    preHandler: [authMiddleware],
+    preHandler: [authMiddleware, requireRole(UserRole.ACCOUNTANT)],
     handler: async (
       req: FastifyRequest<{ Params: { customerId: string } }>,
       reply: FastifyReply,
@@ -70,7 +71,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.route({
     method: 'PUT',
     url: '/bulk',
-    preHandler: [authMiddleware],
+    preHandler: [authMiddleware, requireRole(UserRole.ACCOUNTANT)],
     handler: async (
       req: FastifyRequest<{ Body: IBulkUpdateInvoices }>,
       reply: FastifyReply,
@@ -81,7 +82,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.route({
     method: 'PUT',
     url: '/:id',
-    preHandler: [authMiddleware],
+    preHandler: [authMiddleware, requireRole(UserRole.ACCOUNTANT)],
     handler: async (
       req: FastifyRequest<{
         Params: { id: string };
@@ -95,7 +96,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.route({
     method: 'DELETE',
     url: '/:id',
-    preHandler: [authMiddleware],
+    preHandler: [authMiddleware, requireRole(UserRole.ACCOUNTANT)],
     handler: async (
       req: FastifyRequest<{ Params: { id: string } }>,
       reply: FastifyReply,
@@ -106,7 +107,7 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
   fastify.route({
     method: 'DELETE',
     url: '/delete',
-    preHandler: [authMiddleware],
+    preHandler: [authMiddleware, requireRole(UserRole.ACCOUNTANT)],
     handler: async (
       req: FastifyRequest<{ Body: IBulkDeleteInvoices }>,
       reply: FastifyReply,

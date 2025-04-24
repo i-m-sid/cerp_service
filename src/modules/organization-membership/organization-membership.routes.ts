@@ -17,25 +17,25 @@ export async function organizationMembershipRoutes(fastify: FastifyInstance) {
 
   // Get all memberships for the organization
   fastify.get('/', {
-    preHandler: [authMiddleware, requireRole(UserRole.OWNER)],
+    preHandler: [authMiddleware, requireRole(UserRole.ADMIN)],
     handler: controller.findAll.bind(controller),
   });
 
   // Get a specific membership by ID
   fastify.get('/:id', {
-    preHandler: [authMiddleware, requireRole(UserRole.OWNER)],
+    preHandler: [authMiddleware, requireRole(UserRole.ADMIN)],
     handler: controller.findById.bind(controller),
   });
 
   // Update a membership (e.g., change role)
   fastify.put('/:id', {
-    preHandler: [authMiddleware, requireRole(UserRole.OWNER)],
+    preHandler: [authMiddleware, requireRole(UserRole.ADMIN)],
     handler: controller.update.bind(controller),
   });
 
   // Delete a membership
   fastify.delete('/:id', {
-    preHandler: [authMiddleware, requireRole(UserRole.OWNER)],
+    preHandler: [authMiddleware, requireRole(UserRole.ADMIN)],
     handler: controller.delete.bind(controller),
   });
 }

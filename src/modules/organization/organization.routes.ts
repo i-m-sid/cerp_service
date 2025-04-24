@@ -23,7 +23,7 @@ export async function organizationRoutes(fastify: FastifyInstance) {
   });
 
   fastify.put('/:orgId', {
-    preHandler: [authMiddleware, requireRole(UserRole.OWNER)],
+    preHandler: [authMiddleware, requireRole(UserRole.ADMIN)],
     handler: controller.update.bind(controller),
   });
 
