@@ -29,7 +29,7 @@ export interface PartyDtls {
   Addr2: string;
   Loc: string;
   Pin: number;
-  Pos: string;
+  Pos?: string;
   Stcd: string;
   Ph?: string | null;
   Em?: string | null;

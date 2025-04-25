@@ -21,13 +21,11 @@ export class PartyRepository {
       data: {
         ...rest,
         openingBalance: data.openingBalance || 0,
-        address: address ? JSON.stringify(address) : Prisma.JsonNull,
+        address: address as unknown as Prisma.JsonObject,
         placeOfSupply: placeOfSupply
-          ? JSON.stringify(placeOfSupply)
+          ? (placeOfSupply as unknown as Prisma.JsonObject)
           : Prisma.JsonNull,
-        customFields: customFields
-          ? JSON.stringify(customFields)
-          : Prisma.JsonNull,
+        customFields: customFields as unknown as Prisma.JsonObject,
         allowedPartyTypes: {
           connect: partyTypeIds.map((id) => ({ id })),
         },
@@ -96,9 +94,13 @@ export class PartyRepository {
       where: { id },
       data: {
         ...rest,
-        ...(address && { address: JSON.stringify(address) }),
-        ...(placeOfSupply && { placeOfSupply: JSON.stringify(placeOfSupply) }),
-        ...(customFields && { customFields: JSON.stringify(customFields) }),
+        ...(address && { address: address as unknown as Prisma.JsonObject }),
+        ...(placeOfSupply && {
+          placeOfSupply: placeOfSupply as unknown as Prisma.JsonObject,
+        }),
+        ...(customFields && {
+          customFields: customFields as unknown as Prisma.JsonObject,
+        }),
         ...(partyTypeIds && {
           allowedPartyTypes: {
             set: partyTypeIds.map((id) => ({ id })),

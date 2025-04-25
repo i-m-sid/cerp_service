@@ -18,10 +18,7 @@ export class EInvoiceService {
     this.invoiceService = new InvoiceService();
   }
 
-  async generateEInvoiceV2(
-    invoiceIds: string[],
-    orgId: string,
-  ) {
+  async generateEInvoiceV2(invoiceIds: string[], orgId: string) {
     const invoices = await this.invoiceService.findByIds(invoiceIds, orgId);
     const uoms = await this.uomService.findAll(invoices[0].organization.id);
     const eInvoices = invoices.map((invoice) =>
@@ -64,7 +61,6 @@ export class EInvoiceService {
         Addr2: sellerAddress.addressLine2 ?? '',
         Loc: sellerAddress.city ?? '',
         Pin: Number(sellerAddress.pinCode),
-        Pos: sellerAddress.stateCode,
         Stcd: sellerAddress.stateCode,
         Ph: sellerDetails.phoneNumber,
         Em: sellerDetails.email,
