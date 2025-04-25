@@ -40,6 +40,31 @@ export class EInvoiceService {
     const buyerDetails = invoice.party as unknown as Party;
     const buyerAddress = buyerDetails.address as unknown as IAddress;
 
+    if (sellerDetails.gstNumber == '') {
+      throw new Error('Seller GST number not found');
+    }
+
+    if (buyerDetails.gstNumber == '') {
+      throw new Error('Buyer GST number not found');
+    }
+
+    if (
+      !buyerAddress ||
+      buyerAddress.stateCode == '' ||
+      !buyerAddress.pinCode ||
+      !buyerAddress.city
+    ) {
+      throw new Error('Buyer address not complete');
+    }
+
+    if (
+      !sellerAddress ||
+      sellerAddress.stateCode == '' ||
+      !sellerAddress.pinCode ||
+      !sellerAddress.city
+    ) {
+      throw new Error('Seller address not complete');
+    }
     return {
       Version: '1.1',
       TranDtls: {
