@@ -5,7 +5,7 @@ import { authMiddleware } from '../../middleware/auth.middleware';
 import { EInvoiceController } from './e-invoice.controller';
 import { ICreateEInvoice } from './e-invoice.interface';
 
-export async function invoiceRoutes(fastify: FastifyInstance) {
+export async function eInvoiceRoutes(fastify: FastifyInstance) {
   const controller = new EInvoiceController();
 
   // Create e-invoice json

@@ -14,7 +14,7 @@ import { invoiceRoutes } from './modules/invoice/invoice.routes';
 import { organizationRoutes } from './modules/organization/organization.routes';
 import { organizationMembershipRoutes } from './modules/organization-membership/organization-membership.routes';
 import { stateCodeRoutes } from './modules/state-code/state-code.routes';
-
+import { eInvoiceRoutes } from './modules/e-invoice/e-invoice.routes';
 export async function registerRoutes(fastify: FastifyInstance) {
   // Organization routes
   fastify.register(organizationRoutes, { prefix: '/api/organization' });
@@ -59,6 +59,9 @@ export async function registerRoutes(fastify: FastifyInstance) {
 
   // Invoice routes
   fastify.register(invoiceRoutes, { prefix: '/api/invoice' });
+
+  // E-invoice routes
+  fastify.register(eInvoiceRoutes, { prefix: '/api/e-invoice' });
 
   // State Code routes
   fastify.register(stateCodeRoutes, { prefix: '/api/state-code' });
