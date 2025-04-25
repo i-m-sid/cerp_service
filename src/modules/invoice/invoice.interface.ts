@@ -8,6 +8,7 @@ export interface ICreateLineItem {
   isService: boolean;
   isInterState: boolean;
   uom: string;
+  uomId: string;
   description: string;
   rate: number;
   quantity: number;

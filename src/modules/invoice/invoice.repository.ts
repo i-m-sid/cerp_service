@@ -141,6 +141,21 @@ export class InvoiceRepository {
     };
   }
 
+  async findByIds(ids: string[], orgId: string) {
+    const results = await this.prisma.invoice.findMany({
+      where: {
+        id: { in: ids },
+        orgId,
+      },
+      include: {
+        organization: true,
+        party: true,
+      },
+    });
+
+    return results;
+  }
+
   async findByPartyId(partyId: string, orgId: string) {
     const results = await this.prisma.invoice.findMany({
       where: {
@@ -193,6 +208,7 @@ export class InvoiceRepository {
             isService: updateItem.isService ?? existingItem.isService,
             isInterState: updateItem.isInterState ?? existingItem.isInterState,
             uom: updateItem.uom ?? existingItem.uom,
+            uomId: updateItem.uomId ?? existingItem.uomId,
             description: updateItem.description ?? existingItem.description,
             rate: updateItem.rate ?? existingItem.rate,
             quantity: updateItem.quantity ?? existingItem.quantity,

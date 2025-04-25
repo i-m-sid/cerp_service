@@ -26,7 +26,7 @@ export const BASE_UOMS: IBaseUOM[] = [
   { label: 'KILOMETRE', UQC: 'KME' },
   { label: 'MILLILITRE', UQC: 'MLT' },
   { label: 'METERS', UQC: 'MTR' },
-  { label: 'METRIC TONS', UQC: 'MTS' },
+  { label: 'METRIC TON', UQC: 'MTS' },
   { label: 'NUMBERS', UQC: 'NOS' },
   { label: 'PACKS', UQC: 'PAC' },
   { label: 'PIECES', UQC: 'PCS' },

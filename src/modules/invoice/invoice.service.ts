@@ -76,6 +76,10 @@ export class InvoiceService {
     return this.repository.findById(id, orgId);
   }
 
+  async findByIds(ids: string[], orgId: string) {
+    return this.repository.findByIds(ids, orgId);
+  }
+
   async findByPartyId(partyId: string, orgId: string) {
     return this.repository.findByPartyId(partyId, orgId);
   }
