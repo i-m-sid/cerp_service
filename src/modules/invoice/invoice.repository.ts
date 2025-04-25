@@ -191,16 +191,20 @@ export class InvoiceRepository {
             item: updateItem.item ?? existingItem.item,
             hsnCode: updateItem.hsnCode ?? existingItem.hsnCode,
             isService: updateItem.isService ?? existingItem.isService,
+            isInterState: updateItem.isInterState ?? existingItem.isInterState,
             uom: updateItem.uom ?? existingItem.uom,
             description: updateItem.description ?? existingItem.description,
             rate: updateItem.rate ?? existingItem.rate,
             quantity: updateItem.quantity ?? existingItem.quantity,
-            cgstPercentage:
-              updateItem.cgstPercentage ?? existingItem.cgstPercentage,
-            sgstPercentage:
-              updateItem.sgstPercentage ?? existingItem.sgstPercentage,
-            igstPercentage:
-              updateItem.igstPercentage ?? existingItem.igstPercentage,
+            gstRate: updateItem.gstRate ?? existingItem.gstRate,
+            cessAdValoremRate:
+              updateItem.cessAdValoremRate ?? existingItem.cessAdValoremRate,
+            cessSpecificRate:
+              updateItem.cessSpecificRate ?? existingItem.cessSpecificRate,
+            stateCessAdValoremRate:
+              updateItem.stateCessAdValoremRate ?? existingItem.stateCessAdValoremRate,
+            stateCessSpecificRate:
+              updateItem.stateCessSpecificRate ?? existingItem.stateCessSpecificRate,
             fixedDiscount:
               updateItem.fixedDiscount ?? existingItem.fixedDiscount,
             percentageDiscount:

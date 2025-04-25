@@ -162,9 +162,12 @@ export class InvoiceService {
       }
     }
     if (challans.length > 0) {
-      await this.challanService.bulkUpdate({
-        challans: challans as IUpdateChallan[],
-      }, orgId);
+      await this.challanService.bulkUpdate(
+        {
+          challans: challans as IUpdateChallan[],
+        },
+        orgId,
+      );
     }
   }
 
@@ -227,27 +230,55 @@ export class InvoiceService {
         const rateField = fieldSchema!.find(
           (field) => field.invoiceField === 'rate',
         );
-        const cgstPercentageField = fieldSchema!.find(
+        const gstRateField = fieldSchema!.find(
+          (field) => field.invoiceField === 'gst',
+        );
+        const cgstRateField = fieldSchema!.find(
           (field) => field.invoiceField === 'cgst',
         );
-        const sgstPercentageField = fieldSchema!.find(
+        const sgstRateField = fieldSchema!.find(
           (field) => field.invoiceField === 'sgst',
         );
-        const igstPercentageField = fieldSchema!.find(
+        const igstRateField = fieldSchema!.find(
           (field) => field.invoiceField === 'igst',
+        );
+        const cessAdValoremField = fieldSchema!.find(
+          (field) => field.invoiceField === 'cessAdValorem',
+        );
+        const cessSpecificField = fieldSchema!.find(
+          (field) => field.invoiceField === 'cessSpecific',
+        );
+        const stateCessAdValoremField = fieldSchema!.find(
+          (field) => field.invoiceField === 'stateCessAdValorem',
+        );
+        const stateCessSpecificField = fieldSchema!.find(
+          (field) => field.invoiceField === 'stateCessSpecific',
+        );
+        const fixedDiscountField = fieldSchema!.find(
+          (field) => field.invoiceField === 'fixedDiscount',
+        );
+        const percentageDiscountField = fieldSchema!.find(
+          (field) => field.invoiceField === 'percentageDiscount',
         );
 
         const lineItemChallans: ILineItemChallan[] = [];
 
         for (const lineItem of lineItems) {
           const challanIds = lineItem.challanIds ?? [];
-          const challans = await this.challanService.findManyByIds(challanIds, orgId);
+          const challans = await this.challanService.findManyByIds(
+            challanIds,
+            orgId,
+          );
           lineItemChallans.push({
             rate: lineItem.rate,
             quantity: lineItem.quantity,
-            cgstPercentage: lineItem.cgstPercentage,
-            sgstPercentage: lineItem.sgstPercentage,
-            igstPercentage: lineItem.igstPercentage,
+            gstRate: lineItem.gstRate,
+            cessAdValoremRate: lineItem.cessAdValoremRate,
+            cessSpecificRate: lineItem.cessSpecificRate,
+            stateCessAdValoremRate: lineItem.stateCessAdValoremRate,
+            stateCessSpecificRate: lineItem.stateCessSpecificRate,
+            fixedDiscount: lineItem.fixedDiscount,
+            percentageDiscount: lineItem.percentageDiscount,
             challans: challans.map((challan) => ({
               ...challan,
               statusId:
@@ -274,30 +305,93 @@ export class InvoiceService {
                   value: lineItemChallan.rate.toString(),
                 };
               }
-              if (cgstPercentageField && lineItemChallan.cgstPercentage) {
-                challan.customFields[cgstPercentageField!.id] = {
-                  ...challan.customFields[cgstPercentageField!.id],
-                  value: lineItemChallan.cgstPercentage.toString(),
+              if (gstRateField && lineItemChallan.gstRate) {
+                challan.customFields[gstRateField!.id] = {
+                  ...challan.customFields[gstRateField!.id],
+                  value: (lineItemChallan.gstRate / 2).toString(),
                 };
               }
-              if (sgstPercentageField && lineItemChallan.sgstPercentage) {
-                challan.customFields[sgstPercentageField!.id] = {
-                  ...challan.customFields[sgstPercentageField!.id],
-                  value: lineItemChallan.sgstPercentage.toString(),
+              if (cgstRateField && lineItemChallan.gstRate) {
+                challan.customFields[cgstRateField!.id] = {
+                  ...challan.customFields[cgstRateField!.id],
+                  value: (!lineItemChallan.isInterState
+                    ? lineItemChallan.gstRate / 2
+                    : 0
+                  ).toString(),
                 };
               }
-              if (igstPercentageField && lineItemChallan.igstPercentage) {
-                challan.customFields[igstPercentageField!.id] = {
-                  ...challan.customFields[igstPercentageField!.id],
-                  value: lineItemChallan.igstPercentage.toString(),
+              if (sgstRateField && lineItemChallan.gstRate) {
+                challan.customFields[sgstRateField!.id] = {
+                  ...challan.customFields[sgstRateField!.id],
+                  value: (!lineItemChallan.isInterState
+                    ? lineItemChallan.gstRate / 2
+                    : 0
+                  ).toString(),
+                };
+              }
+              if (igstRateField && lineItemChallan.gstRate) {
+                challan.customFields[igstRateField!.id] = {
+                  ...challan.customFields[igstRateField!.id],
+                  value: (lineItemChallan.isInterState
+                    ? lineItemChallan.gstRate
+                    : 0
+                  ).toString(),
+                };
+              }
+              if (cessAdValoremField && lineItemChallan.cessAdValoremRate) {
+                challan.customFields[cessAdValoremField!.id] = {
+                  ...challan.customFields[cessAdValoremField!.id],
+                  value: lineItemChallan.cessAdValoremRate.toString(),
+                };
+              }
+              if (cessSpecificField && lineItemChallan.cessSpecificRate) {
+                challan.customFields[cessSpecificField!.id] = {
+                  ...challan.customFields[cessSpecificField!.id],
+                  value: lineItemChallan.cessSpecificRate.toString(),
+                };
+              }
+              if (
+                stateCessAdValoremField &&
+                lineItemChallan.stateCessAdValoremRate
+              ) {
+                challan.customFields[stateCessAdValoremField!.id] = {
+                  ...challan.customFields[stateCessAdValoremField!.id],
+                  value: lineItemChallan.stateCessAdValoremRate.toString(),
+                };
+              }
+              if (
+                stateCessSpecificField &&
+                lineItemChallan.stateCessSpecificRate
+              ) {
+                challan.customFields[stateCessSpecificField!.id] = {
+                  ...challan.customFields[stateCessSpecificField!.id],
+                  value: lineItemChallan.stateCessSpecificRate.toString(),
+                };
+              }
+              if (fixedDiscountField && lineItemChallan.fixedDiscount) {
+                challan.customFields[fixedDiscountField!.id] = {
+                  ...challan.customFields[fixedDiscountField!.id],
+                  value: lineItemChallan.fixedDiscount.toString(),
+                };
+              }
+              if (
+                percentageDiscountField &&
+                lineItemChallan.percentageDiscount
+              ) {
+                challan.customFields[percentageDiscountField!.id] = {
+                  ...challan.customFields[percentageDiscountField!.id],
+                  value: lineItemChallan.percentageDiscount.toString(),
                 };
               }
             }
           }
           if (lineItemChallan.challans.length > 0) {
-            await this.challanService.bulkUpdate({
-              challans: lineItemChallan.challans as IUpdateChallan[],
-            }, orgId);
+            await this.challanService.bulkUpdate(
+              {
+                challans: lineItemChallan.challans as IUpdateChallan[],
+              },
+              orgId,
+            );
           }
         }
       }

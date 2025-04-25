@@ -58,13 +58,25 @@ export class InvoiceCalculator {
 
     // Calculate tax amounts - rate never includes tax
     const cgstAmount = this.roundToTwo(
-      item.cgstPercentage ? (subTotal * item.cgstPercentage) / 100 : 0,
+      item.gstRate && !item.isInterState ? (subTotal * item.gstRate / 2) / 100 : 0,
     );
     const sgstAmount = this.roundToTwo(
-      item.sgstPercentage ? (subTotal * item.sgstPercentage) / 100 : 0,
+      item.gstRate && !item.isInterState ? (subTotal * item.gstRate / 2) / 100 : 0,
     );
     const igstAmount = this.roundToTwo(
-      item.igstPercentage ? (subTotal * item.igstPercentage) / 100 : 0,
+      item.gstRate && item.isInterState ? (subTotal * item.gstRate) / 100 : 0,
+    );
+    const stateCessAdValoremAmount = this.roundToTwo(
+      item.stateCessAdValoremRate ? (subTotal * item.stateCessAdValoremRate) / 100 : 0,
+    );
+    const stateCessSpecificAmount = this.roundToTwo(
+      item.stateCessSpecificRate ? (subTotal * item.stateCessSpecificRate) / 100 : 0,
+    );
+    const cessAdValoremAmount = this.roundToTwo(
+      item.cessAdValoremRate ? (subTotal * item.cessAdValoremRate) / 100 : 0,
+    );
+    const cessSpecificAmount = this.roundToTwo(
+      item.cessSpecificRate ? (subTotal * item.cessSpecificRate) / 100 : 0,
     );
 
     // Total amount depends on includeTax flag
@@ -72,7 +84,7 @@ export class InvoiceCalculator {
     if (includeTax) {
       // If includeTax is true, include tax in the total
       totalAmount = this.roundToTwo(
-        subTotal + cgstAmount + sgstAmount + igstAmount,
+        subTotal + cgstAmount + sgstAmount + igstAmount + cessAdValoremAmount + cessSpecificAmount + stateCessAdValoremAmount + stateCessSpecificAmount,
       );
     } else {
       // If includeTax is false, don't include tax in the total
@@ -86,6 +98,10 @@ export class InvoiceCalculator {
       cgstAmount,
       sgstAmount,
       igstAmount,
+      cessAdValoremAmount,
+      cessSpecificAmount,
+      stateCessAdValoremAmount,
+      stateCessSpecificAmount,
       discountAmount,
       totalAmount,
     };
@@ -114,13 +130,27 @@ export class InvoiceCalculator {
     const igstAmount = this.roundToTwo(
       lineItems.reduce((sum, item) => sum + item.igstAmount, 0),
     );
+    const cessAdValoremAmount = this.roundToTwo(
+      lineItems.reduce((sum, item) => sum + item.cessAdValoremAmount, 0),
+    );
+    const cessSpecificAmount = this.roundToTwo(
+      lineItems.reduce((sum, item) => sum + item.cessSpecificAmount, 0),
+    );
+    const stateCessAdValoremAmount = this.roundToTwo(
+      lineItems.reduce((sum, item) => sum + item.stateCessAdValoremAmount, 0),
+    );
+    const stateCessSpecificAmount = this.roundToTwo(
+      lineItems.reduce((sum, item) => sum + item.stateCessSpecificAmount, 0),
+    );
+    const cessAmount = this.roundToTwo(cessAdValoremAmount + cessSpecificAmount);
+    const stateCessAmount = this.roundToTwo(stateCessAdValoremAmount + stateCessSpecificAmount);
 
     // Calculate total based on includeTax flag
     let totalBeforeRounding;
     if (includeTax) {
       // If includeTax is true, include tax in the total
       totalBeforeRounding = this.roundToTwo(
-        subTotal + cgstAmount + sgstAmount + igstAmount,
+        subTotal + cgstAmount + sgstAmount + igstAmount + cessAdValoremAmount + cessSpecificAmount + stateCessAdValoremAmount + stateCessSpecificAmount,
       );
     } else {
       // If includeTax is false, don't include tax in the total
@@ -142,6 +172,8 @@ export class InvoiceCalculator {
       cgstAmount,
       sgstAmount,
       igstAmount,
+      cessAmount,
+      stateCessAmount,
       roundOffAmount,
       totalAmount,
     };

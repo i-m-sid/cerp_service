@@ -6,15 +6,18 @@ export interface ICreateLineItem {
   item: string;
   hsnCode: string;
   isService: boolean;
+  isInterState: boolean;
   uom: string;
   description: string;
   rate: number;
   quantity: number;
-  cgstPercentage?: number;
-  sgstPercentage?: number;
-  igstPercentage?: number;
-  fixedDiscount?: number;
-  percentageDiscount?: number;
+  gstRate: number;
+  cessAdValoremRate: number;
+  cessSpecificRate: number;
+  stateCessAdValoremRate: number;
+  stateCessSpecificRate: number;
+  fixedDiscount: number;
+  percentageDiscount: number;
   challanIds: string[];
 }
 
@@ -61,6 +64,10 @@ export interface ILineItem extends ICreateLineItem {
   cgstAmount: number;
   sgstAmount: number;
   igstAmount: number;
+  cessAdValoremAmount: number;
+  cessSpecificAmount: number;
+  stateCessAdValoremAmount: number;
+  stateCessSpecificAmount: number;
   subTotal: number;
   discountAmount: number;
   totalAmount: number;
@@ -82,10 +89,15 @@ export interface IBulkDeleteInvoices {
 }
 
 export interface ILineItemChallan {
+  isInterState?: boolean;
   rate?: number;
   quantity?: number;
-  cgstPercentage?: number;
-  sgstPercentage?: number;
-  igstPercentage?: number;
+  gstRate?: number;
+  cessAdValoremRate?: number;
+  cessSpecificRate?: number;
+  stateCessAdValoremRate?: number;
+  stateCessSpecificRate?: number;
+  fixedDiscount?: number;
+  percentageDiscount?: number;
   challans: IChallan[];
 }

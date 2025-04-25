@@ -133,9 +133,11 @@ model ItemCategory {
   isService    Boolean             @default(false)
   description  String?
   hsnCode      String?
-  cgst         Decimal            @default(0)
-  sgst         Decimal            @default(0)
-  igst         Decimal            @default(0)
+  gstRate      Decimal            @default(0)
+  cessAdValoremRate Decimal?      @default(0)
+  cessSpecificRate Decimal?      @default(0)
+  stateCessAdValoremRate Decimal? @default(0)
+  stateCessSpecificRate Decimal? @default(0)
   orgId        String
   items        Item[]
   allowedUnits UnitOfMeasurement[] @relation("ItemCategoryUnitOfMeasurement")
@@ -231,6 +233,8 @@ model Invoice {
   cgstAmount                 Decimal? @default(0)
   sgstAmount                 Decimal? @default(0)
   igstAmount                 Decimal? @default(0)
+  cessAmount                 Decimal? @default(0)
+  stateCessAmount            Decimal? @default(0)
   discountAmount             Decimal? @default(0)
   roundOffAmount             Decimal? @default(0)
   totalAmount                Decimal? @default(0)
