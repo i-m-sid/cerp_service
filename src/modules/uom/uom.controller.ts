@@ -5,12 +5,22 @@ import {
   sendSuccessResponse,
   sendErrorResponse,
 } from '../../utils/response-handler';
-
+import { BASE_UOMS } from './base-uom';
 export class UOMController {
   private service: UOMService;
 
   constructor() {
     this.service = new UOMService();
+  }
+
+  fetchBaseUOMs(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const baseUOMs = BASE_UOMS;
+      return sendSuccessResponse(reply, 200, baseUOMs);
+    } catch (error) {
+      request.log.error(error);
+      return sendErrorResponse(reply, 500, error, 'Failed to fetch base UOMs');
+    }
   }
 
   async create(

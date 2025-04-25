@@ -7,6 +7,13 @@ export async function uomRoutes(fastify: FastifyInstance) {
   const controller = new UOMController();
 
   fastify.route({
+    method: 'GET',
+    url: '/base-uoms',
+    handler: async (req: FastifyRequest, reply: FastifyReply) =>
+      controller.fetchBaseUOMs(req, reply),
+  });
+
+  fastify.route({
     method: 'POST',
     url: '',
     preHandler: [authMiddleware],

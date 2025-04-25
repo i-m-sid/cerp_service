@@ -191,6 +191,8 @@ model UnitOfMeasurement {
   label      String
   shortCode  String
   orgId      String
+  baseConversionFactor Decimal @default(1)
+  baseUQC              String  @default("PCS")
   categories ItemCategory[] @relation("ItemCategoryUnitOfMeasurement")
   organization   Organization  @relation(fields: [orgId], references: [id])
 }

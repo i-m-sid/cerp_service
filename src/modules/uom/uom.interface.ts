@@ -2,15 +2,19 @@ export interface ICreateUOM {
   label: string; // e.g., "Kilogram"
   shortCode: string; // e.g., "kg"
   orgId: string;
+  baseUQC: string;
+  baseConversionFactor: number;
+}
+
+export interface IBaseUOM {
+  label: string;
+  UQC: string;
 }
 
 export interface IInternalCreateUOM extends ICreateUOM {
   createdBy: string;
 }
 
-export interface IUpdateUOM {
+export interface IUpdateUOM extends Partial<ICreateUOM> {
   id: string;
-  label?: string;
-  shortCode?: string;
-  orgId: string;
 }
