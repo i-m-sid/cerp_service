@@ -116,7 +116,6 @@ export class ChallanController {
   ) {
     try {
       const results = await this.service.bulkUpdate(request.body, request.user!.orgId!);
-      console.log(results);
       return sendSuccessResponse(reply, 200, results);
     } catch (error) {
       request.log.error(error);
