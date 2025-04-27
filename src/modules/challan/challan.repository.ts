@@ -232,10 +232,8 @@ export class ChallanRepository {
       const partyField = await this.prisma.challanTemplateField.findFirst({
         where: {
           templateId: templateId,
-          refModel: 'party',
-          refKey: {
-            in: ['tradeName', 'legalName'],
-          },
+          refModel: 'Party',
+          refId: 'id',
         },
       });
 
