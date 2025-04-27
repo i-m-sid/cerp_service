@@ -23,7 +23,6 @@ export class InvoiceController {
     request: FastifyRequest<{ Body: ICreateInvoice }>,
     reply: FastifyReply,
   ) {
-    console.log(request.body);
     try {
       if (!request.user?.orgId) {
         return sendErrorResponse(

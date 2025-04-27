@@ -196,6 +196,11 @@ export class ChallanService {
       this.prepareChallanUpdate(challan, fieldSchema),
     );
 
+    console.log(
+      'processedChallans',
+      JSON.stringify(processedChallans, null, 2),
+    );
+
     // Use repository's optimized bulkUpdate
     return this.repository.bulkUpdate(processedChallans, orgId);
   }

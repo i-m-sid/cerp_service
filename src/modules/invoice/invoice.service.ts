@@ -266,6 +266,7 @@ export class InvoiceService {
         );
 
         const lineItemChallans: ILineItemChallan[] = [];
+        const allChallansToUpdate: IUpdateChallan[] = [];
 
         for (const lineItem of lineItems) {
           const challanIds = lineItem.challanIds ?? [];
@@ -388,15 +389,20 @@ export class InvoiceService {
                 };
               }
             }
+
+            // Add the updated challan to the collection for bulk update
+            allChallansToUpdate.push(challan as IUpdateChallan);
           }
-          if (lineItemChallan.challans.length > 0) {
-            await this.challanService.bulkUpdate(
-              {
-                challans: lineItemChallan.challans as IUpdateChallan[],
-              },
-              orgId,
-            );
-          }
+        }
+
+        // Perform a single bulk update with all challans
+        if (allChallansToUpdate.length > 0) {
+          await this.challanService.bulkUpdate(
+            {
+              challans: allChallansToUpdate,
+            },
+            orgId,
+          );
         }
       }
     } catch (error) {

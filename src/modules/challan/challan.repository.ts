@@ -199,6 +199,7 @@ export class ChallanRepository {
             id: challan.id,
           });
         } catch (error: any) {
+          console.log('error', error);
           results.push({
             success: false,
             error: error.message || 'Unknown error',
