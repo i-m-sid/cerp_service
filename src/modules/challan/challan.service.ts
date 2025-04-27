@@ -7,7 +7,12 @@ import {
   IChallan,
 } from './challan.interface';
 import { ChallanRepository } from './challan.repository';
-import { ChallanTemplateField, PrismaClient, FieldType, UserRole } from '@prisma/client';
+import {
+  ChallanTemplateField,
+  PrismaClient,
+  FieldType,
+  UserRole,
+} from '@prisma/client';
 import { evaluateFormula, evaluateFormulaFields } from './challan.utils';
 
 export class ChallanService {
@@ -82,10 +87,13 @@ export class ChallanService {
     data.customFields = evaluateFormulaFields(fields, data.customFields);
 
     // Pass data directly (customFields is now Record<string, ...>)
-    return this.repository.create({
-      ...data,
-      date: dateObject,
-    }, orgId);
+    return this.repository.create(
+      {
+        ...data,
+        date: dateObject,
+      },
+      orgId,
+    );
   }
 
   async findById(id: string, orgId: string) {
@@ -116,17 +124,15 @@ export class ChallanService {
     return result;
   }
 
-  async update(data: IUpdateChallan, orgId: string, fieldSchema?: ChallanTemplateField[]) {
+  /**
+   * Prepares a challan update by processing dates, custom fields, and formulas
+   */
+  private prepareChallanUpdate(
+    data: IUpdateChallan,
+    fields: ChallanTemplateField[],
+  ): IUpdateChallan {
     const dateObject =
       typeof data.date === 'string' ? new Date(data.date) : data.date;
-
-    const fields =
-      fieldSchema ??
-      (await this.prisma.challanTemplateField.findMany({
-        where: {
-          templateId: data.templateId,
-        },
-      }));
 
     if (!fields || fields.length === 0) {
       throw new Error('No template fields found for the specified template');
@@ -155,11 +161,20 @@ export class ChallanService {
       this.validateRequiredFields(fields, data.customFields);
     }
 
-    // Pass data directly (customFields is now Record<string, ...>)
-    return this.repository.update({
+    return {
       ...data,
       date: dateObject,
-    }, orgId);
+    };
+  }
+
+  async update(data: IUpdateChallan, orgId: string) {
+    const fieldSchema = await this.prisma.challanTemplateField.findMany({
+      where: {
+        templateId: data.templateId,
+      },
+    });
+    const processedData = this.prepareChallanUpdate(data, fieldSchema);
+    return this.repository.update(processedData, orgId);
   }
 
   async bulkUpdate(data: IBulkUpdateChallans, orgId: string) {
@@ -168,16 +183,21 @@ export class ChallanService {
     if (!challans || !Array.isArray(challans) || challans.length === 0) {
       throw new Error('No challans provided for bulk update');
     }
-    let results = [];
+
+    // Get field schema once for all challans
     const fieldSchema = await this.prisma.challanTemplateField.findMany({
       where: {
         templateId: challans[0].templateId,
       },
     });
-    for (const challan of challans) {
-      results.push(await this.update(challan, orgId, fieldSchema));
-    }
-    return results;
+
+    // Process all challans in parallel using the common method
+    const processedChallans = challans.map((challan) =>
+      this.prepareChallanUpdate(challan, fieldSchema),
+    );
+
+    // Use repository's optimized bulkUpdate
+    return this.repository.bulkUpdate(processedChallans, orgId);
   }
 
   async delete(id: string, orgId: string) {

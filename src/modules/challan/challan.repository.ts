@@ -144,21 +144,71 @@ export class ChallanRepository {
   }
 
   async bulkUpdate(challans: IUpdateChallan[], orgId: string) {
-    // Using Promise.all for parallel processing
-    const updatePromises = challans.map(async (challan) => {
-      try {
-        const updatedChallan = await this.update(challan, orgId);
-        return { success: true, data: updatedChallan, id: challan.id };
-      } catch (error: any) {
-        return {
-          success: false,
-          error: error.message || 'Unknown error',
-          id: challan.id,
+    return this.prisma.$transaction(async (tx) => {
+      const results: Array<{
+        success: boolean;
+        data?: {
+          [key: string]: any;
+          customFields: Record<string, ICustomField>;
         };
-      }
-    });
+        error?: string;
+        id: string;
+      }> = [];
 
-    return Promise.all(updatePromises);
+      for (const challan of challans) {
+        try {
+          const { id, ...updateFields } = challan;
+
+          const updateData: Prisma.ChallanUpdateInput = {
+            challanNumber: updateFields.challanNumber,
+            date: updateFields.date,
+            customFields:
+              updateFields.customFields !== undefined
+                ? (updateFields.customFields as unknown as Prisma.JsonObject)
+                : undefined,
+            ...(updateFields.statusId && {
+              status: {
+                connect: { id: updateFields.statusId },
+              },
+            }),
+            ...(updateFields.templateId && {
+              template: {
+                connect: { id: updateFields.templateId },
+              },
+            }),
+          };
+
+          const result = await tx.challan.update({
+            where: { id, orgId },
+            data: updateData,
+            include: {
+              status: true,
+              template: true,
+            },
+          });
+
+          results.push({
+            success: true,
+            data: {
+              ...result,
+              customFields: result.customFields as unknown as Record<
+                string,
+                ICustomField
+              >,
+            },
+            id: challan.id,
+          });
+        } catch (error: any) {
+          results.push({
+            success: false,
+            error: error.message || 'Unknown error',
+            id: challan.id,
+          });
+        }
+      }
+
+      return results;
+    });
   }
 
   async delete(id: string, orgId: string) {
@@ -176,21 +226,45 @@ export class ChallanRepository {
   }
 
   async bulkDelete(ids: string[], orgId: string) {
-    // Using Promise.all for parallel processing
-    const deletePromises = ids.map(async (id) => {
-      try {
-        const deletedChallan = await this.delete(id, orgId);
-        return { success: true, data: deletedChallan, id };
-      } catch (error: any) {
-        return {
-          success: false,
-          error: error.message || 'Unknown error',
-          id,
+    return this.prisma.$transaction(async (tx) => {
+      const results: Array<{
+        success: boolean;
+        data?: {
+          [key: string]: any;
+          customFields: Record<string, ICustomField>;
         };
-      }
-    });
+        error?: string;
+        id: string;
+      }> = [];
 
-    return Promise.all(deletePromises);
+      for (const id of ids) {
+        try {
+          const result = await tx.challan.delete({
+            where: { id, orgId },
+          });
+
+          results.push({
+            success: true,
+            data: {
+              ...result,
+              customFields: result.customFields as unknown as Record<
+                string,
+                ICustomField
+              >,
+            },
+            id,
+          });
+        } catch (error: any) {
+          results.push({
+            success: false,
+            error: error.message || 'Unknown error',
+            id,
+          });
+        }
+      }
+
+      return results;
+    });
   }
 
   // TODO: filter by role
@@ -241,7 +315,7 @@ export class ChallanRepository {
         // Now filter challans where the customField matching this field ID has the party ID
         // PartyId is always stored in the id field
         whereClause.customFields = {
-          path: [`$.${partyField.id}.id`],
+          path: [partyField.id, 'id'],
           equals: filters.partyId,
         };
       } else {
