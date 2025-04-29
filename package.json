@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "init:ledger-categories": "ts-node src/scripts/init-default-ledger-categories.ts"
   },
   "dependencies": {
     "@fastify/aws-lambda": "^5.1.4",
@@ -30,8 +31,7 @@
     "jsonwebtoken": "^9.0.0",
     "libsodium-wrappers": "^0.7.15",
     "lodash": "^4.17.21",
-    "nanoid": "^3.3.4",
-    "zod": "^3.24.2"
+    "nanoid": "^3.3.4"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.147",

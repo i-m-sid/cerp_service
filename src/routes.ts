@@ -15,6 +15,10 @@ import { organizationRoutes } from './modules/organization/organization.routes';
 import { organizationMembershipRoutes } from './modules/organization-membership/organization-membership.routes';
 import { stateCodeRoutes } from './modules/state-code/state-code.routes';
 import { eInvoiceRoutes } from './modules/e-invoice/e-invoice.routes';
+import { ledgerRoutes } from './modules/ledger/ledger.routes';
+import { journalRoutes } from './modules/journal/journal.routes';
+import { bankStatementRoutes } from './modules/bank-statement/bank-statement.routes';
+
 export async function registerRoutes(fastify: FastifyInstance) {
   // Organization routes
   fastify.register(organizationRoutes, { prefix: '/api/organization' });
@@ -59,6 +63,15 @@ export async function registerRoutes(fastify: FastifyInstance) {
 
   // Invoice routes
   fastify.register(invoiceRoutes, { prefix: '/api/invoice' });
+
+  // Ledger routes
+  fastify.register(ledgerRoutes, { prefix: '/api/ledger' });
+
+  // Journal routes
+  fastify.register(journalRoutes, { prefix: '/api/journal' });
+
+  // Bank Statement routes
+  fastify.register(bankStatementRoutes, { prefix: '/api/bank-statement' });
 
   // E-invoice routes
   fastify.register(eInvoiceRoutes, { prefix: '/api/e-invoice' });

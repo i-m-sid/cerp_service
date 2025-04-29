@@ -15,6 +15,8 @@ export class OrganizationService {
   }
 
   async create(data: ICreateOrganization) {
+    // We no longer need to create default categories for each organization
+    // as we're using system-wide defaults
     return this.repository.create(data);
   }
 
