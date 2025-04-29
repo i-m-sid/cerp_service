@@ -1,4 +1,4 @@
-import { JournalStatus, VoucherType, SourceType } from '@prisma/client';
+import { JournalStatus, VoucherType, SourceType, Prisma } from '@prisma/client';
 
 export interface ICreateJournalLine {
   accountId: string;
@@ -7,8 +7,8 @@ export interface ICreateJournalLine {
   creditAmount?: number;
 }
 
-export interface IUpdateJournalLine extends Partial<ICreateJournalLine> {
-  id: string;
+export interface IUpdateJournalLine extends ICreateJournalLine {
+  id?: string;
 }
 
 export interface IFindAllJournalFilters {
@@ -18,6 +18,7 @@ export interface IFindAllJournalFilters {
   voucherType?: VoucherType;
   status?: JournalStatus;
 }
+
 export interface IJournal {
   voucherNumber: string;
   description?: string;
@@ -30,11 +31,20 @@ export interface IJournal {
   sourceId?: string;
 }
 
-export interface ICreateJournal extends IJournal {
+export interface ICreateJournal {
+  voucherNumber: string;
+  description?: string;
+  date: Date;
+  status: JournalStatus;
+  voucherType: VoucherType;
+  orgId: string;
+  createdBy?: string;
+  sourceType?: SourceType;
+  sourceId?: string;
   lines: ICreateJournalLine[];
 }
 
-export interface IUpdateJournal extends Partial<IJournal> {
+export interface IUpdateJournal extends Partial<Omit<ICreateJournal, 'lines'>> {
   id: string;
-  lines: IUpdateJournalLine[];
+  lines?: IUpdateJournalLine[];
 }

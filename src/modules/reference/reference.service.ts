@@ -8,6 +8,6 @@ export class ReferenceService {
   }
 
   async getTableReferences(): Promise<TableReference[]> {
-    return await this.repository.getTableReferences();
+    return this.repository.getTableReferences();
   }
 }

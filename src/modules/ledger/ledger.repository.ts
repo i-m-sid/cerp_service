@@ -7,6 +7,16 @@ import {
 } from './ledger.interface';
 import { DEFAULT_ORGANIZATION_ID } from './ledger.categories.default';
 
+const LEDGER_ACCOUNT_INCLUDE = {
+  category: true,
+  party: true,
+  lines: {
+    include: {
+      journal: true,
+    },
+  },
+} as const;
+
 export class LedgerRepository {
   private prisma: PrismaClient;
 
@@ -55,21 +65,38 @@ export class LedgerRepository {
 
   // Ledger Account CRUD
   async createAccount(data: ICreateLedgerAccount) {
-    return this.prisma.ledgerAccount.create({ data });
+    return this.prisma.ledgerAccount.create({
+      data,
+      include: LEDGER_ACCOUNT_INCLUDE,
+    });
   }
 
   async findAllAccounts(orgId: string, categoryId?: string, partyId?: string) {
     return this.prisma.ledgerAccount.findMany({
       where: { orgId, categoryId, partyId },
       orderBy: { name: 'asc' },
-      include: { category: true, party: true },
+      include: LEDGER_ACCOUNT_INCLUDE,
     });
   }
 
   async findAccountById(id: string, orgId: string) {
     return this.prisma.ledgerAccount.findFirst({
       where: { id, orgId },
-      include: { category: true, party: true },
+      include: LEDGER_ACCOUNT_INCLUDE,
+    });
+  }
+
+  async findByPartyId(partyId: string, orgId: string) {
+    return this.prisma.ledgerAccount.findMany({
+      where: { partyId, orgId },
+      include: LEDGER_ACCOUNT_INCLUDE,
+    });
+  }
+
+  async findByName(name: string, orgId: string) {
+    return this.prisma.ledgerAccount.findFirst({
+      where: { name, orgId },
+      include: LEDGER_ACCOUNT_INCLUDE,
     });
   }
 
@@ -78,6 +105,7 @@ export class LedgerRepository {
     return this.prisma.ledgerAccount.update({
       where: { id },
       data: updateData,
+      include: LEDGER_ACCOUNT_INCLUDE,
     });
   }
 

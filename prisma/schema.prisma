@@ -278,6 +278,7 @@ model LedgerAccount {
   name          String
   code          String?
   description   String?
+  isSystemGenerated      Boolean              @default(false)
   isActive      Boolean              @default(true)
   categoryId    String
   isBank        Boolean              @default(false)

@@ -176,39 +176,6 @@ export class InvoiceController {
     }
   }
 
-  async bulkUpdate(
-    request: FastifyRequest<{ Body: IBulkUpdateInvoices }>,
-    reply: FastifyReply,
-  ) {
-    try {
-      if (!request.user?.orgId) {
-        return sendErrorResponse(
-          reply,
-          400,
-          null,
-          'Organization ID is required',
-        );
-      }
-
-      const { invoices } = request.body;
-      const updatedInvoices = await this.service.bulkUpdate({
-        invoices: invoices.map((invoice) => ({
-          ...invoice,
-          orgId: request.user?.orgId!,
-        })),
-      });
-      return sendSuccessResponse(reply, 200, updatedInvoices);
-    } catch (error) {
-      request.log.error(error);
-      return sendErrorResponse(
-        reply,
-        500,
-        error,
-        'Failed to bulk update invoices',
-      );
-    }
-  }
-
   async delete(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply,

@@ -1,8 +1,15 @@
-import { PrismaClient } from '@prisma/client';
+import {
+  PrismaClient,
+  LedgerAccountType,
+  Prisma,
+  SourceType,
+} from '@prisma/client';
 import {
   ICreateJournal,
   IFindAllJournalFilters,
   IUpdateJournal,
+  ICreateJournalLine,
+  IUpdateJournalLine,
 } from './journal.interface';
 
 export class JournalRepository {
@@ -12,15 +19,90 @@ export class JournalRepository {
     this.prisma = new PrismaClient();
   }
 
-  async create(data: ICreateJournal) {
-    return this.prisma.journal.create({
+  private async updateAccountBalance(
+    accountId: string,
+    debitAmount: number,
+    creditAmount: number,
+    accountType: LedgerAccountType,
+    tx: Prisma.TransactionClient,
+  ) {
+    // Calculate net change based on account type
+    let netChange = 0;
+
+    switch (accountType) {
+      case 'ASSET':
+      case 'EXPENSE':
+        // Debit increases, Credit decreases
+        netChange = debitAmount - creditAmount;
+        break;
+      case 'LIABILITY':
+      case 'EQUITY':
+      case 'REVENUE':
+        // Credit increases, Debit decreases
+        netChange = creditAmount - debitAmount;
+        break;
+    }
+
+    await tx.ledgerAccount.update({
+      where: { id: accountId },
       data: {
-        ...data,
-        lines: {
-          create: data.lines,
+        currentBalance: {
+          increment: netChange,
         },
       },
-      include: { lines: true },
+    });
+  }
+
+  private async processJournalLines(
+    lines: ICreateJournalLine[],
+    operation: 'ADD' | 'REMOVE',
+    tx: Prisma.TransactionClient,
+  ) {
+    for (const line of lines) {
+      const account = await tx.ledgerAccount.findUnique({
+        where: { id: line.accountId },
+        include: { category: true },
+      });
+
+      if (!account) {
+        throw new Error(`Account ${line.accountId} not found`);
+      }
+
+      const debitAmount = line.debitAmount || 0;
+      const creditAmount = line.creditAmount || 0;
+
+      // For removal operations, invert the amounts
+      const finalDebitAmount = operation === 'ADD' ? debitAmount : -debitAmount;
+      const finalCreditAmount =
+        operation === 'ADD' ? creditAmount : -creditAmount;
+
+      await this.updateAccountBalance(
+        account.id,
+        finalDebitAmount,
+        finalCreditAmount,
+        account.category.accountType,
+        tx,
+      );
+    }
+  }
+
+  async create(data: ICreateJournal) {
+    return this.prisma.$transaction(async (tx) => {
+      // Create the journal and its lines
+      const journal = await tx.journal.create({
+        data: {
+          ...data,
+          lines: {
+            create: data.lines,
+          },
+        },
+        include: { lines: true },
+      });
+
+      // Update account balances
+      await this.processJournalLines(data.lines, 'ADD', tx);
+
+      return journal;
     });
   }
 
@@ -46,77 +128,122 @@ export class JournalRepository {
     });
   }
 
-  async update(data: IUpdateJournal) {
-    const { id, lines, ...updateData } = data;
-    // Remove orgId if present and filter undefined values
-    const { orgId, ...rawUpdateData } = updateData;
-
-    // Only include defined fields
-    const prismaUpdateData: Record<string, any> = {};
-    Object.entries(rawUpdateData).forEach(([key, value]) => {
-      if (value !== undefined) {
-        prismaUpdateData[key] = value;
-      }
-    });
-
-    // Process the lines if provided
-    if (lines && lines.length > 0) {
-      // Get existing lines to determine which ones to update vs. create
-      const existingLines = await this.prisma.journalLine.findMany({
-        where: { journalId: id },
-        select: { id: true },
-      });
-      const existingIds = new Set(existingLines.map((line) => line.id));
-
-      // Separate lines that need to be created vs updated
-      const linesToCreate = lines
-        .filter((line) => !existingIds.has(line.id))
-        .filter((line) => line.accountId !== undefined);
-      const linesToUpdate = lines.filter((line) => existingIds.has(line.id));
-
-      // Create new lines - use individual creates for better type safety
-      for (const line of linesToCreate) {
-        const { id: lineId, ...lineData } = line;
-        await this.prisma.journalLine.create({
-          data: {
-            accountId: lineData.accountId!,
-            description: lineData.description,
-            debitAmount: lineData.debitAmount ?? 0,
-            creditAmount: lineData.creditAmount ?? 0,
-            journalId: id,
-          },
-        });
-      }
-
-      // Update existing lines
-      for (const line of linesToUpdate) {
-        const { id: lineId, ...lineData } = line;
-        const updateFields: Record<string, any> = {};
-        // Only include defined values
-        Object.entries(lineData).forEach(([key, value]) => {
-          if (value !== undefined) {
-            updateFields[key] = value;
-          }
-        });
-
-        if (Object.keys(updateFields).length > 0) {
-          await this.prisma.journalLine.update({
-            where: { id: lineId },
-            data: updateFields,
-          });
-        }
-      }
-    }
-
-    // Update the journal
-    return this.prisma.journal.update({
-      where: { id },
-      data: prismaUpdateData,
+  async findBySourceTypeAndSourceId(
+    sourceType: SourceType,
+    sourceId: string,
+    orgId: string,
+  ) {
+    return this.prisma.journal.findFirst({
+      where: { sourceType, sourceId, orgId },
       include: { lines: true },
     });
   }
 
+  async update(data: IUpdateJournal) {
+    const { id, lines, ...updateData } = data;
+
+    return this.prisma.$transaction(async (tx) => {
+      // Get existing journal with its lines
+      const existingJournal = await tx.journal.findUnique({
+        where: { id },
+        include: { lines: true },
+      });
+
+      if (!existingJournal) {
+        throw new Error(`Journal ${id} not found`);
+      }
+
+      // Remove the effect of existing lines
+      await this.processJournalLines(
+        existingJournal.lines.map((line) => ({
+          accountId: line.accountId,
+          debitAmount: Number(line.debitAmount),
+          creditAmount: Number(line.creditAmount),
+          description: line.description || undefined,
+        })),
+        'REMOVE',
+        tx,
+      );
+
+      // Remove orgId if present and filter undefined values
+      const { orgId, ...rawUpdateData } = updateData;
+
+      // Only include defined fields
+      const prismaUpdateData: Record<string, any> = {};
+      Object.entries(rawUpdateData).forEach(([key, value]) => {
+        if (value !== undefined) {
+          prismaUpdateData[key] = value;
+        }
+      });
+
+      // Process the lines if provided
+      if (lines && lines.length > 0) {
+        // Delete existing lines
+        await tx.journalLine.deleteMany({
+          where: { journalId: id },
+        });
+
+        // Create new lines
+        const newLines = lines
+          .filter((line) => line.accountId !== undefined)
+          .map(({ id: _id, ...line }) => line);
+
+        for (const lineData of newLines) {
+          await tx.journalLine.create({
+            data: {
+              accountId: lineData.accountId,
+              description: lineData.description,
+              debitAmount: lineData.debitAmount ?? 0,
+              creditAmount: lineData.creditAmount ?? 0,
+              journalId: id,
+            },
+          });
+        }
+
+        // Update account balances for new lines
+        await this.processJournalLines(newLines, 'ADD', tx);
+      }
+
+      // Update the journal
+      return tx.journal.update({
+        where: { id },
+        data: prismaUpdateData,
+        include: { lines: true },
+      });
+    });
+  }
+
   async delete(id: string) {
-    return this.prisma.journal.delete({ where: { id } });
+    return this.prisma.$transaction(async (tx) => {
+      // Get the journal with its lines
+      const journal = await tx.journal.findUnique({
+        where: { id },
+        include: { lines: true },
+      });
+
+      if (!journal) {
+        throw new Error(`Journal ${id} not found`);
+      }
+
+      // Remove the effect of the lines from account balances
+      await this.processJournalLines(
+        journal.lines.map((line) => ({
+          accountId: line.accountId,
+          debitAmount: Number(line.debitAmount),
+          creditAmount: Number(line.creditAmount),
+          description: line.description || undefined,
+        })),
+        'REMOVE',
+        tx,
+      );
+
+      // First delete all journal lines
+      await tx.journalLine.deleteMany({
+        where: { journalId: id },
+      });
+
+      // Then delete the journal
+      return tx.journal.delete({ where: { id } });
+    });
   }
 }

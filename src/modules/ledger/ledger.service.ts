@@ -52,6 +52,14 @@ export class LedgerService {
     return this.repository.findAccountById(id, orgId);
   }
 
+  async findByPartyId(partyId: string, orgId: string) {
+    return this.repository.findByPartyId(partyId, orgId);
+  }
+
+  async findByName(name: string, orgId: string) {
+    return this.repository.findByName(name, orgId);
+  }
+
   async updateAccount(data: IUpdateLedgerAccount) {
     return this.repository.updateAccount(data);
   }

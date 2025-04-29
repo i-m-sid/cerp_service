@@ -27,7 +27,6 @@ export class LedgerController {
     reply: FastifyReply,
   ) {
     try {
-      console.log('request.body', JSON.stringify(request.body, null, 2));
       const category = await this.service.createCategory({
         ...request.body,
         orgId: request.user!.orgId!,

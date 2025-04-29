@@ -31,15 +31,18 @@ export class JournalController {
     }
   }
 
-  async findAll(request: FastifyRequest<{
-    Querystring: {
-      startDate?: string;
-      endDate?: string;
-      source?: SourceType;
-      voucherType?: VoucherType;
-      status?: JournalStatus;
-    };
-  }>, reply: FastifyReply) {
+  async findAll(
+    request: FastifyRequest<{
+      Querystring: {
+        startDate?: string;
+        endDate?: string;
+        source?: SourceType;
+        voucherType?: VoucherType;
+        status?: JournalStatus;
+      };
+    }>,
+    reply: FastifyReply,
+  ) {
     try {
       const { startDate, endDate, source, voucherType, status } = request.query;
       const journals = await this.service.findAll(request.user!.orgId!, {

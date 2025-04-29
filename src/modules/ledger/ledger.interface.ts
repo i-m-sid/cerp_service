@@ -24,6 +24,7 @@ export interface ICreateLedgerAccount {
   orgId: string;
   openingBalance?: number;
   partyId?: string;
+  isSystemGenerated?: boolean;
 }
 
 export interface IUpdateLedgerAccount extends Partial<ICreateLedgerAccount> {

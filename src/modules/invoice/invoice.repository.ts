@@ -3,6 +3,7 @@ import {
   Prisma,
   TransactionType,
   InvoiceType,
+  SourceType,
 } from '@prisma/client';
 import {
   ICreateInvoice,
@@ -17,6 +18,12 @@ import { InvoiceCalculator } from './invoice.utils';
 import { transformPartyData } from '../party/party.service';
 export class InvoiceRepository {
   private prisma: PrismaClient;
+  private readonly include = {
+    challans: true,
+    party: true,
+    challanTemplate: true,
+    organization: true,
+  };
 
   constructor() {
     this.prisma = new PrismaClient();
@@ -77,9 +84,7 @@ export class InvoiceRepository {
 
     const result = await this.prisma.invoice.create({
       data: createData,
-      include: {
-        challans: true,
-      },
+      include: this.include,
     });
 
     return {
@@ -111,9 +116,7 @@ export class InvoiceRepository {
             }
           : {}),
       },
-      include: {
-        challans: true,
-      },
+      include: this.include,
     });
 
     return results.map((result) => ({
@@ -128,9 +131,7 @@ export class InvoiceRepository {
         id,
         orgId,
       },
-      include: {
-        challans: true,
-      },
+      include: this.include,
     });
 
     if (!result) return null;
@@ -147,10 +148,7 @@ export class InvoiceRepository {
         id: { in: ids },
         orgId,
       },
-      include: {
-        organization: true,
-        party: true,
-      },
+      include: this.include,
     });
 
     return results;
@@ -162,9 +160,7 @@ export class InvoiceRepository {
         partyId,
         orgId,
       },
-      include: {
-        challans: true,
-      },
+      include: this.include,
     });
 
     return results.map((result) => ({
@@ -218,9 +214,11 @@ export class InvoiceRepository {
             cessSpecificRate:
               updateItem.cessSpecificRate ?? existingItem.cessSpecificRate,
             stateCessAdValoremRate:
-              updateItem.stateCessAdValoremRate ?? existingItem.stateCessAdValoremRate,
+              updateItem.stateCessAdValoremRate ??
+              existingItem.stateCessAdValoremRate,
             stateCessSpecificRate:
-              updateItem.stateCessSpecificRate ?? existingItem.stateCessSpecificRate,
+              updateItem.stateCessSpecificRate ??
+              existingItem.stateCessSpecificRate,
             fixedDiscount:
               updateItem.fixedDiscount ?? existingItem.fixedDiscount,
             percentageDiscount:
@@ -276,32 +274,13 @@ export class InvoiceRepository {
         orgId,
       },
       data: updateData,
-      include: {
-        challans: true,
-      },
+      include: this.include,
     });
 
     return {
       ...result,
       lineItems: result.lineItems as unknown as ILineItem[],
     };
-  }
-
-  async bulkUpdate(invoices: IUpdateInvoice[]) {
-    const updatePromises = invoices.map(async (invoice) => {
-      try {
-        const updatedInvoice = await this.update(invoice);
-        return { success: true, data: updatedInvoice, id: invoice.id };
-      } catch (error: any) {
-        return {
-          success: false,
-          error: error.message || 'Unknown error',
-          id: invoice.id,
-        };
-      }
-    });
-
-    return Promise.all(updatePromises);
   }
 
   async delete(id: string, orgId: string) {

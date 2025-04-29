@@ -1,3 +1,4 @@
+import { SourceType } from '@prisma/client';
 import { ICreateJournal, IUpdateJournal, IFindAllJournalFilters } from './journal.interface';
 import { JournalRepository } from './journal.repository';
 
@@ -14,11 +15,11 @@ export class JournalService {
     }
     // Optional: check that debits equal credits
     const totalDebit = data.lines.reduce(
-      (sum, l) => sum + (l.debitAmount || 0),
+      (sum, l) => sum + (l.debitAmount ? Number(l.debitAmount) : 0),
       0,
     );
     const totalCredit = data.lines.reduce(
-      (sum, l) => sum + (l.creditAmount || 0),
+      (sum, l) => sum + (l.creditAmount ? Number(l.creditAmount) : 0),
       0,
     );
     if (totalDebit !== totalCredit) {
@@ -35,14 +36,26 @@ export class JournalService {
     return this.repository.findById(id, orgId);
   }
 
+  async findBySourceTypeAndSourceId(
+    sourceType: SourceType,
+    sourceId: string,
+    orgId: string,
+  ) {
+    return this.repository.findBySourceTypeAndSourceId(
+      sourceType,
+      sourceId,
+      orgId,
+    );
+  }
+
   async update(data: IUpdateJournal) {
     if (data.lines && data.lines.length > 0) {
       const totalDebit = data.lines.reduce(
-        (sum, l) => sum + (l.debitAmount || 0),
+        (sum, l) => sum + (l.debitAmount ? Number(l.debitAmount) : 0),
         0,
       );
       const totalCredit = data.lines.reduce(
-        (sum, l) => sum + (l.creditAmount || 0),
+        (sum, l) => sum + (l.creditAmount ? Number(l.creditAmount) : 0),
         0,
       );
       if (totalDebit !== totalCredit) {
