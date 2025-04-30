@@ -42,6 +42,10 @@ model Organization {
   uoms UnitOfMeasurement[]
   challanStatuses ChallanStatus[]
   challans Challan[]
+  ledgerAccounts LedgerAccount[]
+  ledgerAccountCategories LedgerAccountCategory[]
+  journals Journal[]
+  bankStatements BankStatement[]
 }
 
 model OrganizationMembership {
@@ -69,6 +73,7 @@ model Party {
   customFields         Json?
   vehicles             Vehicle[]
   invoices             Invoice[]
+  ledgerAccounts       LedgerAccount[]
   allowedPartyTypes    PartyType[] @relation("PartyPartyType")
   organization   Organization  @relation(fields: [orgId], references: [id])
 
@@ -250,6 +255,122 @@ model Invoice {
   organization               Organization  @relation(fields: [orgId], references: [id])
   challanTemplate            ChallanTemplate @relation(fields: [challanTemplateId], references: [id])
 }
+model LedgerAccountCategory {
+  id            String           @id @default(cuid())
+  name          String
+  code          String?
+  isDefault     Boolean          @default(false)
+  accountType   LedgerAccountType
+  description   String?
+  orgId         String
+  organization  Organization     @relation(fields: [orgId], references: [id])
+  accounts      LedgerAccount[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  
+  @@unique([orgId, code])
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+model LedgerAccount {
+  id            String               @id @default(cuid())
+  name          String
+  code          String?
+  description   String?
+  isSystemGenerated      Boolean              @default(false)
+  isActive      Boolean              @default(true)
+  categoryId    String
+  isBank        Boolean              @default(false)
+  bankMeta   Json?
+  orgId         String
+  openingBalance Decimal             @default(0)
+  currentBalance Decimal             @default(0)
+  category      LedgerAccountCategory @relation(fields: [categoryId], references: [id])
+  organization  Organization         @relation(fields: [orgId], references: [id])
+  partyId       String?              // Optional link to a party
+  party         Party?               @relation(fields: [partyId], references: [id])
+  lines         JournalLine[]
+  bankStatements BankStatement[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([orgId, code])
+  @@index([orgId])
+}
+
+model Journal {
+  id            String           @id @default(cuid())
+  voucherNumber     String
+  description     String?
+  date          DateTime
+  status        JournalStatus
+  voucherType   VoucherType
+  orgId         String
+  createdBy     String?
+  sourceType    SourceType?
+  sourceId      String?
+  lines         JournalLine[]
+  organization  Organization     @relation(fields: [orgId], references: [id])
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  
+  @@index([orgId])
+  BankStatementEntry BankStatementEntry[]
+}
+
+model JournalLine {
+  id            String         @id @default(cuid())
+  journalId     String
+  accountId     String
+  description   String?
+  debitAmount   Decimal        @default(0)
+  creditAmount  Decimal        @default(0)
+  journal       Journal  @relation(fields: [journalId], references: [id])
+  account       LedgerAccount  @relation(fields: [accountId], references: [id])
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  
+  // @@index([journalId])
+  // @@index([accountId])
+}
+
+model BankStatement {
+  id              String            @id @default(cuid())
+  accountId       String            // References a LedgerAccount
+  account         LedgerAccount     @relation(fields: [accountId], references: [id])
+  startDate       DateTime
+  endDate         DateTime
+  openingBalance    Decimal
+  closingBalance      Decimal
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  orgId           String
+  organization    Organization      @relation(fields: [orgId], references: [id])
+  entries         BankStatementEntry[]
+  
+
+  @@index([orgId])
+}
+
+model BankStatementEntry {
+  id              String    @id @default(cuid())
+  statementId     String
+  statement       BankStatement @relation(fields: [statementId], references: [id])
+  transactionDate DateTime
+  description     String
+  referenceNumber     String?
+  amount          Decimal
+  closingBalance  Decimal
+  isReconciled    Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  journalId  String?   // Optional reference to LedgerJournal
+  journal    Journal? @relation(fields: [journalId], references: [id])
+  
+  // @@index([statementId])
+  // @@index([journalId])
+}
 
 enum FieldType {
   TEXT
@@ -280,6 +401,37 @@ enum UserRole {
   ACCOUNTANT      // Manages invoices, ledgers, and finances
   DATA_ENTRY      // Can create and edit records but limited permissions
   VIEWER          // Read-only access 
+}
+
+enum LedgerAccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum VoucherType {
+  PAYMENT
+  RECEIPT
+  CONTRA
+  PURCHASE
+  SALES
+  DEBIT_NOTE
+  CREDIT_NOTE
+  JOURNAL
+}
+
+enum JournalStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum SourceType {
+  INVOICE
+  PRO_FORMA
+  CHALLAN
 }
 
 

@@ -67,17 +67,6 @@ export async function invoiceRoutes(fastify: FastifyInstance) {
     ) => controller.findByCustomerId(req, reply),
   });
 
-  // Bulk update invoices
-  fastify.route({
-    method: 'PUT',
-    url: '/bulk',
-    preHandler: [authMiddleware, requireRole(UserRole.ACCOUNTANT)],
-    handler: async (
-      req: FastifyRequest<{ Body: IBulkUpdateInvoices }>,
-      reply: FastifyReply,
-    ) => controller.bulkUpdate(req, reply),
-  });
-
   // Update invoice by ID
   fastify.route({
     method: 'PUT',
