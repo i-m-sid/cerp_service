@@ -583,7 +583,7 @@ export class InvoiceService {
         );
         journalLines.push({
           accountId: cgstAccount.id,
-          description: `CGST ${rate}%`,
+          description: `CGST @${rate}%`,
           debitAmount:
             invoice.transactionType === TransactionType.PURCHASE
               ? amount
@@ -607,7 +607,7 @@ export class InvoiceService {
         );
         journalLines.push({
           accountId: sgstAccount.id,
-          description: `SGST ${rate}%`,
+          description: `SGST @${rate}%`,
           debitAmount:
             invoice.transactionType === TransactionType.PURCHASE
               ? amount
@@ -631,7 +631,7 @@ export class InvoiceService {
         );
         journalLines.push({
           accountId: igstAccount.id,
-          description: `IGST ${rate}%`,
+          description: `IGST @${rate}%`,
           debitAmount:
             invoice.transactionType === TransactionType.PURCHASE
               ? amount
@@ -655,7 +655,7 @@ export class InvoiceService {
         );
         journalLines.push({
           accountId: cessAccount.id,
-          description: `Cess Ad Valorem ${rate}%`,
+          description: `Cess Ad Valorem @${rate}%`,
           debitAmount:
             invoice.transactionType === TransactionType.PURCHASE
               ? amount
@@ -679,7 +679,7 @@ export class InvoiceService {
         );
         journalLines.push({
           accountId: stateCessAccount.id,
-          description: `State Cess Ad Valorem ${rate}%`,
+          description: `State Cess Ad Valorem @${rate}%`,
           debitAmount:
             invoice.transactionType === TransactionType.PURCHASE
               ? amount
@@ -754,7 +754,7 @@ export class InvoiceService {
       });
     }
 
-    const journalDescription = `${invoice.challanTemplate.name} ${invoice.invoiceNumber}`;
+    const journalDescription = `${invoice.challanTemplate.name} ${invoice.invoiceType.replace(/_/g, ' ').toLowerCase()} - ${invoice.invoiceNumber}`;
 
     // Create the appropriate journal entry based on transaction type
     if (invoice.transactionType === TransactionType.SALES) {
