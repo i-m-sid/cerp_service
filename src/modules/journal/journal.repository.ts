@@ -86,12 +86,13 @@ export class JournalRepository {
     }
   }
 
-  async create(data: ICreateJournal) {
+  async create(data: ICreateJournal, voucherNumber: string) {
     return this.prisma.$transaction(async (tx) => {
       // Create the journal and its lines
       const journal = await tx.journal.create({
         data: {
           ...data,
+          voucherNumber,
           lines: {
             create: data.lines,
           },

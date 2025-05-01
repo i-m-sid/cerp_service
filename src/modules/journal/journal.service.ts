@@ -1,12 +1,46 @@
 import { SourceType } from '@prisma/client';
-import { ICreateJournal, IUpdateJournal, IFindAllJournalFilters } from './journal.interface';
+import {
+  ICreateJournal,
+  IUpdateJournal,
+  IFindAllJournalFilters,
+} from './journal.interface';
 import { JournalRepository } from './journal.repository';
+import { OrganizationService } from '../organization/organization.service';
+import {
+  generateJournalVoucherNumber,
+  getJournalNumericPart,
+  updateJournalConfigCurrentNumber,
+} from './journal.utils';
 
 export class JournalService {
   private repository: JournalRepository;
+  private organizationService: OrganizationService;
 
   constructor() {
     this.repository = new JournalRepository();
+    this.organizationService = new OrganizationService();
+  }
+
+  private async generateVoucherNumber(orgId: string): Promise<string> {
+    const org = await this.organizationService.findById(orgId);
+    const voucherNumber = generateJournalVoucherNumber(org?.config);
+
+    // Update the current number in config
+    if (org?.config) {
+      const documentNumber = getJournalNumericPart(voucherNumber, org.config);
+      if (documentNumber) {
+        const updatedConfig = updateJournalConfigCurrentNumber(
+          documentNumber,
+          org.config,
+        );
+        await this.organizationService.update(
+          { id: orgId, config: updatedConfig },
+          orgId,
+        );
+      }
+    }
+
+    return voucherNumber;
   }
 
   async create(data: ICreateJournal) {
@@ -25,7 +59,10 @@ export class JournalService {
     if (totalDebit !== totalCredit) {
       throw new Error('Total debit and credit amounts must be equal');
     }
-    return this.repository.create(data);
+
+    const voucherNumber = await this.generateVoucherNumber(data.orgId);
+
+    return this.repository.create(data, voucherNumber);
   }
 
   async findAll(orgId: string, filters: IFindAllJournalFilters) {

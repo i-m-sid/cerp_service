@@ -777,7 +777,6 @@ export class InvoiceService {
         await this.journalService.update({
           id: existingJournal.id,
           orgId: invoice.orgId,
-          voucherNumber: invoice.invoiceNumber,
           voucherType: VoucherType.SALES,
           date: invoice.date,
           status: JournalStatus.POSTED,
@@ -789,7 +788,6 @@ export class InvoiceService {
       } else {
         await this.journalService.create({
           orgId: invoice.orgId,
-          voucherNumber: invoice.invoiceNumber,
           voucherType: VoucherType.SALES,
           date: invoice.date,
           status: JournalStatus.POSTED,
@@ -818,7 +816,6 @@ export class InvoiceService {
         await this.journalService.update({
           id: existingJournal.id,
           orgId: invoice.orgId,
-          voucherNumber: invoice.invoiceNumber,
           voucherType: VoucherType.PURCHASE,
           date: invoice.date,
           status: JournalStatus.POSTED,
@@ -830,7 +827,6 @@ export class InvoiceService {
       } else {
         await this.journalService.create({
           orgId: invoice.orgId,
-          voucherNumber: invoice.invoiceNumber,
           voucherType: VoucherType.PURCHASE,
           date: invoice.date,
           status: JournalStatus.POSTED,

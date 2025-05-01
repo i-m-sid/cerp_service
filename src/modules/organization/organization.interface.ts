@@ -20,6 +20,7 @@ export interface IOrganizationConfig {
   proForma?: IDocumentConfig;
   quote?: IDocumentConfig;
   purchaseOrder?: IDocumentConfig;
+  journal?: IDocumentConfig;
 }
 
 export interface ICreateOrganization {

@@ -32,7 +32,6 @@ export interface IJournal {
 }
 
 export interface ICreateJournal {
-  voucherNumber: string;
   description?: string;
   date: Date;
   status: JournalStatus;
@@ -46,5 +45,6 @@ export interface ICreateJournal {
 
 export interface IUpdateJournal extends Partial<Omit<ICreateJournal, 'lines'>> {
   id: string;
+  voucherNumber?: string;
   lines?: IUpdateJournalLine[];
 }
