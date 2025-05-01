@@ -12,8 +12,14 @@ export class OrganizationRepository {
     this.prisma = new PrismaClient();
   }
 
-  private transformToOrganizationWithRole(org: any, userId: string): IOrganizationWithRole {
+  private transformToOrganizationWithRole(
+    org: any,
+    userId: string,
+  ): IOrganizationWithRole {
     if (!org.members || org.members.length === 0) {
+      throw new Error('User does not have access to this organization');
+    }
+    if (!org.members.find((m: any) => m.userId === userId)) {
       throw new Error('User does not have access to this organization');
     }
 
@@ -32,7 +38,10 @@ export class OrganizationRepository {
     };
   }
 
-  async create(data: ICreateOrganization, userId: string): Promise<IOrganizationWithRole> {
+  async create(
+    data: ICreateOrganization,
+    userId: string,
+  ): Promise<IOrganizationWithRole> {
     const org = await this.prisma.organization.create({
       data: {
         orgName: data.orgName,
@@ -92,7 +101,10 @@ export class OrganizationRepository {
     );
   }
 
-  async findById(id: string, userId: string): Promise<IOrganizationWithRole | null> {
+  async findById(
+    id: string,
+    userId: string,
+  ): Promise<IOrganizationWithRole | null> {
     const org = await this.prisma.organization.findFirst({
       where: {
         id,
