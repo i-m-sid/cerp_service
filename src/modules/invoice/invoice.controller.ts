@@ -193,6 +193,7 @@ export class InvoiceController {
       const invoice = await this.service.delete(
         request.params.id,
         request.user.orgId,
+        request.user.userId,
       );
       if (!invoice) {
         return sendErrorResponse(reply, 404, null, 'Invoice not found');
@@ -260,6 +261,7 @@ export class InvoiceController {
       const results = await this.service.bulkDelete(
         request.body.ids,
         request.user.orgId,
+        request.user.userId,
       );
 
       // Check if any invoices failed to delete

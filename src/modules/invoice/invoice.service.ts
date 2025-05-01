@@ -59,6 +59,7 @@ export class InvoiceService {
         data.orgId,
         data.invoiceType ?? InvoiceType.INVOICE,
         data.lineItems,
+        userId,
       );
       const invoice = await this.repository.create(data);
       await this.updateInvoiceConfig(
@@ -71,6 +72,7 @@ export class InvoiceService {
         invoice as unknown as Invoice & { party: Party } & {
           challanTemplate: ChallanTemplate;
         },
+        userId,
       );
       return invoice;
     } catch (error) {
@@ -115,6 +117,7 @@ export class InvoiceService {
       data.orgId,
       data.invoiceType ?? InvoiceType.INVOICE,
       data.lineItems ?? [],
+      userId,
     );
     const invoice = await this.repository.update(data);
     await this.updateInvoiceConfig(
@@ -127,17 +130,19 @@ export class InvoiceService {
       invoice as unknown as Invoice & { party: Party } & {
         challanTemplate: ChallanTemplate;
       },
+      userId,
     );
     return invoice;
   }
 
-  async delete(id: string, orgId: string) {
+  async delete(id: string, orgId: string, userId: string) {
     const invoice = await this.repository.findById(id, orgId);
     if (invoice?.challans) {
       await this.resetChallanStatus(
         invoice.challanTemplateId,
         orgId,
         invoice.challans.map((challan) => challan.id),
+        userId,
       );
     }
     if (
@@ -164,7 +169,7 @@ export class InvoiceService {
     return this.repository.findByTypes(orgId, transactionType, invoiceType);
   }
 
-  async bulkDelete(ids: string[], orgId: string) {
+  async bulkDelete(ids: string[], orgId: string, userId: string) {
     for (const id of ids) {
       const invoice = await this.repository.findById(id, orgId);
       if (invoice?.challans) {
@@ -172,6 +177,7 @@ export class InvoiceService {
           invoice.challanTemplateId,
           orgId,
           invoice.challans.map((challan) => challan.id),
+          userId,
         );
       }
       await this.deleteInvoiceJournal(id, orgId);
@@ -183,9 +189,10 @@ export class InvoiceService {
     challanTemplateId: string,
     orgId: string,
     challanIds: string[],
+    userId: string,
   ) {
     const challans = await this.challanService.findManyByIds(challanIds, orgId);
-    const org = await this.organizationService.findById(orgId);
+    const org = await this.organizationService.findById(orgId, userId);
     const statusId = org?.config?.challanDefaultStatus?.[challanTemplateId];
     for (const challan of challans) {
       if (statusId) {
@@ -209,7 +216,7 @@ export class InvoiceService {
     userId: string,
   ) {
     try {
-      const org = await this.organizationService.findById(orgId);
+      const org = await this.organizationService.findById(orgId, userId);
       if (org?.config) {
         const documentNumber = getInvoiceNumericPart(
           invoiceNumber,
@@ -245,13 +252,14 @@ export class InvoiceService {
     orgId: string,
     invoiceType: InvoiceType,
     lineItems: ICreateLineItem[] | IUpdateLineItem[],
+    userId: string,
   ) {
     try {
       const challanTemplate = await this.challanTemplateService.findById(
         challanTemplateId,
         orgId,
       );
-      const org = await this.organizationService.findById(orgId);
+      const org = await this.organizationService.findById(orgId, userId);
       const statusId =
         org?.config?.invoiceTypeToChallanStatus?.[challanTemplateId]?.[
           invoiceType
@@ -453,6 +461,7 @@ export class InvoiceService {
     invoice: Invoice & { party: Party } & {
       challanTemplate: ChallanTemplate;
     },
+    userId: string,
   ) {
     if (
       invoice.invoiceType !== InvoiceType.INVOICE &&
@@ -786,16 +795,19 @@ export class InvoiceService {
           sourceId: invoice.id,
         });
       } else {
-        await this.journalService.create({
-          orgId: invoice.orgId,
-          voucherType: VoucherType.SALES,
-          date: invoice.date,
-          status: JournalStatus.POSTED,
-          description: journalDescription,
-          lines: journalLines,
-          sourceType: SourceType.INVOICE,
-          sourceId: invoice.id,
-        });
+        await this.journalService.create(
+          {
+            orgId: invoice.orgId,
+            voucherType: VoucherType.SALES,
+            date: invoice.date,
+            status: JournalStatus.POSTED,
+            description: journalDescription,
+            lines: journalLines,
+            sourceType: SourceType.INVOICE,
+            sourceId: invoice.id,
+          },
+          userId,
+        );
       }
     } else if (invoice.transactionType === TransactionType.PURCHASE) {
       // For Purchase: Debit Purchase, Debit Tax Accounts, Credit Party (Payable)
@@ -825,16 +837,19 @@ export class InvoiceService {
           sourceId: invoice.id,
         });
       } else {
-        await this.journalService.create({
-          orgId: invoice.orgId,
-          voucherType: VoucherType.PURCHASE,
-          date: invoice.date,
-          status: JournalStatus.POSTED,
-          description: journalDescription,
-          lines: journalLines,
-          sourceType: SourceType.INVOICE,
-          sourceId: invoice.id,
-        });
+        await this.journalService.create(
+          {
+            orgId: invoice.orgId,
+            voucherType: VoucherType.PURCHASE,
+            date: invoice.date,
+            status: JournalStatus.POSTED,
+            description: journalDescription,
+            lines: journalLines,
+            sourceType: SourceType.INVOICE,
+            sourceId: invoice.id,
+          },
+          userId,
+        );
       }
     }
   }

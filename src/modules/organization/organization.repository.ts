@@ -12,7 +12,7 @@ export class OrganizationRepository {
     this.prisma = new PrismaClient();
   }
 
-  private transformToOrganizationWithRole(org: any): IOrganizationWithRole {
+  private transformToOrganizationWithRole(org: any, userId: string): IOrganizationWithRole {
     if (!org.members || org.members.length === 0) {
       throw new Error('User does not have access to this organization');
     }
@@ -27,12 +27,12 @@ export class OrganizationRepository {
       email: org.email ?? undefined,
       address: org.address as any,
       createdAt: org.createdAt,
-      role: org.members[0].role,
+      role: org.members.find((m: any) => m.userId === userId)?.role,
       config: (org.config as any) ?? undefined,
     };
   }
 
-  async create(data: ICreateOrganization): Promise<IOrganizationWithRole> {
+  async create(data: ICreateOrganization, userId: string): Promise<IOrganizationWithRole> {
     const org = await this.prisma.organization.create({
       data: {
         orgName: data.orgName,
@@ -63,7 +63,7 @@ export class OrganizationRepository {
       },
     });
 
-    return this.transformToOrganizationWithRole(org);
+    return this.transformToOrganizationWithRole(org, userId);
   }
 
   async findAll(userId: string): Promise<IOrganizationWithRole[]> {
@@ -88,11 +88,11 @@ export class OrganizationRepository {
     });
 
     return organizations.map((org) =>
-      this.transformToOrganizationWithRole(org),
+      this.transformToOrganizationWithRole(org, userId),
     );
   }
 
-  async findById(id: string): Promise<IOrganizationWithRole | null> {
+  async findById(id: string, userId: string): Promise<IOrganizationWithRole | null> {
     const org = await this.prisma.organization.findFirst({
       where: {
         id,
@@ -106,7 +106,7 @@ export class OrganizationRepository {
       },
     });
 
-    return org ? this.transformToOrganizationWithRole(org) : null;
+    return org ? this.transformToOrganizationWithRole(org, userId) : null;
   }
 
   async findByUserId(userId: string): Promise<IOrganizationWithRole[]> {
@@ -131,7 +131,7 @@ export class OrganizationRepository {
     });
 
     return organizations.map((org) =>
-      this.transformToOrganizationWithRole(org),
+      this.transformToOrganizationWithRole(org, userId),
     );
   }
 
@@ -175,10 +175,10 @@ export class OrganizationRepository {
       },
     });
 
-    return this.transformToOrganizationWithRole(org);
+    return this.transformToOrganizationWithRole(org, userId);
   }
 
-  async delete(id: string): Promise<IOrganizationWithRole> {
+  async delete(id: string, userId: string): Promise<IOrganizationWithRole> {
     const org = await this.prisma.organization.delete({
       where: { id },
       include: {
@@ -190,6 +190,6 @@ export class OrganizationRepository {
       },
     });
 
-    return this.transformToOrganizationWithRole(org);
+    return this.transformToOrganizationWithRole(org, userId);
   }
 }

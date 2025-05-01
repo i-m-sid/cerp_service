@@ -14,18 +14,18 @@ export class OrganizationService {
     this.repository = new OrganizationRepository();
   }
 
-  async create(data: ICreateOrganization) {
+  async create(data: ICreateOrganization, userId: string) {
     // We no longer need to create default categories for each organization
     // as we're using system-wide defaults
-    return this.repository.create(data);
+    return this.repository.create(data, userId);
   }
 
   async findAll(userId: string) {
     return this.repository.findAll(userId);
   }
 
-  async findById(id: string) {
-    return this.repository.findById(id);
+  async findById(id: string, userId: string) {
+    return this.repository.findById(id, userId);
   }
 
   async findByUserId(userId: string) {
@@ -36,7 +36,7 @@ export class OrganizationService {
     return this.repository.update(data, userId);
   }
 
-  async delete(id: string) {
-    return this.repository.delete(id);
+  async delete(id: string, userId: string) {
+    return this.repository.delete(id, userId);
   }
 }

@@ -21,8 +21,8 @@ export class JournalService {
     this.organizationService = new OrganizationService();
   }
 
-  private async generateVoucherNumber(orgId: string): Promise<string> {
-    const org = await this.organizationService.findById(orgId);
+  private async generateVoucherNumber(orgId: string, userId: string): Promise<string> {
+    const org = await this.organizationService.findById(orgId, userId);
     const voucherNumber = generateJournalVoucherNumber(org?.config);
 
     // Update the current number in config
@@ -35,7 +35,7 @@ export class JournalService {
         );
         await this.organizationService.update(
           { id: orgId, config: updatedConfig },
-          orgId,
+          userId,
         );
       }
     }
@@ -43,7 +43,7 @@ export class JournalService {
     return voucherNumber;
   }
 
-  async create(data: ICreateJournal) {
+  async create(data: ICreateJournal, userId: string) {
     if (!data.lines || data.lines.length === 0) {
       throw new Error('At least one journal line is required');
     }
@@ -60,7 +60,7 @@ export class JournalService {
       throw new Error('Total debit and credit amounts must be equal');
     }
 
-    const voucherNumber = await this.generateVoucherNumber(data.orgId);
+    const voucherNumber = await this.generateVoucherNumber(data.orgId, userId);
 
     return this.repository.create(data, voucherNumber);
   }

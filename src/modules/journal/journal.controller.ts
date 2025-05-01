@@ -20,10 +20,13 @@ export class JournalController {
     reply: FastifyReply,
   ) {
     try {
-      const journal = await this.service.create({
-        ...request.body,
-        orgId: request.user!.orgId!,
-      });
+      const journal = await this.service.create(
+        {
+          ...request.body,
+          orgId: request.user!.orgId!,
+        },
+        request.user!.userId,
+      );
       return sendSuccessResponse(reply, 201, journal);
     } catch (error) {
       request.log.error(error);

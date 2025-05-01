@@ -23,10 +23,13 @@ export class OrganizationController {
     reply: FastifyReply,
   ) {
     try {
-      const org = await this.service.create({
-        ...request.body,
-        createdBy: request.user!.userId,
-      });
+      const org = await this.service.create(
+        {
+          ...request.body,
+          createdBy: request.user!.userId,
+        },
+        request.user!.userId,
+      );
       return sendSuccessResponse(reply, 201, org);
     } catch (error) {
       request.log.error(error);
@@ -63,7 +66,10 @@ export class OrganizationController {
     reply: FastifyReply,
   ) {
     try {
-      const org = await this.service.findById(request.params.orgId);
+      const org = await this.service.findById(
+        request.params.orgId,
+        request.user!.userId,
+      );
       if (!org) {
         return sendErrorResponse(reply, 404, null, 'Organization not found');
       }
@@ -111,7 +117,7 @@ export class OrganizationController {
     reply: FastifyReply,
   ) {
     try {
-      await this.service.delete(request.params.orgId);
+      await this.service.delete(request.params.orgId, request.user!.userId);
       return sendSuccessResponse(reply, 200, {
         message: 'Organization deleted successfully',
       });
