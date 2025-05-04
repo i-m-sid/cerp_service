@@ -2,9 +2,9 @@ import Fastify from 'fastify';
 import dotenv from 'dotenv';
 import { setupErrorHandler } from './utils/error-handler';
 import fastifyFormbody from '@fastify/formbody';
-import fastifyRedis from '@fastify/redis';
 import fastifyCors from '@fastify/cors';
 import { registerRoutes } from './routes';
+import { orgValidationPlugin } from './plugins/org-validation.plugin';
 
 dotenv.config();
 
@@ -25,6 +25,9 @@ app.register(fastifyCors, {
 });
 
 app.register(fastifyFormbody);
+
+// Register the organization validation plugin
+app.register(orgValidationPlugin);
 
 // Register all routes
 app.register(registerRoutes);
