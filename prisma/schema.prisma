@@ -156,6 +156,7 @@ model Item {
   description String?
   categoryId  String
   orgId        String
+  uomConversionOverrides Json?       // Store UOM overrides as JSON
   category    ItemCategory @relation(fields: [categoryId], references: [id])
   organization   Organization  @relation(fields: [orgId], references: [id])
 

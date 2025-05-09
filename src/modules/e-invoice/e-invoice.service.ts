@@ -9,13 +9,16 @@ import { EInvoice, EInvoiceItem } from './e-invoice.core.interface';
 import { IAddress } from '../party/party.interface';
 import { UOMService } from '../uom/uom.service';
 import { InvoiceService } from '../invoice/invoice.service';
+import { ItemService } from '../item/item.service';
 
 export class EInvoiceService {
   private uomService: UOMService;
   private invoiceService: InvoiceService;
+  private itemService: ItemService;
   constructor() {
     this.uomService = new UOMService();
     this.invoiceService = new InvoiceService();
+    this.itemService = new ItemService();
   }
 
   async generateEInvoiceV2(invoiceIds: string[], orgId: string) {
@@ -27,13 +30,15 @@ export class EInvoiceService {
     return eInvoices;
   }
 
-  invoiceToEInvoice(
+  async invoiceToEInvoice(
     invoice: Invoice & { organization: unknown; party: unknown },
     uoms: UnitOfMeasurement[],
-  ): EInvoice {
-    const items = (invoice.lineItems as unknown as ILineItem[])?.map(
-      (lineItem: ILineItem, index: number) =>
-        this.lineItemToEInvoiceItem(index, lineItem, uoms),
+  ): Promise<EInvoice> {
+    const items = await Promise.all(
+      (invoice.lineItems as unknown as ILineItem[])?.map(
+        (lineItem: ILineItem, index: number) =>
+          this.lineItemToEInvoiceItem(index, lineItem, uoms, invoice.orgId),
+      ),
     );
     const sellerDetails = invoice.organization as unknown as Organization;
     const sellerAddress = sellerDetails.address as unknown as IAddress;
@@ -121,22 +126,37 @@ export class EInvoiceService {
     };
   }
 
-  lineItemToEInvoiceItem(
+  async lineItemToEInvoiceItem(
     index: number,
     lineItem: ILineItem,
     uoms: UnitOfMeasurement[],
-  ): EInvoiceItem {
+    orgId: string,
+  ): Promise<EInvoiceItem> {
+    const item = await this.itemService.findById(lineItem.itemId, orgId);
     const uom = uoms.find((uom) => uom.id === lineItem.uomId);
+    var baseUQC = uom?.baseUQC;
+    var baseConversionFactor = Number(uom?.baseConversionFactor);
+    if (
+      item.uomConversionOverrides &&
+      item.uomConversionOverrides[lineItem.uomId]
+    ) {
+      baseUQC = item.uomConversionOverrides[lineItem.uomId].baseUQC;
+      baseConversionFactor =
+        item.uomConversionOverrides[lineItem.uomId].baseConversionFactor;
+    }
     if (!uom) {
       throw new Error('UOM not found');
     }
-    const uqc = uom?.baseUQC!;
     const quantity = parseFloat(
-      (lineItem.quantity * Number(uom?.baseConversionFactor ?? 1)).toFixed(3),
+      (lineItem.quantity * baseConversionFactor).toFixed(3),
     );
     const unitPrice = parseFloat(
-      (lineItem.rate / Number(uom?.baseConversionFactor ?? 1)).toFixed(3),
+      (lineItem.rate / baseConversionFactor).toFixed(3),
     );
+    if (!baseUQC) {
+      throw new Error(`E-invoice UOM not configured for ${lineItem.item}`);
+    }
+
     return {
       SlNo: (index + 1).toString(),
       PrdDesc: lineItem.item,
@@ -144,7 +164,7 @@ export class EInvoiceService {
       HsnCd: lineItem.hsnCode,
       Qty: quantity,
       FreeQty: 0,
-      Unit: uqc,
+      Unit: baseUQC,
       UnitPrice: unitPrice,
       TotAmt: lineItem.subTotal + lineItem.discountAmount,
       Discount: lineItem.discountAmount,

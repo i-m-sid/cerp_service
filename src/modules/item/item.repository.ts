@@ -1,5 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import { ICreateItem, IUpdateItem } from './item.interface';
+import { Prisma, PrismaClient } from '@prisma/client';
+import {
+  ICreateItem,
+  IUOMConversionOverride,
+  IUpdateItem,
+} from './item.interface';
 
 export class ItemRepository {
   private prisma: PrismaClient;
@@ -17,8 +21,8 @@ export class ItemRepository {
   };
 
   async create(data: ICreateItem) {
-    const { orgId, categoryId, ...createData } = data;
-    return this.prisma.item.create({
+    const { orgId, categoryId, uomConversionOverrides, ...createData } = data;
+    const item = await this.prisma.item.create({
       data: {
         ...createData,
         organization: {
@@ -27,43 +31,85 @@ export class ItemRepository {
         category: {
           connect: { id: categoryId },
         },
+        uomConversionOverrides:
+          uomConversionOverrides as unknown as Prisma.JsonObject,
       },
       include: this.include,
     });
+
+    return {
+      ...item,
+      uomConversionOverrides: item.uomConversionOverrides as unknown as Record<
+        string,
+        IUOMConversionOverride
+      >,
+    };
   }
 
   async findAll(orgId: string) {
-    return this.prisma.item.findMany({
+    const items = await this.prisma.item.findMany({
       where: { orgId },
       include: this.include,
       orderBy: {
         name: 'asc',
       },
     });
+
+    return items.map((item) => ({
+      ...item,
+      uomConversionOverrides: item.uomConversionOverrides as unknown as Record<
+        string,
+        IUOMConversionOverride
+      >,
+    }));
   }
 
   async findById(id: string, orgId: string) {
-    return this.prisma.item.findFirst({
+    const item = await this.prisma.item.findFirst({
       where: { id, orgId },
       include: this.include,
     });
+
+    return {
+      ...item,
+      uomConversionOverrides: item?.uomConversionOverrides as unknown as Record<
+        string,
+        IUOMConversionOverride
+      >,
+    };
   }
 
   async findByName(name: string, orgId: string) {
-    return this.prisma.item.findFirst({
+    const item = await this.prisma.item.findFirst({
       where: { name, orgId },
       include: this.include,
     });
+
+    return {
+      ...item,
+      uomConversionOverrides: item?.uomConversionOverrides as unknown as Record<
+        string,
+        IUOMConversionOverride
+      >,
+    };
   }
 
   async findByCategoryId(categoryId: string, orgId: string) {
-    return this.prisma.item.findMany({
+    const items = await this.prisma.item.findMany({
       where: { categoryId, orgId },
       include: this.include,
       orderBy: {
         name: 'asc',
       },
     });
+
+    return items.map((item) => ({
+      ...item,
+      uomConversionOverrides: item.uomConversionOverrides as unknown as Record<
+        string,
+        IUOMConversionOverride
+      >,
+    }));
   }
 
   async findByTemplateId(templateId: string, orgId: string) {
@@ -85,7 +131,7 @@ export class ItemRepository {
     );
 
     // Get items that belong to the allowed categories
-    return this.prisma.item.findMany({
+    const items = await this.prisma.item.findMany({
       where: {
         orgId,
         categoryId: {
@@ -97,20 +143,44 @@ export class ItemRepository {
       },
       include: this.include,
     });
+
+    return items.map((item) => ({
+      ...item,
+      uomConversionOverrides: item.uomConversionOverrides as unknown as Record<
+        string,
+        IUOMConversionOverride
+      >,
+    }));
   }
 
   async update(data: IUpdateItem) {
-    const { id, ...updateData } = data;
-    return this.prisma.item.update({
+    const { id, uomConversionOverrides, ...updateData } = data;
+    const item = await this.prisma.item.update({
       where: { id },
       data: updateData,
       include: this.include,
     });
+
+    return {
+      ...item,
+      uomConversionOverrides: item.uomConversionOverrides as unknown as Record<
+        string,
+        IUOMConversionOverride
+      >,
+    };
   }
 
   async delete(id: string) {
-    return this.prisma.item.delete({
+    const item = await this.prisma.item.delete({
       where: { id },
     });
+
+    return {
+      ...item,
+      uomConversionOverrides: item.uomConversionOverrides as unknown as Record<
+        string,
+        IUOMConversionOverride
+      >,
+    };
   }
 }
