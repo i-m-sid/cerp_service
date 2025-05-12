@@ -226,45 +226,38 @@ export class ChallanRepository {
   }
 
   async bulkDelete(ids: string[], orgId: string) {
-    return this.prisma.$transaction(async (tx) => {
-      const results: Array<{
-        success: boolean;
-        data?: {
-          [key: string]: any;
-          customFields: Record<string, ICustomField>;
-        };
-        error?: string;
-        id: string;
-      }> = [];
+    return this.prisma.$transaction(
+      async (tx) => {
+        const deletePromises = ids.map(async (id) => {
+          try {
+            const result = await tx.challan.delete({
+              where: { id, orgId },
+            });
 
-      for (const id of ids) {
-        try {
-          const result = await tx.challan.delete({
-            where: { id, orgId },
-          });
+            return {
+              success: true,
+              data: {
+                ...result,
+                customFields: result.customFields as unknown as Record<
+                  string,
+                  ICustomField
+                >,
+              },
+              id,
+            };
+          } catch (error: any) {
+            return {
+              success: false,
+              error: error.message || 'Unknown error',
+              id,
+            };
+          }
+        });
 
-          results.push({
-            success: true,
-            data: {
-              ...result,
-              customFields: result.customFields as unknown as Record<
-                string,
-                ICustomField
-              >,
-            },
-            id,
-          });
-        } catch (error: any) {
-          results.push({
-            success: false,
-            error: error.message || 'Unknown error',
-            id,
-          });
-        }
-      }
-
-      return results;
-    });
+        return Promise.all(deletePromises);
+      },
+      { timeout: 100000 },
+    );
   }
 
   // TODO: filter by role

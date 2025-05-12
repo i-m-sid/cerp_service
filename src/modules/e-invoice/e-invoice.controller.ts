@@ -16,11 +16,13 @@ export class EInvoiceController {
     req: FastifyRequest<{ Body: ICreateEInvoice }>,
     res: FastifyReply,
   ) {
+    console.log(JSON.stringify(req.body, null, 2));
     try {
       const invoices = await this.service.generateEInvoiceV2(
         req.body.invoiceIds,
         req.user?.orgId!,
       );
+      console.log(JSON.stringify(invoices, null, 2));
       return sendSuccessResponse(res, 200, invoices);
     } catch (error) {
       return sendErrorResponse(res, 500, error);

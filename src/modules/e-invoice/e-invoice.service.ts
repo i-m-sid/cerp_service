@@ -23,11 +23,15 @@ export class EInvoiceService {
     this.itemService = new ItemService();
   }
 
-  async generateEInvoiceV2(invoiceIds: string[], orgId: string) {
+  async generateEInvoiceV2(
+    invoiceIds: string[],
+    orgId: string,
+  ): Promise<EInvoice[]> {
     const invoices = await this.invoiceService.findByIds(invoiceIds, orgId);
     const uoms = await this.uomService.findAll(invoices[0].organization.id);
-    const eInvoices = invoices.map((invoice) =>
-      this.invoiceToEInvoice(invoice, uoms),
+    console.log(JSON.stringify(invoices, null, 2));
+    const eInvoices = await Promise.all(
+      invoices.map((invoice) => this.invoiceToEInvoice(invoice, uoms)),
     );
     return eInvoices;
   }
@@ -92,7 +96,7 @@ export class EInvoiceService {
         Addr1: sellerAddress.addressLine1 ?? '',
         Addr2: sellerAddress.addressLine2 ?? '',
         Loc: sellerAddress.city ?? '',
-        Pin: Number(sellerAddress.pinCode),
+        Pin: parseInt(sellerAddress.pinCode),
         Stcd: sellerAddress.stateCode,
         Ph: sellerDetails.phoneNumber,
         Em: sellerDetails.email,
@@ -103,23 +107,23 @@ export class EInvoiceService {
         Addr1: buyerAddress.addressLine1 ?? '',
         Addr2: buyerAddress.addressLine2 ?? '',
         Loc: buyerAddress.city ?? '',
-        Pin: Number(buyerAddress.pinCode),
+        Pin: parseInt(buyerAddress.pinCode),
         Pos: buyerAddress.stateCode,
         Stcd: buyerAddress.stateCode,
         Ph: buyerDetails.phoneNumber,
         Em: buyerDetails.email,
       },
       ValDtls: {
-        AssVal: invoice.subTotal ?? new Decimal(0), //Todo: check if this is correct
-        IgstVal: invoice.igstAmount ?? new Decimal(0),
-        CgstVal: invoice.cgstAmount ?? new Decimal(0),
-        SgstVal: invoice.sgstAmount ?? new Decimal(0),
-        CesVal: invoice.cessAmount ?? new Decimal(0),
-        StCesVal: invoice.stateCessAmount ?? new Decimal(0),
-        Discount: invoice.discountAmount ?? new Decimal(0),
+        AssVal: invoice.subTotal?.toDecimalPlaces(2) ?? new Decimal(0), //Todo: check if this is correct
+        IgstVal: invoice.igstAmount?.toDecimalPlaces(2) ?? new Decimal(0),
+        CgstVal: invoice.cgstAmount?.toDecimalPlaces(2) ?? new Decimal(0),
+        SgstVal: invoice.sgstAmount?.toDecimalPlaces(2) ?? new Decimal(0),
+        CesVal: invoice.cessAmount?.toDecimalPlaces(2) ?? new Decimal(0),
+        StCesVal: invoice.stateCessAmount?.toDecimalPlaces(2) ?? new Decimal(0),
+        Discount: invoice.discountAmount?.toDecimalPlaces(2) ?? new Decimal(0),
         OthChrg: new Decimal(0),
-        RndOffAmt: invoice.roundOffAmount ?? new Decimal(0),
-        TotInvVal: invoice.totalAmount ?? new Decimal(0),
+        RndOffAmt: invoice.roundOffAmount?.toDecimalPlaces(2) ?? new Decimal(0),
+        TotInvVal: invoice.totalAmount?.toDecimalPlaces(2) ?? new Decimal(0),
       },
       RefDtls: {
         InvRm: 'NICGEPP2.0',
@@ -168,22 +172,22 @@ export class EInvoiceService {
       FreeQty: new Decimal(0),
       Unit: baseUQC,
       UnitPrice: unitPrice,
-      TotAmt: lineItem.subTotal.add(lineItem.discountAmount),
-      Discount: lineItem.discountAmount,
+      TotAmt: lineItem.subTotal.add(lineItem.discountAmount).toDecimalPlaces(2),
+      Discount: lineItem.discountAmount.toDecimalPlaces(2),
       PreTaxVal: new Decimal(0),
-      AssAmt: lineItem.subTotal,
-      GstRt: lineItem.gstRate,
-      IgstAmt: lineItem.igstAmount,
-      CgstAmt: lineItem.cgstAmount,
-      SgstAmt: lineItem.sgstAmount,
-      CesRt: lineItem.cessAdValoremRate,
-      CesAmt: lineItem.cessAdValoremAmount,
-      CesNonAdvlAmt: lineItem.cessSpecificAmount,
-      StateCesRt: lineItem.stateCessAdValoremRate,
-      StateCesAmt: lineItem.stateCessAdValoremAmount,
-      StateCesNonAdvlAmt: lineItem.stateCessSpecificAmount,
+      AssAmt: lineItem.subTotal.toDecimalPlaces(2),
+      GstRt: lineItem.gstRate.toDecimalPlaces(2),
+      IgstAmt: lineItem.igstAmount.toDecimalPlaces(2),
+      CgstAmt: lineItem.cgstAmount.toDecimalPlaces(2),
+      SgstAmt: lineItem.sgstAmount.toDecimalPlaces(2),
+      CesRt: lineItem.cessAdValoremRate.toDecimalPlaces(2),
+      CesAmt: lineItem.cessAdValoremAmount.toDecimalPlaces(2),
+      CesNonAdvlAmt: lineItem.cessSpecificAmount.toDecimalPlaces(2),
+      StateCesRt: lineItem.stateCessAdValoremRate.toDecimalPlaces(2),
+      StateCesAmt: lineItem.stateCessAdValoremAmount.toDecimalPlaces(2),
+      StateCesNonAdvlAmt: lineItem.stateCessSpecificAmount.toDecimalPlaces(2),
       OthChrg: new Decimal(0),
-      TotItemVal: lineItem.totalAmount,
+      TotItemVal: lineItem.totalAmount.toDecimalPlaces(2),
     };
   }
 
