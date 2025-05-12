@@ -29,7 +29,6 @@ export class EInvoiceService {
   ): Promise<EInvoice[]> {
     const invoices = await this.invoiceService.findByIds(invoiceIds, orgId);
     const uoms = await this.uomService.findAll(invoices[0].organization.id);
-    console.log(JSON.stringify(invoices, null, 2));
     const eInvoices = await Promise.all(
       invoices.map((invoice) => this.invoiceToEInvoice(invoice, uoms)),
     );

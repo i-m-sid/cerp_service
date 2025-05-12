@@ -50,8 +50,6 @@ export class JournalService {
     if (!data.lines || data.lines.length === 0) {
       throw new Error('At least one journal line is required');
     }
-
-    console.log(JSON.stringify(data.lines, null, 2));
     // Optional: check that debits equal credits
     const totalDebit = data.lines.reduce(
       (sum, l) => sum + (l.debitAmount ? Number(l.debitAmount) : 0),
@@ -62,7 +60,6 @@ export class JournalService {
       0,
     );
     if (totalDebit !== totalCredit) {
-      console.log(totalDebit, totalCredit);
       throw new Error('Total debit and credit amounts must be equal');
     }
 
