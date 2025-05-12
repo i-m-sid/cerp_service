@@ -1,3 +1,5 @@
+import { Decimal } from '@prisma/client/runtime/library';
+
 /** Core Transaction‐level objects */
 export interface TranDtls {
   /** Tax scheme – always “GST” in this feed */
@@ -41,18 +43,18 @@ export interface BuyerDtls extends PartyDtls {
 }
 
 export interface ValDtls {
-  AssVal: number;
-  IgstVal: number;
-  CgstVal: number;
-  SgstVal: number;
-  CesVal: number;
-  StCesVal: number;
-  Discount: number;
-  OthChrg: number;
+  AssVal: Decimal;
+  IgstVal: Decimal;
+  CgstVal: Decimal;
+  SgstVal: Decimal;
+  CesVal: Decimal;
+  StCesVal: Decimal;
+  Discount: Decimal;
+  OthChrg: Decimal;
   /** Rounding‐off adjustment (+/-) */
-  RndOffAmt: number;
+  RndOffAmt: Decimal;
   /** Grand total (invoice value) */
-  TotInvVal: number;
+  TotInvVal: Decimal;
 }
 
 export interface RefDtls {
@@ -67,27 +69,27 @@ export interface EInvoiceItem {
   /** “Y” if service, “N” if goods */
   IsServc: 'Y' | 'N';
   HsnCd: string;
-  Qty: number;
-  FreeQty: number;
+  Qty: Decimal;
+  FreeQty: Decimal;
   /** Unit of measure – must match UQC master (e.g. MTS) */
   Unit: string;
-  UnitPrice: number;
-  TotAmt: number;
-  Discount: number;
-  PreTaxVal: number;
-  AssAmt: number;
-  GstRt: number;
-  IgstAmt: number;
-  CgstAmt: number;
-  SgstAmt: number;
-  CesRt: number;
-  CesAmt: number;
-  CesNonAdvlAmt: number;
-  StateCesRt: number;
-  StateCesAmt: number;
-  StateCesNonAdvlAmt: number;
-  OthChrg: number;
-  TotItemVal: number;
+  UnitPrice: Decimal;
+  TotAmt: Decimal;
+  Discount: Decimal;
+  PreTaxVal: Decimal;
+  AssAmt: Decimal;
+  GstRt: Decimal;
+  IgstAmt: Decimal;
+  CgstAmt: Decimal;
+  SgstAmt: Decimal;
+  CesRt: Decimal;
+  CesAmt: Decimal;
+  CesNonAdvlAmt: Decimal;
+  StateCesRt: Decimal;
+  StateCesAmt: Decimal;
+  StateCesNonAdvlAmt: Decimal;
+  OthChrg: Decimal;
+  TotItemVal: Decimal;
 }
 
 /** The complete e-invoice object */

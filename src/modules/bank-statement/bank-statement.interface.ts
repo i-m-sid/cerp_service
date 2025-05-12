@@ -1,13 +1,13 @@
 /**
  * Bank Statement Module Interfaces
  */
-
+import { Decimal } from '@prisma/client/runtime/library';
 export interface IBankStatementEntry {
   transactionDate: Date;
   description: string;
   referenceNumber?: string;
-  amount: number;
-  closingBalance: number;
+  amount: Decimal;
+  closingBalance: Decimal;
   isReconciled: boolean;
   journalId?: string;
 }
@@ -25,8 +25,8 @@ export interface IBankStatement {
   accountId: string;
   startDate: Date;
   endDate: Date;
-  openingBalance: number;
-  closingBalance: number;
+  openingBalance: Decimal;
+  closingBalance: Decimal;
   orgId: string;
 }
 

@@ -1,4 +1,5 @@
 import { LedgerAccountType } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 
 export interface ICreateLedgerAccountCategory {
   name: string;
@@ -22,7 +23,7 @@ export interface ICreateLedgerAccount {
   isBank?: boolean;
   bankMeta?: object;
   orgId: string;
-  openingBalance?: number;
+  openingBalance?: Decimal;
   partyId?: string;
   isSystemGenerated?: boolean;
 }

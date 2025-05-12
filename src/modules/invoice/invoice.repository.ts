@@ -14,12 +14,17 @@ import {
   IPartyDetails,
   IOrgDetails,
 } from './invoice.interface';
-import { InvoiceCalculator } from './invoice.utils';
+import { InvoiceCalculator, transformLineItems } from './invoice.utils';
 import { transformPartyData } from '../party/party.service';
 export class InvoiceRepository {
   private prisma: PrismaClient;
   private readonly include = {
-    challans: true,
+    challans: {
+      orderBy: [
+        { date: 'asc' as Prisma.SortOrder },
+        { createdAt: 'asc' as Prisma.SortOrder },
+      ],
+    },
     party: true,
     challanTemplate: true,
     organization: true,
@@ -89,7 +94,7 @@ export class InvoiceRepository {
 
     return {
       ...result,
-      lineItems: result.lineItems as unknown as ILineItem[],
+      lineItems: transformLineItems(result.lineItems as unknown as any[]),
     };
   }
 
@@ -121,7 +126,7 @@ export class InvoiceRepository {
 
     return results.map((result) => ({
       ...result,
-      lineItems: result.lineItems as unknown as ILineItem[],
+      lineItems: transformLineItems(result.lineItems as unknown as any[]),
     }));
   }
 
@@ -138,7 +143,7 @@ export class InvoiceRepository {
 
     return {
       ...result,
-      lineItems: result.lineItems as unknown as ILineItem[],
+      lineItems: transformLineItems(result.lineItems as unknown as any[]),
     };
   }
 
@@ -165,7 +170,7 @@ export class InvoiceRepository {
 
     return results.map((result) => ({
       ...result,
-      lineItems: result.lineItems as unknown as ILineItem[],
+      lineItems: transformLineItems(result.lineItems as unknown as any[]),
     }));
   }
 
@@ -279,7 +284,7 @@ export class InvoiceRepository {
 
     return {
       ...result,
-      lineItems: result.lineItems as unknown as ILineItem[],
+      lineItems: transformLineItems(result.lineItems as unknown as any[]),
     };
   }
 
@@ -293,7 +298,7 @@ export class InvoiceRepository {
 
     return {
       ...result,
-      lineItems: result.lineItems as unknown as ILineItem[],
+      lineItems: transformLineItems(result.lineItems as unknown as any[]),
     };
   }
 
@@ -304,13 +309,18 @@ export class InvoiceRepository {
         orgId,
       },
       include: {
-        challans: true,
+        challans: {
+          orderBy: [
+            { date: 'asc' as Prisma.SortOrder },
+            { createdAt: 'asc' as Prisma.SortOrder },
+          ],
+        },
       },
     });
 
     return results.map((result) => ({
       ...result,
-      lineItems: result.lineItems as unknown as ILineItem[],
+      lineItems: transformLineItems(result.lineItems as unknown as any[]),
     }));
   }
 
@@ -321,13 +331,18 @@ export class InvoiceRepository {
         orgId,
       },
       include: {
-        challans: true,
+        challans: {
+          orderBy: [
+            { date: 'asc' as Prisma.SortOrder },
+            { createdAt: 'asc' as Prisma.SortOrder },
+          ],
+        },
       },
     });
 
     return results.map((result) => ({
       ...result,
-      lineItems: result.lineItems as unknown as ILineItem[],
+      lineItems: transformLineItems(result.lineItems as unknown as any[]),
     }));
   }
 
@@ -343,13 +358,18 @@ export class InvoiceRepository {
     const results = await this.prisma.invoice.findMany({
       where,
       include: {
-        challans: true,
+        challans: {
+          orderBy: [
+            { date: 'asc' as Prisma.SortOrder },
+            { createdAt: 'asc' as Prisma.SortOrder },
+          ],
+        },
       },
     });
 
     return results.map((result) => ({
       ...result,
-      lineItems: result.lineItems as unknown as ILineItem[],
+      lineItems: transformLineItems(result.lineItems as unknown as any[]),
     }));
   }
 
@@ -369,7 +389,9 @@ export class InvoiceRepository {
             success: true,
             data: {
               ...result,
-              lineItems: result.lineItems as unknown as ILineItem[],
+              lineItems: transformLineItems(
+                result.lineItems as unknown as any[],
+              ),
             },
             id,
           };

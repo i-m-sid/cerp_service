@@ -1,6 +1,8 @@
+import { Decimal } from '@prisma/client/runtime/library';
+
 export interface IUOMConversionOverride {
   baseUQC: string;
-  baseConversionFactor: number;
+  baseConversionFactor: Decimal;
 }
 export interface ICreateItem {
   name: string;

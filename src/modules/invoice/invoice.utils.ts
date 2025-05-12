@@ -3,40 +3,42 @@ import {
   IDocumentConfig,
   IOrganizationConfig,
 } from '../organization/organization.interface';
-import { ICreateLineItem, ILineItem } from './invoice.interface';
+import {
+  ICreateLineItem,
+  ILineItem,
+  IUpdateLineItem,
+} from './invoice.interface';
 import { nanoid } from 'nanoid';
-
+import { Decimal } from '@prisma/client/runtime/library';
 export class InvoiceCalculator {
   private static calculateDiscount(
-    amount: number,
-    fixedDiscount?: number,
-    percentageDiscount?: number,
-  ): number {
-    let totalDiscount = 0;
+    amount: Decimal,
+    fixedDiscount?: Decimal,
+    percentageDiscount?: Decimal,
+  ): Decimal {
+    let totalDiscount = new Decimal(0);
 
-    if (percentageDiscount && percentageDiscount > 0) {
-      totalDiscount += (amount * percentageDiscount) / 100;
+    if (percentageDiscount && percentageDiscount.gt(0)) {
+      totalDiscount = totalDiscount.add(
+        amount.mul(percentageDiscount).div(100),
+      );
     }
 
-    if (fixedDiscount && fixedDiscount > 0) {
-      totalDiscount += fixedDiscount;
+    if (fixedDiscount && fixedDiscount.gt(0)) {
+      totalDiscount = totalDiscount.add(fixedDiscount);
     }
 
     return totalDiscount;
   }
 
-  private static roundToTwo(num: number): number {
-    return Math.round((num + Number.EPSILON) * 100) / 100;
-  }
-
-  private static calculateRoundOff(amount: number): {
-    roundOffAmount: number;
-    finalAmount: number;
+  private static calculateRoundOff(amount: Decimal): {
+    roundOffAmount: Decimal;
+    finalAmount: Decimal;
   } {
-    const roundedAmount = Math.round(amount);
-    const roundOffAmount = roundedAmount - amount;
+    const roundedAmount = amount.round();
+    const roundOffAmount = roundedAmount.sub(amount);
     return {
-      roundOffAmount: this.roundToTwo(roundOffAmount),
+      roundOffAmount,
       finalAmount: roundedAmount,
     };
   }
@@ -45,47 +47,54 @@ export class InvoiceCalculator {
     item: ICreateLineItem,
     includeTax: boolean = true,
   ): ILineItem {
-    const quantity = item.quantity || 1;
-    const baseAmount = this.roundToTwo(item.rate * quantity);
-    const discountAmount = this.roundToTwo(
-      this.calculateDiscount(
-        baseAmount,
-        item.fixedDiscount,
-        item.percentageDiscount,
-      ),
+    const quantity = new Decimal(item.quantity);
+    const rate = new Decimal(item.rate);
+    const baseAmount = rate.mul(quantity);
+    const discountAmount = this.calculateDiscount(
+      baseAmount,
+      new Decimal(item.fixedDiscount),
+      new Decimal(item.percentageDiscount),
     );
-    const subTotal = this.roundToTwo(baseAmount - discountAmount);
+    const subTotal = baseAmount.sub(discountAmount);
 
     // Calculate tax amounts - rate never includes tax
-    const cgstAmount = this.roundToTwo(
-      item.gstRate && !item.isInterState ? (subTotal * item.gstRate / 2) / 100 : 0,
-    );
-    const sgstAmount = this.roundToTwo(
-      item.gstRate && !item.isInterState ? (subTotal * item.gstRate / 2) / 100 : 0,
-    );
-    const igstAmount = this.roundToTwo(
-      item.gstRate && item.isInterState ? (subTotal * item.gstRate) / 100 : 0,
-    );
-    const stateCessAdValoremAmount = this.roundToTwo(
-      item.stateCessAdValoremRate ? (subTotal * item.stateCessAdValoremRate) / 100 : 0,
-    );
-    const stateCessSpecificAmount = this.roundToTwo(
-      item.stateCessSpecificRate ? (subTotal * item.stateCessSpecificRate) / 100 : 0,
-    );
-    const cessAdValoremAmount = this.roundToTwo(
-      item.cessAdValoremRate ? (subTotal * item.cessAdValoremRate) / 100 : 0,
-    );
-    const cessSpecificAmount = this.roundToTwo(
-      item.cessSpecificRate ? (subTotal * item.cessSpecificRate) / 100 : 0,
-    );
+    const cgstAmount =
+      item.gstRate && !item.isInterState
+        ? subTotal.mul(item.gstRate).div(2).div(100)
+        : new Decimal(0);
+    const sgstAmount =
+      item.gstRate && !item.isInterState
+        ? subTotal.mul(item.gstRate).div(2).div(100)
+        : new Decimal(0);
+    const igstAmount =
+      item.gstRate && item.isInterState
+        ? subTotal.mul(item.gstRate).div(100)
+        : new Decimal(0);
+    const stateCessAdValoremAmount = item.stateCessAdValoremRate
+      ? subTotal.mul(item.stateCessAdValoremRate).div(100)
+      : new Decimal(0);
+    const stateCessSpecificAmount = item.stateCessSpecificRate
+      ? subTotal.mul(item.stateCessSpecificRate).div(100)
+      : new Decimal(0);
+    const cessAdValoremAmount = item.cessAdValoremRate
+      ? subTotal.mul(item.cessAdValoremRate).div(100)
+      : new Decimal(0);
+    const cessSpecificAmount = item.cessSpecificRate
+      ? subTotal.mul(item.cessSpecificRate).div(100)
+      : new Decimal(0);
 
     // Total amount depends on includeTax flag
     let totalAmount;
     if (includeTax) {
       // If includeTax is true, include tax in the total
-      totalAmount = this.roundToTwo(
-        subTotal + cgstAmount + sgstAmount + igstAmount + cessAdValoremAmount + cessSpecificAmount + stateCessAdValoremAmount + stateCessSpecificAmount,
-      );
+      totalAmount = subTotal
+        .add(cgstAmount)
+        .add(sgstAmount)
+        .add(igstAmount)
+        .add(cessAdValoremAmount)
+        .add(cessSpecificAmount)
+        .add(stateCessAdValoremAmount)
+        .add(stateCessSpecificAmount);
     } else {
       // If includeTax is false, don't include tax in the total
       totalAmount = subTotal;
@@ -94,16 +103,16 @@ export class InvoiceCalculator {
     return {
       ...item,
       id: nanoid(),
-      subTotal,
-      cgstAmount,
-      sgstAmount,
-      igstAmount,
-      cessAdValoremAmount,
-      cessSpecificAmount,
-      stateCessAdValoremAmount,
-      stateCessSpecificAmount,
-      discountAmount,
-      totalAmount,
+      subTotal: subTotal.toDecimalPlaces(2),
+      cgstAmount: cgstAmount.toDecimalPlaces(2),
+      sgstAmount: sgstAmount.toDecimalPlaces(2),
+      igstAmount: igstAmount.toDecimalPlaces(2),
+      cessAdValoremAmount: cessAdValoremAmount.toDecimalPlaces(2),
+      cessSpecificAmount: cessSpecificAmount.toDecimalPlaces(2),
+      stateCessAdValoremAmount: stateCessAdValoremAmount.toDecimalPlaces(2),
+      stateCessSpecificAmount: stateCessSpecificAmount.toDecimalPlaces(2),
+      discountAmount: discountAmount.toDecimalPlaces(2),
+      totalAmount: totalAmount.toDecimalPlaces(2),
     };
   }
 
@@ -112,52 +121,68 @@ export class InvoiceCalculator {
     shouldRoundOff: boolean = false,
     includeTax: boolean = true,
   ) {
-    const subTotal = this.roundToTwo(
-      lineItems.reduce((sum, item) => sum + item.subTotal, 0),
+    const subTotal = lineItems.reduce(
+      (sum, item) => sum.add(item.subTotal),
+      new Decimal(0),
     );
 
     // Calculate total discount from line items
-    const discountAmount = this.roundToTwo(
-      lineItems.reduce((sum, item) => sum + item.discountAmount, 0),
+    const discountAmount = lineItems.reduce(
+      (sum, item) => sum.add(item.discountAmount),
+      new Decimal(0),
     );
 
-    const cgstAmount = this.roundToTwo(
-      lineItems.reduce((sum, item) => sum + item.cgstAmount, 0),
+    const cgstAmount = lineItems.reduce(
+      (sum, item) => sum.add(item.cgstAmount),
+      new Decimal(0),
     );
-    const sgstAmount = this.roundToTwo(
-      lineItems.reduce((sum, item) => sum + item.sgstAmount, 0),
+    const sgstAmount = lineItems.reduce(
+      (sum, item) => sum.add(item.sgstAmount),
+      new Decimal(0),
     );
-    const igstAmount = this.roundToTwo(
-      lineItems.reduce((sum, item) => sum + item.igstAmount, 0),
+    const igstAmount = lineItems.reduce(
+      (sum, item) => sum.add(item.igstAmount),
+      new Decimal(0),
     );
-    const cessAdValoremAmount = this.roundToTwo(
-      lineItems.reduce((sum, item) => sum + item.cessAdValoremAmount, 0),
+    const cessAdValoremAmount = lineItems.reduce(
+      (sum, item) => sum.add(item.cessAdValoremAmount),
+      new Decimal(0),
     );
-    const cessSpecificAmount = this.roundToTwo(
-      lineItems.reduce((sum, item) => sum + item.cessSpecificAmount, 0),
+    const cessSpecificAmount = lineItems.reduce(
+      (sum, item) => sum.add(item.cessSpecificAmount),
+      new Decimal(0),
     );
-    const stateCessAdValoremAmount = this.roundToTwo(
-      lineItems.reduce((sum, item) => sum + item.stateCessAdValoremAmount, 0),
+    const stateCessAdValoremAmount = lineItems.reduce(
+      (sum, item) => sum.add(item.stateCessAdValoremAmount),
+      new Decimal(0),
     );
-    const stateCessSpecificAmount = this.roundToTwo(
-      lineItems.reduce((sum, item) => sum + item.stateCessSpecificAmount, 0),
+    const stateCessSpecificAmount = lineItems.reduce(
+      (sum, item) => sum.add(item.stateCessSpecificAmount),
+      new Decimal(0),
     );
-    const cessAmount = this.roundToTwo(cessAdValoremAmount + cessSpecificAmount);
-    const stateCessAmount = this.roundToTwo(stateCessAdValoremAmount + stateCessSpecificAmount);
+    const cessAmount = cessAdValoremAmount.add(cessSpecificAmount);
+    const stateCessAmount = stateCessAdValoremAmount.add(
+      stateCessSpecificAmount,
+    );
 
     // Calculate total based on includeTax flag
     let totalBeforeRounding;
     if (includeTax) {
       // If includeTax is true, include tax in the total
-      totalBeforeRounding = this.roundToTwo(
-        subTotal + cgstAmount + sgstAmount + igstAmount + cessAdValoremAmount + cessSpecificAmount + stateCessAdValoremAmount + stateCessSpecificAmount,
-      );
+      totalBeforeRounding = subTotal
+        .add(cgstAmount)
+        .add(sgstAmount)
+        .add(igstAmount)
+        .add(cessAdValoremAmount)
+        .add(cessSpecificAmount)
+        .add(stateCessAdValoremAmount)
+        .add(stateCessSpecificAmount);
     } else {
       // If includeTax is false, don't include tax in the total
       totalBeforeRounding = subTotal;
     }
 
-    let roundOffAmount = 0;
+    let roundOffAmount = new Decimal(0);
     let totalAmount = totalBeforeRounding;
 
     if (shouldRoundOff) {
@@ -167,15 +192,15 @@ export class InvoiceCalculator {
     }
 
     return {
-      subTotal,
-      discountAmount,
-      cgstAmount,
-      sgstAmount,
-      igstAmount,
-      cessAmount,
-      stateCessAmount,
-      roundOffAmount,
-      totalAmount,
+      subTotal: subTotal.toDecimalPlaces(2),
+      discountAmount: discountAmount.toDecimalPlaces(2),
+      cgstAmount: cgstAmount.toDecimalPlaces(2),
+      sgstAmount: sgstAmount.toDecimalPlaces(2),
+      igstAmount: igstAmount.toDecimalPlaces(2),
+      cessAmount: cessAmount.toDecimalPlaces(2),
+      stateCessAmount: stateCessAmount.toDecimalPlaces(2),
+      roundOffAmount: roundOffAmount.toDecimalPlaces(2),
+      totalAmount: totalAmount.toDecimalPlaces(2),
     };
   }
 }
@@ -310,4 +335,89 @@ export function shouldUpdateInvoiceConfigCurrentNumber(
     (transactionType === TransactionType.PURCHASE &&
       invoiceType === InvoiceType.ORDER)
   );
+}
+
+/**
+ * Transforms line items from JSON data to ILineItem objects with proper Decimal instances
+ * @param lineItems Array of line items from JSON data
+ * @returns Array of line items with proper Decimal instances
+ */
+export function transformLineItems(lineItems: any[]): ILineItem[] {
+  if (!lineItems || !Array.isArray(lineItems)) {
+    return [];
+  }
+
+  return lineItems.map((item) => ({
+    ...item,
+    rate: new Decimal(item.rate),
+    quantity: new Decimal(item.quantity),
+    gstRate: new Decimal(item.gstRate),
+    cessAdValoremRate: new Decimal(item.cessAdValoremRate || 0),
+    cessSpecificRate: new Decimal(item.cessSpecificRate || 0),
+    stateCessAdValoremRate: new Decimal(item.stateCessAdValoremRate || 0),
+    stateCessSpecificRate: new Decimal(item.stateCessSpecificRate || 0),
+    fixedDiscount: new Decimal(item.fixedDiscount || 0),
+    percentageDiscount: new Decimal(item.percentageDiscount || 0),
+    cgstAmount: new Decimal(item.cgstAmount || 0),
+    sgstAmount: new Decimal(item.sgstAmount || 0),
+    igstAmount: new Decimal(item.igstAmount || 0),
+    cessAdValoremAmount: new Decimal(item.cessAdValoremAmount || 0),
+    cessSpecificAmount: new Decimal(item.cessSpecificAmount || 0),
+    stateCessAdValoremAmount: new Decimal(item.stateCessAdValoremAmount || 0),
+    stateCessSpecificAmount: new Decimal(item.stateCessSpecificAmount || 0),
+    subTotal: new Decimal(item.subTotal || 0),
+    discountAmount: new Decimal(item.discountAmount || 0),
+    totalAmount: new Decimal(item.totalAmount || 0),
+  }));
+}
+
+/**
+ * Transforms a single input line item from JSON data to ensure Decimal fields
+ * @param item Line item data from API or other source
+ * @returns The line item with proper Decimal instances
+ */
+export function transformInputLineItem<
+  T extends ICreateLineItem | IUpdateLineItem,
+>(item: T): T {
+  const result = { ...item } as any;
+
+  // Handle numeric fields, converting them to Decimal only if they exist
+  if (item.rate !== undefined) result.rate = new Decimal(item.rate.toString());
+  if (item.quantity !== undefined)
+    result.quantity = new Decimal(item.quantity.toString());
+  if (item.gstRate !== undefined)
+    result.gstRate = new Decimal(item.gstRate.toString());
+  if (item.cessAdValoremRate !== undefined)
+    result.cessAdValoremRate = new Decimal(item.cessAdValoremRate.toString());
+  if (item.cessSpecificRate !== undefined)
+    result.cessSpecificRate = new Decimal(item.cessSpecificRate.toString());
+  if (item.stateCessAdValoremRate !== undefined)
+    result.stateCessAdValoremRate = new Decimal(
+      item.stateCessAdValoremRate.toString(),
+    );
+  if (item.stateCessSpecificRate !== undefined)
+    result.stateCessSpecificRate = new Decimal(
+      item.stateCessSpecificRate.toString(),
+    );
+  if (item.fixedDiscount !== undefined)
+    result.fixedDiscount = new Decimal(item.fixedDiscount.toString());
+  if (item.percentageDiscount !== undefined)
+    result.percentageDiscount = new Decimal(item.percentageDiscount.toString());
+
+  return result as T;
+}
+
+/**
+ * Transforms an array of input line items from JSON data
+ * @param items Array of line items from API or other source
+ * @returns Array of line items with proper Decimal instances
+ */
+export function transformInputLineItems<
+  T extends ICreateLineItem | IUpdateLineItem,
+>(items: T[]): T[] {
+  if (!items || !Array.isArray(items)) {
+    return [];
+  }
+
+  return items.map((item) => transformInputLineItem(item));
 }

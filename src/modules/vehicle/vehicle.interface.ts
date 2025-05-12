@@ -1,11 +1,13 @@
+import { Decimal } from "@prisma/client/runtime/library";
+
 export interface ICreateVehicle {
   vehicleNumber: string;
   type: string;
   registeredAt?: Date;
   isActive?: boolean;
   ownerId?: string;
-  lastFuelOdometerReading?: number;
-  lastServiceOdometerReading?: number;
+  lastFuelOdometerReading?: Decimal;
+  lastServiceOdometerReading?: Decimal;
   lastServiceDate?: Date;
   orgId: string;
 }
@@ -22,7 +24,7 @@ export interface IUpdateVehicle {
   isActive?: boolean;
   ownerId?: string;
   orgId: string;
-  lastFuelOdometerReading?: number;
-  lastServiceOdometerReading?: number;
+  lastFuelOdometerReading?: Decimal;
+  lastServiceOdometerReading?: Decimal;
   lastServiceDate?: Date;
 }

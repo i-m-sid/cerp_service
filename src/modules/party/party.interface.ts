@@ -1,3 +1,5 @@
+import { Decimal } from "@prisma/client/runtime/library";
+
 export interface IAddress {
   shortAddress?: string;
   addressLine1?: string;
@@ -16,7 +18,7 @@ export interface ICreateParty {
   tradeName?: string;
   phoneNumber?: string;
   email?: string;
-  openingBalance?: number;
+  openingBalance?: Decimal;
   address?: IAddress;
   placeOfSupply: IAddress[];
   customFields: Map<string, any>;

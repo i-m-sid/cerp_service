@@ -10,6 +10,8 @@ import { IAddress } from '../party/party.interface';
 import { UOMService } from '../uom/uom.service';
 import { InvoiceService } from '../invoice/invoice.service';
 import { ItemService } from '../item/item.service';
+import { Decimal } from '@prisma/client/runtime/library';
+import { transformLineItems } from '../invoice/invoice.utils';
 
 export class EInvoiceService {
   private uomService: UOMService;
@@ -34,10 +36,10 @@ export class EInvoiceService {
     invoice: Invoice & { organization: unknown; party: unknown },
     uoms: UnitOfMeasurement[],
   ): Promise<EInvoice> {
+    const lineItems = transformLineItems(invoice.lineItems as unknown as any[]);
     const items = await Promise.all(
-      (invoice.lineItems as unknown as ILineItem[])?.map(
-        (lineItem: ILineItem, index: number) =>
-          this.lineItemToEInvoiceItem(index, lineItem, uoms, invoice.orgId),
+      lineItems.map((lineItem: ILineItem, index: number) =>
+        this.lineItemToEInvoiceItem(index, lineItem, uoms, invoice.orgId),
       ),
     );
     const sellerDetails = invoice.organization as unknown as Organization;
@@ -108,16 +110,16 @@ export class EInvoiceService {
         Em: buyerDetails.email,
       },
       ValDtls: {
-        AssVal: Number(invoice.subTotal), //Todo: check if this is correct
-        IgstVal: Number(invoice.igstAmount),
-        CgstVal: Number(invoice.cgstAmount),
-        SgstVal: Number(invoice.sgstAmount),
-        CesVal: Number(invoice.cessAmount),
-        StCesVal: Number(invoice.stateCessAmount),
-        Discount: Number(invoice.discountAmount),
-        OthChrg: 0,
-        RndOffAmt: Number(invoice.roundOffAmount),
-        TotInvVal: Number(invoice.totalAmount),
+        AssVal: invoice.subTotal ?? new Decimal(0), //Todo: check if this is correct
+        IgstVal: invoice.igstAmount ?? new Decimal(0),
+        CgstVal: invoice.cgstAmount ?? new Decimal(0),
+        SgstVal: invoice.sgstAmount ?? new Decimal(0),
+        CesVal: invoice.cessAmount ?? new Decimal(0),
+        StCesVal: invoice.stateCessAmount ?? new Decimal(0),
+        Discount: invoice.discountAmount ?? new Decimal(0),
+        OthChrg: new Decimal(0),
+        RndOffAmt: invoice.roundOffAmount ?? new Decimal(0),
+        TotInvVal: invoice.totalAmount ?? new Decimal(0),
       },
       RefDtls: {
         InvRm: 'NICGEPP2.0',
@@ -135,7 +137,7 @@ export class EInvoiceService {
     const item = await this.itemService.findById(lineItem.itemId, orgId);
     const uom = uoms.find((uom) => uom.id === lineItem.uomId);
     var baseUQC = uom?.baseUQC;
-    var baseConversionFactor = Number(uom?.baseConversionFactor);
+    var baseConversionFactor = uom?.baseConversionFactor ?? new Decimal(1);
     if (
       item.uomConversionOverrides &&
       item.uomConversionOverrides[lineItem.uomId]
@@ -147,12 +149,12 @@ export class EInvoiceService {
     if (!uom) {
       throw new Error('UOM not found');
     }
-    const quantity = parseFloat(
-      (lineItem.quantity * baseConversionFactor).toFixed(3),
-    );
-    const unitPrice = parseFloat(
-      (lineItem.rate / baseConversionFactor).toFixed(3),
-    );
+    const quantity = lineItem.quantity
+      .mul(baseConversionFactor)
+      .toDecimalPlaces(3);
+    const unitPrice = lineItem.rate
+      .div(baseConversionFactor)
+      .toDecimalPlaces(3);
     if (!baseUQC) {
       throw new Error(`E-invoice UOM not configured for ${lineItem.item}`);
     }
@@ -163,12 +165,12 @@ export class EInvoiceService {
       IsServc: lineItem.isService ? 'Y' : 'N',
       HsnCd: lineItem.hsnCode,
       Qty: quantity,
-      FreeQty: 0,
+      FreeQty: new Decimal(0),
       Unit: baseUQC,
       UnitPrice: unitPrice,
-      TotAmt: lineItem.subTotal + lineItem.discountAmount,
+      TotAmt: lineItem.subTotal.add(lineItem.discountAmount),
       Discount: lineItem.discountAmount,
-      PreTaxVal: 0,
+      PreTaxVal: new Decimal(0),
       AssAmt: lineItem.subTotal,
       GstRt: lineItem.gstRate,
       IgstAmt: lineItem.igstAmount,
@@ -180,7 +182,7 @@ export class EInvoiceService {
       StateCesRt: lineItem.stateCessAdValoremRate,
       StateCesAmt: lineItem.stateCessAdValoremAmount,
       StateCesNonAdvlAmt: lineItem.stateCessSpecificAmount,
-      OthChrg: 0,
+      OthChrg: new Decimal(0),
       TotItemVal: lineItem.totalAmount,
     };
   }

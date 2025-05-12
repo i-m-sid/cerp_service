@@ -11,7 +11,7 @@ import {
   ICreateJournalLine,
   IUpdateJournalLine,
 } from './journal.interface';
-
+import { Decimal } from '@prisma/client/runtime/library';
 export class JournalRepository {
   private prisma: PrismaClient;
 
@@ -21,25 +21,25 @@ export class JournalRepository {
 
   private async updateAccountBalance(
     accountId: string,
-    debitAmount: number,
-    creditAmount: number,
+    debitAmount: Decimal,
+    creditAmount: Decimal,
     accountType: LedgerAccountType,
     tx: Prisma.TransactionClient,
   ) {
     // Calculate net change based on account type
-    let netChange = 0;
+    let netChange = new Decimal(0);
 
     switch (accountType) {
       case 'ASSET':
       case 'EXPENSE':
         // Debit increases, Credit decreases
-        netChange = debitAmount - creditAmount;
+        netChange = debitAmount.sub(creditAmount);
         break;
       case 'LIABILITY':
       case 'EQUITY':
       case 'REVENUE':
         // Credit increases, Debit decreases
-        netChange = creditAmount - debitAmount;
+        netChange = creditAmount.sub(debitAmount);
         break;
     }
 
@@ -68,13 +68,14 @@ export class JournalRepository {
         throw new Error(`Account ${line.accountId} not found`);
       }
 
-      const debitAmount = line.debitAmount || 0;
-      const creditAmount = line.creditAmount || 0;
+      const debitAmount = line.debitAmount || new Decimal(0);
+      const creditAmount = line.creditAmount || new Decimal(0);
 
       // For removal operations, invert the amounts
-      const finalDebitAmount = operation === 'ADD' ? debitAmount : -debitAmount;
+      const finalDebitAmount =
+        operation === 'ADD' ? debitAmount : debitAmount.neg();
       const finalCreditAmount =
-        operation === 'ADD' ? creditAmount : -creditAmount;
+        operation === 'ADD' ? creditAmount : creditAmount.neg();
 
       await this.updateAccountBalance(
         account.id,
@@ -158,8 +159,8 @@ export class JournalRepository {
       await this.processJournalLines(
         existingJournal.lines.map((line) => ({
           accountId: line.accountId,
-          debitAmount: Number(line.debitAmount),
-          creditAmount: Number(line.creditAmount),
+          debitAmount: line.debitAmount,
+          creditAmount: line.creditAmount,
           description: line.description || undefined,
         })),
         'REMOVE',
@@ -230,8 +231,8 @@ export class JournalRepository {
       await this.processJournalLines(
         journal.lines.map((line) => ({
           accountId: line.accountId,
-          debitAmount: Number(line.debitAmount),
-          creditAmount: Number(line.creditAmount),
+          debitAmount: line.debitAmount,
+          creditAmount: line.creditAmount,
           description: line.description || undefined,
         })),
         'REMOVE',

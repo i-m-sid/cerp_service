@@ -1,10 +1,16 @@
-import { JournalStatus, VoucherType, SourceType, Prisma } from '@prisma/client';
+import {
+  JournalStatus,
+  VoucherType,
+  SourceType,
+  Prisma,
+} from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 
 export interface ICreateJournalLine {
   accountId: string;
   description?: string;
-  debitAmount?: number;
-  creditAmount?: number;
+  debitAmount?: Decimal;
+  creditAmount?: Decimal;
 }
 
 export interface IUpdateJournalLine extends ICreateJournalLine {

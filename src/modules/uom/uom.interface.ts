@@ -1,9 +1,11 @@
+import { Decimal } from "@prisma/client/runtime/library";
+
 export interface ICreateUOM {
   label: string; // e.g., "Kilogram"
   shortCode: string; // e.g., "kg"
   orgId: string;
   baseUQC: string;
-  baseConversionFactor: number;
+  baseConversionFactor: Decimal;
 }
 
 export interface IBaseUOM {

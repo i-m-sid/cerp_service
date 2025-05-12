@@ -143,73 +143,72 @@ export class ChallanRepository {
     };
   }
 
+  /**
+   * Bulk updates challans in parallel within a transaction.
+   *
+   * @param challans - Array of challan update objects
+   * @param orgId - Organization ID
+   * @returns Promise resolving to an array of update results for each challan
+   */
   async bulkUpdate(challans: IUpdateChallan[], orgId: string) {
-    return this.prisma.$transaction(async (tx) => {
-      const results: Array<{
-        success: boolean;
-        data?: {
-          [key: string]: any;
-          customFields: Record<string, ICustomField>;
-        };
-        error?: string;
-        id: string;
-      }> = [];
+    return this.prisma.$transaction(
+      async (tx) => {
+        const updatePromises = challans.map(async (challan) => {
+          try {
+            const { id, ...updateFields } = challan;
 
-      for (const challan of challans) {
-        try {
-          const { id, ...updateFields } = challan;
+            const updateData: Prisma.ChallanUpdateInput = {
+              challanNumber: updateFields.challanNumber,
+              date: updateFields.date,
+              customFields:
+                updateFields.customFields !== undefined
+                  ? (updateFields.customFields as unknown as Prisma.JsonObject)
+                  : undefined,
+              ...(updateFields.statusId && {
+                status: {
+                  connect: { id: updateFields.statusId },
+                },
+              }),
+              ...(updateFields.templateId && {
+                template: {
+                  connect: { id: updateFields.templateId },
+                },
+              }),
+            };
 
-          const updateData: Prisma.ChallanUpdateInput = {
-            challanNumber: updateFields.challanNumber,
-            date: updateFields.date,
-            customFields:
-              updateFields.customFields !== undefined
-                ? (updateFields.customFields as unknown as Prisma.JsonObject)
-                : undefined,
-            ...(updateFields.statusId && {
-              status: {
-                connect: { id: updateFields.statusId },
+            const result = await tx.challan.update({
+              where: { id, orgId },
+              data: updateData,
+              include: {
+                status: true,
+                template: true,
               },
-            }),
-            ...(updateFields.templateId && {
-              template: {
-                connect: { id: updateFields.templateId },
+            });
+
+            return {
+              success: true,
+              data: {
+                ...result,
+                customFields: result.customFields as unknown as Record<
+                  string,
+                  ICustomField
+                >,
               },
-            }),
-          };
-
-          const result = await tx.challan.update({
-            where: { id, orgId },
-            data: updateData,
-            include: {
-              status: true,
-              template: true,
-            },
-          });
-
-          results.push({
-            success: true,
-            data: {
-              ...result,
-              customFields: result.customFields as unknown as Record<
-                string,
-                ICustomField
-              >,
-            },
-            id: challan.id,
-          });
-        } catch (error: any) {
-          console.log('error', error);
-          results.push({
-            success: false,
-            error: error.message || 'Unknown error',
-            id: challan.id,
-          });
-        }
-      }
-
-      return results;
-    });
+              id: challan.id,
+            };
+          } catch (error: any) {
+            console.log('error', error);
+            return {
+              success: false,
+              error: error.message || 'Unknown error',
+              id: challan.id,
+            };
+          }
+        });
+        return Promise.all(updatePromises);
+      },
+      { timeout: 100000 },
+    );
   }
 
   async delete(id: string, orgId: string) {
@@ -327,7 +326,7 @@ export class ChallanRepository {
     // Get all challans for this template with customFields
     const challans = await this.prisma.challan.findMany({
       where: whereClause,
-      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
       include: {
         status: true,
         template: true,

@@ -1,5 +1,6 @@
-import { InvoiceType, TransactionType, } from '@prisma/client';
+import { InvoiceType, TransactionType } from '@prisma/client';
 import { IChallan } from '../challan/challan.interface';
+import { Decimal } from '@prisma/client/runtime/library';
 
 export interface ICreateLineItem {
   itemId: string;
@@ -10,15 +11,15 @@ export interface ICreateLineItem {
   uom: string;
   uomId: string;
   description: string;
-  rate: number;
-  quantity: number;
-  gstRate: number;
-  cessAdValoremRate: number;
-  cessSpecificRate: number;
-  stateCessAdValoremRate: number;
-  stateCessSpecificRate: number;
-  fixedDiscount: number;
-  percentageDiscount: number;
+  rate: Decimal;
+  quantity: Decimal;
+  gstRate: Decimal;
+  cessAdValoremRate: Decimal;
+  cessSpecificRate: Decimal;
+  stateCessAdValoremRate: Decimal;
+  stateCessSpecificRate: Decimal;
+  fixedDiscount: Decimal;
+  percentageDiscount: Decimal;
   challanIds: string[];
 }
 
@@ -62,16 +63,16 @@ export interface IUpdateLineItem extends Partial<ICreateLineItem> {
 
 export interface ILineItem extends ICreateLineItem {
   id: string;
-  cgstAmount: number;
-  sgstAmount: number;
-  igstAmount: number;
-  cessAdValoremAmount: number;
-  cessSpecificAmount: number;
-  stateCessAdValoremAmount: number;
-  stateCessSpecificAmount: number;
-  subTotal: number;
-  discountAmount: number;
-  totalAmount: number;
+  cgstAmount: Decimal;
+  sgstAmount: Decimal;
+  igstAmount: Decimal;
+  cessAdValoremAmount: Decimal;
+  cessSpecificAmount: Decimal;
+  stateCessAdValoremAmount: Decimal;
+  stateCessSpecificAmount: Decimal;
+  subTotal: Decimal;
+  discountAmount: Decimal;
+  totalAmount: Decimal;
 }
 
 export interface IUpdateInvoice
@@ -91,14 +92,14 @@ export interface IBulkDeleteInvoices {
 
 export interface ILineItemChallan {
   isInterState?: boolean;
-  rate?: number;
-  quantity?: number;
-  gstRate?: number;
-  cessAdValoremRate?: number;
-  cessSpecificRate?: number;
-  stateCessAdValoremRate?: number;
-  stateCessSpecificRate?: number;
-  fixedDiscount?: number;
-  percentageDiscount?: number;
+  rate?: Decimal;
+  quantity?: Decimal;
+  gstRate?: Decimal;
+  cessAdValoremRate?: Decimal;
+  cessSpecificRate?: Decimal;
+  stateCessAdValoremRate?: Decimal;
+  stateCessSpecificRate?: Decimal;
+  fixedDiscount?: Decimal;
+  percentageDiscount?: Decimal;
   challans: IChallan[];
 }
