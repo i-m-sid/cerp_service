@@ -9,4 +9,6 @@ export class LedgerConstants {
   static readonly salesId = 'cma2bxe6u000f3b5yl5ncq201';
   static readonly purchaseId = 'cma2bxe6u000f3b5yl5ncq301';
   static readonly indirectExpenseId = 'cma2bxe6u000f3b5yl5ncq303';
+  static readonly sundryDebtorsId = 'cma2bxe6u000f3b5yl5ncq006';
+  static readonly sundryCreditorsId = 'cma2bxe6u000f3b5yl5ncq106';
 }

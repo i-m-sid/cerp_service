@@ -538,7 +538,11 @@ export class InvoiceService {
         const taxableAmount = lineItem.rate.mul(lineItem.quantity);
 
         // Handle CGST
-        if (!lineItem.isInterState && lineItem.gstRate) {
+        if (
+          !lineItem.isInterState &&
+          lineItem.gstRate &&
+          lineItem.gstRate.gt(0)
+        ) {
           const cgstRate = lineItem.gstRate.div(2);
           const cgstAmount = taxableAmount.mul(cgstRate).div(100);
           const rateKey = cgstRate.toString();
@@ -549,7 +553,11 @@ export class InvoiceService {
         }
 
         // Handle SGST
-        if (!lineItem.isInterState && lineItem.gstRate) {
+        if (
+          !lineItem.isInterState &&
+          lineItem.gstRate &&
+          lineItem.gstRate.gt(0)
+        ) {
           const sgstRate = lineItem.gstRate.div(2);
           const sgstAmount = taxableAmount.mul(sgstRate).div(100);
           const rateKey = sgstRate.toString();
@@ -560,7 +568,11 @@ export class InvoiceService {
         }
 
         // Handle IGST
-        if (lineItem.isInterState && lineItem.gstRate) {
+        if (
+          lineItem.isInterState &&
+          lineItem.gstRate &&
+          lineItem.gstRate.gt(0)
+        ) {
           const igstRate = lineItem.gstRate;
           const igstAmount = taxableAmount.mul(igstRate).div(100);
           const rateKey = igstRate.toString();
@@ -571,7 +583,7 @@ export class InvoiceService {
         }
 
         // Handle Cess Ad Valorem
-        if (lineItem.cessAdValoremRate) {
+        if (lineItem.cessAdValoremRate && lineItem.cessAdValoremRate.gt(0)) {
           const cessAmount = taxableAmount
             .mul(lineItem.cessAdValoremRate)
             .div(100);
@@ -585,7 +597,10 @@ export class InvoiceService {
         }
 
         // Handle State Cess Ad Valorem
-        if (lineItem.stateCessAdValoremRate) {
+        if (
+          lineItem.stateCessAdValoremRate &&
+          lineItem.stateCessAdValoremRate.gt(0)
+        ) {
           const stateCessAmount = taxableAmount
             .mul(lineItem.stateCessAdValoremRate)
             .div(100);
@@ -599,14 +614,17 @@ export class InvoiceService {
         }
 
         // Handle Specific Cess amounts
-        if (lineItem.cessSpecificRate) {
+        if (lineItem.cessSpecificRate && lineItem.cessSpecificRate.gt(0)) {
           totalCessSpecific = totalCessSpecific.add(
             lineItem.quantity.mul(lineItem.cessSpecificRate),
           );
         }
 
         // Handle State Specific Cess amounts
-        if (lineItem.stateCessSpecificRate) {
+        if (
+          lineItem.stateCessSpecificRate &&
+          lineItem.stateCessSpecificRate.gt(0)
+        ) {
           totalStateCessSpecific = totalStateCessSpecific.add(
             lineItem.quantity.mul(lineItem.stateCessSpecificRate),
           );
@@ -618,122 +636,127 @@ export class InvoiceService {
     const journalLines: ICreateJournalLine[] = [];
 
     // Process CGST by rates
-    for (const [rate, amount] of cgstAmountsByRate.entries()) {
-      if (amount.gt(0)) {
-        const cgstAccount = await this.getOrCreateTaxLedgerAccount(
-          invoice.transactionType,
-          invoice.orgId,
-          'CGST',
-          rate,
-        );
-        journalLines.push({
-          accountId: cgstAccount.id,
-          description: `CGST @${rate}%`,
-          debitAmount:
-            invoice.transactionType === TransactionType.PURCHASE
-              ? amount.toDecimalPlaces(2)
-              : undefined,
-          creditAmount:
-            invoice.transactionType === TransactionType.SALES
-              ? amount.toDecimalPlaces(2)
-              : undefined,
-        });
+    if (cgstAmountsByRate.size > 0) {
+      const cgstAccount = await this.getOrCreateTaxLedgerAccount(
+        invoice.transactionType,
+        invoice.orgId,
+        'CGST',
+      );
+      for (const [rate, amount] of cgstAmountsByRate.entries()) {
+        if (amount.gt(0)) {
+          journalLines.push({
+            accountId: cgstAccount.id,
+            description: `CGST @${rate}%`,
+            debitAmount:
+              invoice.transactionType === TransactionType.PURCHASE
+                ? amount.toDecimalPlaces(2)
+                : undefined,
+            creditAmount:
+              invoice.transactionType === TransactionType.SALES
+                ? amount.toDecimalPlaces(2)
+                : undefined,
+          });
+        }
       }
     }
 
     // Process SGST by rates
-    for (const [rate, amount] of sgstAmountsByRate.entries()) {
-      if (amount.gt(0)) {
-        const sgstAccount = await this.getOrCreateTaxLedgerAccount(
-          invoice.transactionType,
-          invoice.orgId,
-          'SGST',
-          rate,
-        );
-        journalLines.push({
-          accountId: sgstAccount.id,
-          description: `SGST @${rate}%`,
-          debitAmount:
-            invoice.transactionType === TransactionType.PURCHASE
-              ? amount.toDecimalPlaces(2)
-              : undefined,
-          creditAmount:
-            invoice.transactionType === TransactionType.SALES
-              ? amount.toDecimalPlaces(2)
-              : undefined,
-        });
+    if (sgstAmountsByRate.size > 0) {
+      const sgstAccount = await this.getOrCreateTaxLedgerAccount(
+        invoice.transactionType,
+        invoice.orgId,
+        'SGST',
+      );
+      for (const [rate, amount] of sgstAmountsByRate.entries()) {
+        if (amount.gt(0)) {
+          journalLines.push({
+            accountId: sgstAccount.id,
+            description: `SGST @${rate}%`,
+            debitAmount:
+              invoice.transactionType === TransactionType.PURCHASE
+                ? amount.toDecimalPlaces(2)
+                : undefined,
+            creditAmount:
+              invoice.transactionType === TransactionType.SALES
+                ? amount.toDecimalPlaces(2)
+                : undefined,
+          });
+        }
       }
     }
 
     // Process IGST by rates
-    for (const [rate, amount] of igstAmountsByRate.entries()) {
-      if (amount.gt(0)) {
-        const igstAccount = await this.getOrCreateTaxLedgerAccount(
-          invoice.transactionType,
-          invoice.orgId,
-          'IGST',
-          rate,
-        );
-        journalLines.push({
-          accountId: igstAccount.id,
-          description: `IGST @${rate}%`,
-          debitAmount:
-            invoice.transactionType === TransactionType.PURCHASE
-              ? amount.toDecimalPlaces(2)
-              : undefined,
-          creditAmount:
-            invoice.transactionType === TransactionType.SALES
-              ? amount.toDecimalPlaces(2)
-              : undefined,
-        });
+    if (igstAmountsByRate.size > 0) {
+      const igstAccount = await this.getOrCreateTaxLedgerAccount(
+        invoice.transactionType,
+        invoice.orgId,
+        'IGST',
+      );
+      for (const [rate, amount] of igstAmountsByRate.entries()) {
+        if (amount.gt(0)) {
+          journalLines.push({
+            accountId: igstAccount.id,
+            description: `IGST @${rate}%`,
+            debitAmount:
+              invoice.transactionType === TransactionType.PURCHASE
+                ? amount.toDecimalPlaces(2)
+                : undefined,
+            creditAmount:
+              invoice.transactionType === TransactionType.SALES
+                ? amount.toDecimalPlaces(2)
+                : undefined,
+          });
+        }
       }
     }
 
     // Process Cess Ad Valorem by rates
-    for (const [rate, amount] of cessAdValoremAmountsByRate.entries()) {
-      if (amount.gt(0)) {
-        const cessAccount = await this.getOrCreateTaxLedgerAccount(
-          invoice.transactionType,
-          invoice.orgId,
-          'Cess Ad Valorem',
-          rate,
-        );
-        journalLines.push({
-          accountId: cessAccount.id,
-          description: `Cess Ad Valorem @${rate}%`,
-          debitAmount:
-            invoice.transactionType === TransactionType.PURCHASE
-              ? amount.toDecimalPlaces(2)
-              : undefined,
-          creditAmount:
-            invoice.transactionType === TransactionType.SALES
-              ? amount.toDecimalPlaces(2)
-              : undefined,
-        });
+    if (cessAdValoremAmountsByRate.size > 0) {
+      const cessAccount = await this.getOrCreateTaxLedgerAccount(
+        invoice.transactionType,
+        invoice.orgId,
+        'Cess Ad Valorem',
+      );
+      for (const [rate, amount] of cessAdValoremAmountsByRate.entries()) {
+        if (amount.gt(0)) {
+          journalLines.push({
+            accountId: cessAccount.id,
+            description: `Cess Ad Valorem @${rate}%`,
+            debitAmount:
+              invoice.transactionType === TransactionType.PURCHASE
+                ? amount.toDecimalPlaces(2)
+                : undefined,
+            creditAmount:
+              invoice.transactionType === TransactionType.SALES
+                ? amount.toDecimalPlaces(2)
+                : undefined,
+          });
+        }
       }
     }
 
     // Process State Cess Ad Valorem by rates
-    for (const [rate, amount] of stateCessAdValoremAmountsByRate.entries()) {
-      if (amount.gt(0)) {
-        const stateCessAccount = await this.getOrCreateTaxLedgerAccount(
-          invoice.transactionType,
-          invoice.orgId,
-          'State Cess Ad Valorem',
-          rate,
-        );
-        journalLines.push({
-          accountId: stateCessAccount.id,
-          description: `State Cess Ad Valorem @${rate}%`,
-          debitAmount:
-            invoice.transactionType === TransactionType.PURCHASE
-              ? amount.toDecimalPlaces(2)
-              : undefined,
-          creditAmount:
-            invoice.transactionType === TransactionType.SALES
-              ? amount.toDecimalPlaces(2)
-              : undefined,
-        });
+    if (stateCessAdValoremAmountsByRate.size > 0) {
+      const stateCessAccount = await this.getOrCreateTaxLedgerAccount(
+        invoice.transactionType,
+        invoice.orgId,
+        'State Cess Ad Valorem',
+      );
+      for (const [rate, amount] of stateCessAdValoremAmountsByRate.entries()) {
+        if (amount.gt(0)) {
+          journalLines.push({
+            accountId: stateCessAccount.id,
+            description: `State Cess Ad Valorem @${rate}%`,
+            debitAmount:
+              invoice.transactionType === TransactionType.PURCHASE
+                ? amount.toDecimalPlaces(2)
+                : undefined,
+            creditAmount:
+              invoice.transactionType === TransactionType.SALES
+                ? amount.toDecimalPlaces(2)
+                : undefined,
+          });
+        }
       }
     }
 
@@ -956,8 +979,8 @@ export class InvoiceService {
     );
     const categoryId =
       transactionType === TransactionType.SALES
-        ? LedgerConstants.salesId
-        : LedgerConstants.purchaseId;
+        ? LedgerConstants.sundryDebtorsId
+        : LedgerConstants.sundryCreditorsId;
 
     if (partyLedgerAccount && partyLedgerAccount.categoryId === categoryId) {
       return partyLedgerAccount;
@@ -970,7 +993,7 @@ export class InvoiceService {
       categoryId: categoryId,
       isBank: false,
       isActive: true,
-      description: `${transactionType === TransactionType.SALES ? 'Receivable from' : 'Payable to'} ${partyName}}`,
+      description: `${transactionType === TransactionType.SALES ? 'Receivable from' : 'Payable to'} ${partyName}`,
       openingBalance: new Decimal(party.openingBalance ?? 0),
     });
   }
@@ -979,7 +1002,6 @@ export class InvoiceService {
     transactionType: TransactionType,
     orgId: string,
     taxName: string,
-    taxRate?: string,
   ): Promise<LedgerAccount> {
     const categoryId =
       transactionType === TransactionType.SALES
@@ -987,9 +1009,7 @@ export class InvoiceService {
         : LedgerConstants.taxInputId;
     const direction =
       transactionType === TransactionType.SALES ? 'Output' : 'Input';
-    const taxLedgerAccountName = taxRate
-      ? `${taxName} ${direction} ${taxRate}%`
-      : `${taxName} ${direction}`;
+    const taxLedgerAccountName = `${taxName} ${direction}`;
     const taxLedgerAccount = await this.ledgerService.findByName(
       taxLedgerAccountName,
       orgId,
@@ -1004,7 +1024,7 @@ export class InvoiceService {
       isSystemGenerated: true,
       isBank: false,
       isActive: true,
-      description: `Account for ${taxName} ${direction} at ${taxRate}% rate`,
+      description: `Account for ${taxName} ${direction}`,
       openingBalance: new Decimal(0),
     });
   }
