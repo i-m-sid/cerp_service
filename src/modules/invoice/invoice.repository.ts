@@ -175,109 +175,56 @@ export class InvoiceRepository {
   }
 
   async update(data: IUpdateInvoice) {
-    const { id, challanIds, orgId, lineItems, ...updateFields } = data;
-
-    // Calculate totals if line items are being updated
-    let totals = {};
-    if (lineItems) {
-      // First get the existing line items to merge with updates
-      const existingInvoice = await this.prisma.invoice.findUnique({
-        where: { id },
-        select: { lineItems: true, includeTax: true },
-      });
-
-      const existingLineItems =
-        existingInvoice?.lineItems as unknown as ILineItem[];
-      const includeTax =
-        updateFields.includeTax !== undefined
-          ? updateFields.includeTax
-          : existingInvoice?.includeTax || false;
-
-      // Merge existing items with updates
-      const updatedLineItems = existingLineItems.map((existingItem) => {
-        const updateItem = lineItems.find(
-          (item) => item.id === existingItem.id,
-        );
-        if (!updateItem) return existingItem;
-
-        // Create a new line item with merged data
-        return InvoiceCalculator.calculateLineItem(
-          {
-            itemId: updateItem.itemId ?? existingItem.itemId,
-            item: updateItem.item ?? existingItem.item,
-            hsnCode: updateItem.hsnCode ?? existingItem.hsnCode,
-            isService: updateItem.isService ?? existingItem.isService,
-            isInterState: updateItem.isInterState ?? existingItem.isInterState,
-            uom: updateItem.uom ?? existingItem.uom,
-            uomId: updateItem.uomId ?? existingItem.uomId,
-            description: updateItem.description ?? existingItem.description,
-            rate: updateItem.rate ?? existingItem.rate,
-            quantity: updateItem.quantity ?? existingItem.quantity,
-            gstRate: updateItem.gstRate ?? existingItem.gstRate,
-            cessAdValoremRate:
-              updateItem.cessAdValoremRate ?? existingItem.cessAdValoremRate,
-            cessSpecificRate:
-              updateItem.cessSpecificRate ?? existingItem.cessSpecificRate,
-            stateCessAdValoremRate:
-              updateItem.stateCessAdValoremRate ??
-              existingItem.stateCessAdValoremRate,
-            stateCessSpecificRate:
-              updateItem.stateCessSpecificRate ??
-              existingItem.stateCessSpecificRate,
-            fixedDiscount:
-              updateItem.fixedDiscount ?? existingItem.fixedDiscount,
-            percentageDiscount:
-              updateItem.percentageDiscount ?? existingItem.percentageDiscount,
-            challanIds: updateItem.challanIds ?? existingItem.challanIds,
-          },
-          includeTax,
-        );
-      });
-
-      totals = InvoiceCalculator.calculateInvoiceTotals(
-        updatedLineItems,
-        updateFields.roundOff ?? false,
-        includeTax,
-      );
+    if (!data.lineItems) {
+      throw new Error('Line items are required');
     }
+    // Calculate line items with totals
+    const calculatedLineItems = data.lineItems.map((item) =>
+      InvoiceCalculator.calculateLineItem(
+        item as ICreateLineItem,
+        data.includeTax,
+      ),
+    );
+
+    // Calculate invoice totals
+    const totals = InvoiceCalculator.calculateInvoiceTotals(
+      calculatedLineItems,
+      data.roundOff,
+      data.includeTax,
+    );
 
     const updateData = {
-      invoiceNumber: updateFields.invoiceNumber,
-      poNumber: updateFields.poNumber,
-      date: updateFields.date,
-      invoiceType: updateFields.invoiceType,
-      transactionType: updateFields.transactionType,
-      includeTax: updateFields.includeTax,
-      roundOff: updateFields.roundOff,
-      notes: updateFields.notes,
-      termsAndConditions: updateFields.termsAndConditions,
-      ...totals, // Add calculated totals if line items were updated
-      lineItems: lineItems
-        ? (lineItems as unknown as Prisma.JsonObject)
-        : undefined,
-      ...(updateFields.challanTemplateId && {
-        challanTemplate: {
-          connect: { id: updateFields.challanTemplateId },
-        },
-      }),
-      ...(updateFields.partyId && {
-        party: {
-          connect: { id: updateFields.partyId },
-        },
-      }),
-      ...(challanIds && {
+      invoiceNumber: data.invoiceNumber,
+      poNumber: data.poNumber,
+      date: data.date,
+      invoiceType: data.invoiceType,
+      transactionType: data.transactionType,
+      partyDetails: data.partyDetails as unknown as Prisma.JsonObject,
+      orgDetails: data.orgDetails as unknown as Prisma.JsonObject,
+      includeTax: data.includeTax,
+      roundOff: data.roundOff,
+      lineItems: calculatedLineItems as unknown as Prisma.JsonObject,
+      notes: data.notes,
+      termsAndConditions: data.termsAndConditions,
+      ...totals,
+      challanTemplate: {
+        connect: { id: data.challanTemplateId },
+      },
+      party: {
+        connect: { id: data.partyId },
+      },
+      organization: {
+        connect: { id: data.orgId },
+      },
+      ...(data.challanIds && {
         challans: {
-          set: [],
-          connect: challanIds.map((id) => ({ id })),
+          connect: data.challanIds.map((id) => ({ id })),
         },
       }),
     };
 
     const result = await this.prisma.invoice.update({
-      where: {
-        id,
-        orgId,
-      },
+      where: { id: data.id },
       data: updateData,
       include: this.include,
     });

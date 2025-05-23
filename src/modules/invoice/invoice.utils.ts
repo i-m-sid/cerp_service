@@ -382,27 +382,25 @@ export function transformInputLineItem<
   const result = { ...item } as any;
 
   // Handle numeric fields, converting them to Decimal only if they exist
-  if (item.rate !== undefined) result.rate = new Decimal(item.rate.toString());
-  if (item.quantity !== undefined)
-    result.quantity = new Decimal(item.quantity.toString());
-  if (item.gstRate !== undefined)
-    result.gstRate = new Decimal(item.gstRate.toString());
-  if (item.cessAdValoremRate !== undefined)
-    result.cessAdValoremRate = new Decimal(item.cessAdValoremRate.toString());
-  if (item.cessSpecificRate !== undefined)
-    result.cessSpecificRate = new Decimal(item.cessSpecificRate.toString());
-  if (item.stateCessAdValoremRate !== undefined)
-    result.stateCessAdValoremRate = new Decimal(
-      item.stateCessAdValoremRate.toString(),
-    );
-  if (item.stateCessSpecificRate !== undefined)
-    result.stateCessSpecificRate = new Decimal(
-      item.stateCessSpecificRate.toString(),
-    );
-  if (item.fixedDiscount !== undefined)
-    result.fixedDiscount = new Decimal(item.fixedDiscount.toString());
-  if (item.percentageDiscount !== undefined)
-    result.percentageDiscount = new Decimal(item.percentageDiscount.toString());
+  result.rate = new Decimal((item.rate ?? 0).toString());
+  result.quantity = new Decimal((item.quantity ?? 0).toString());
+  result.gstRate = new Decimal((item.gstRate ?? 0).toString());
+  result.cessAdValoremRate = new Decimal(
+    (item.cessAdValoremRate ?? 0).toString(),
+  );
+  result.cessSpecificRate = new Decimal(
+    (item.cessSpecificRate ?? 0).toString(),
+  );
+  result.stateCessAdValoremRate = new Decimal(
+    (item.stateCessAdValoremRate ?? 0).toString(),
+  );
+  result.stateCessSpecificRate = new Decimal(
+    (item.stateCessSpecificRate ?? 0).toString(),
+  );
+  result.fixedDiscount = new Decimal((item.fixedDiscount ?? 0).toString());
+  result.percentageDiscount = new Decimal(
+    (item.percentageDiscount ?? 0).toString(),
+  );
 
   return result as T;
 }

@@ -535,8 +535,6 @@ export class InvoiceService {
     const lineItems = transformLineItems(invoice.lineItems as unknown as any[]);
     if (lineItems && lineItems.length > 0) {
       for (const lineItem of lineItems) {
-        const taxableAmount = lineItem.rate.mul(lineItem.quantity);
-
         // Handle CGST
         if (
           !lineItem.isInterState &&
@@ -544,7 +542,7 @@ export class InvoiceService {
           lineItem.gstRate.gt(0)
         ) {
           const cgstRate = lineItem.gstRate.div(2);
-          const cgstAmount = taxableAmount.mul(cgstRate).div(100);
+          const cgstAmount = lineItem.cgstAmount;
           const rateKey = cgstRate.toString();
           cgstAmountsByRate.set(
             rateKey,
@@ -559,7 +557,7 @@ export class InvoiceService {
           lineItem.gstRate.gt(0)
         ) {
           const sgstRate = lineItem.gstRate.div(2);
-          const sgstAmount = taxableAmount.mul(sgstRate).div(100);
+          const sgstAmount = lineItem.sgstAmount;
           const rateKey = sgstRate.toString();
           sgstAmountsByRate.set(
             rateKey,
@@ -574,7 +572,7 @@ export class InvoiceService {
           lineItem.gstRate.gt(0)
         ) {
           const igstRate = lineItem.gstRate;
-          const igstAmount = taxableAmount.mul(igstRate).div(100);
+          const igstAmount = lineItem.igstAmount;
           const rateKey = igstRate.toString();
           igstAmountsByRate.set(
             rateKey,
@@ -584,9 +582,7 @@ export class InvoiceService {
 
         // Handle Cess Ad Valorem
         if (lineItem.cessAdValoremRate && lineItem.cessAdValoremRate.gt(0)) {
-          const cessAmount = taxableAmount
-            .mul(lineItem.cessAdValoremRate)
-            .div(100);
+          const cessAmount = lineItem.cessAdValoremAmount;
           const rateKey = lineItem.cessAdValoremRate.toString();
           cessAdValoremAmountsByRate.set(
             rateKey,
@@ -601,9 +597,7 @@ export class InvoiceService {
           lineItem.stateCessAdValoremRate &&
           lineItem.stateCessAdValoremRate.gt(0)
         ) {
-          const stateCessAmount = taxableAmount
-            .mul(lineItem.stateCessAdValoremRate)
-            .div(100);
+          const stateCessAmount = lineItem.stateCessAdValoremAmount;
           const rateKey = lineItem.stateCessAdValoremRate.toString();
           stateCessAdValoremAmountsByRate.set(
             rateKey,
@@ -616,7 +610,7 @@ export class InvoiceService {
         // Handle Specific Cess amounts
         if (lineItem.cessSpecificRate && lineItem.cessSpecificRate.gt(0)) {
           totalCessSpecific = totalCessSpecific.add(
-            lineItem.quantity.mul(lineItem.cessSpecificRate),
+            lineItem.cessSpecificAmount,
           );
         }
 
@@ -626,7 +620,7 @@ export class InvoiceService {
           lineItem.stateCessSpecificRate.gt(0)
         ) {
           totalStateCessSpecific = totalStateCessSpecific.add(
-            lineItem.quantity.mul(lineItem.stateCessSpecificRate),
+            lineItem.stateCessSpecificAmount,
           );
         }
       }
