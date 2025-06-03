@@ -60,6 +60,8 @@ export class JournalService {
       0,
     );
     if (totalDebit !== totalCredit) {
+      console.log('totalDebit', totalDebit);
+      console.log('totalCredit', totalCredit);
       throw new Error('Total debit and credit amounts must be equal');
     }
 

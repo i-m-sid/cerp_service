@@ -104,13 +104,21 @@ export class InvoiceCalculator {
       ...item,
       id: nanoid(),
       subTotal: subTotal.toDecimalPlaces(2),
-      cgstAmount: cgstAmount.toDecimalPlaces(2),
-      sgstAmount: sgstAmount.toDecimalPlaces(2),
-      igstAmount: igstAmount.toDecimalPlaces(2),
-      cessAdValoremAmount: cessAdValoremAmount.toDecimalPlaces(2),
-      cessSpecificAmount: cessSpecificAmount.toDecimalPlaces(2),
-      stateCessAdValoremAmount: stateCessAdValoremAmount.toDecimalPlaces(2),
-      stateCessSpecificAmount: stateCessSpecificAmount.toDecimalPlaces(2),
+      cgstAmount: includeTax ? cgstAmount.toDecimalPlaces(2) : new Decimal(0),
+      sgstAmount: includeTax ? sgstAmount.toDecimalPlaces(2) : new Decimal(0),
+      igstAmount: includeTax ? igstAmount.toDecimalPlaces(2) : new Decimal(0),
+      cessAdValoremAmount: includeTax
+        ? cessAdValoremAmount.toDecimalPlaces(2)
+        : new Decimal(0),
+      cessSpecificAmount: includeTax
+        ? cessSpecificAmount.toDecimalPlaces(2)
+        : new Decimal(0),
+      stateCessAdValoremAmount: includeTax
+        ? stateCessAdValoremAmount.toDecimalPlaces(2)
+        : new Decimal(0),
+      stateCessSpecificAmount: includeTax
+        ? stateCessSpecificAmount.toDecimalPlaces(2)
+        : new Decimal(0),
       discountAmount: discountAmount.toDecimalPlaces(2),
       totalAmount: totalAmount.toDecimalPlaces(2),
     };
@@ -194,11 +202,13 @@ export class InvoiceCalculator {
     return {
       subTotal: subTotal.toDecimalPlaces(2),
       discountAmount: discountAmount.toDecimalPlaces(2),
-      cgstAmount: cgstAmount.toDecimalPlaces(2),
-      sgstAmount: sgstAmount.toDecimalPlaces(2),
-      igstAmount: igstAmount.toDecimalPlaces(2),
-      cessAmount: cessAmount.toDecimalPlaces(2),
-      stateCessAmount: stateCessAmount.toDecimalPlaces(2),
+      cgstAmount: includeTax ? cgstAmount.toDecimalPlaces(2) : new Decimal(0),
+      sgstAmount: includeTax ? sgstAmount.toDecimalPlaces(2) : new Decimal(0),
+      igstAmount: includeTax ? igstAmount.toDecimalPlaces(2) : new Decimal(0),
+      cessAmount: includeTax ? cessAmount.toDecimalPlaces(2) : new Decimal(0),
+      stateCessAmount: includeTax
+        ? stateCessAmount.toDecimalPlaces(2)
+        : new Decimal(0),
       roundOffAmount: roundOffAmount.toDecimalPlaces(2),
       totalAmount: totalAmount.toDecimalPlaces(2),
     };

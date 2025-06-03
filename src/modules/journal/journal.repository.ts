@@ -43,11 +43,13 @@ export class JournalRepository {
         break;
     }
 
+    console.log('netChange', netChange);
+
     await tx.ledgerAccount.update({
       where: { id: accountId },
       data: {
         currentBalance: {
-          increment: netChange,
+          increment: netChange.toString(),
         },
       },
     });
