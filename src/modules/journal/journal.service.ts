@@ -11,6 +11,7 @@ import {
   getJournalNumericPart,
   updateJournalConfigCurrentNumber,
 } from './journal.utils';
+import { Decimal } from '@prisma/client/runtime/library';
 
 export class JournalService {
   private repository: JournalRepository;
@@ -52,14 +53,14 @@ export class JournalService {
     }
     // Optional: check that debits equal credits
     const totalDebit = data.lines.reduce(
-      (sum, l) => sum + (l.debitAmount ? Number(l.debitAmount) : 0),
-      0,
+      (sum, l) => sum.add(l.debitAmount ?? new Decimal(0)),
+      new Decimal(0),
     );
     const totalCredit = data.lines.reduce(
-      (sum, l) => sum + (l.creditAmount ? Number(l.creditAmount) : 0),
-      0,
+      (sum, l) => sum.add(l.creditAmount ?? new Decimal(0)),
+      new Decimal(0),
     );
-    if (totalDebit !== totalCredit) {
+    if (!totalDebit.equals(totalCredit)) {
       console.log('totalDebit', totalDebit);
       console.log('totalCredit', totalCredit);
       throw new Error('Total debit and credit amounts must be equal');
@@ -93,14 +94,14 @@ export class JournalService {
   async update(data: IUpdateJournal) {
     if (data.lines && data.lines.length > 0) {
       const totalDebit = data.lines.reduce(
-        (sum, l) => sum + (l.debitAmount ? Number(l.debitAmount) : 0),
-        0,
+        (sum, l) => sum.add(l.debitAmount ?? new Decimal(0)),
+        new Decimal(0),
       );
       const totalCredit = data.lines.reduce(
-        (sum, l) => sum + (l.creditAmount ? Number(l.creditAmount) : 0),
-        0,
+        (sum, l) => sum.add(l.creditAmount ?? new Decimal(0)),
+        new Decimal(0),
       );
-      if (totalDebit !== totalCredit) {
+      if (!totalDebit.equals(totalCredit)) {
         throw new Error('Total debit and credit amounts must be equal');
       }
     }

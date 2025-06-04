@@ -121,6 +121,9 @@ export class InvoiceRepository {
             }
           : {}),
       },
+      orderBy: {
+        createdAt: 'asc',
+      },
       include: this.include,
     });
 
