@@ -796,7 +796,7 @@ export class InvoiceService {
       });
     }
 
-    if (roundOff && roundOff.gt(0)) {
+    if (roundOff) {
       const isSales = invoice.transactionType === TransactionType.SALES;
       const isPurchase = invoice.transactionType === TransactionType.PURCHASE;
 
@@ -809,8 +809,8 @@ export class InvoiceService {
       journalLines.push({
         accountId: roundOffLedgerAccount.id,
         description: `Round off`,
-        debitAmount: shouldDebit ? roundOff : undefined,
-        creditAmount: shouldCredit ? roundOff : undefined,
+        debitAmount: shouldDebit ? roundOff.abs() : undefined,
+        creditAmount: shouldCredit ? roundOff.abs() : undefined,
       });
     }
 

@@ -207,7 +207,7 @@ export class ChallanRepository {
         });
         return Promise.all(updatePromises);
       },
-      { timeout: 100000 },
+      { timeout: 1000000 },
     );
   }
 
@@ -256,7 +256,7 @@ export class ChallanRepository {
 
         return Promise.all(deletePromises);
       },
-      { timeout: 100000 },
+      { timeout: 1000000 },
     );
   }
 
