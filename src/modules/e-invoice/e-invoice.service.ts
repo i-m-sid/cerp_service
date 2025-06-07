@@ -12,6 +12,7 @@ import { InvoiceService } from '../invoice/invoice.service';
 import { ItemService } from '../item/item.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { transformLineItems } from '../invoice/invoice.utils';
+import { eInvoiceDecimalToNumber } from './e-invoice.util';
 
 export class EInvoiceService {
   private uomService: UOMService;
@@ -32,7 +33,7 @@ export class EInvoiceService {
     const eInvoices = await Promise.all(
       invoices.map((invoice) => this.invoiceToEInvoice(invoice, uoms)),
     );
-    return eInvoices;
+    return eInvoiceDecimalToNumber(eInvoices);
   }
 
   async invoiceToEInvoice(
